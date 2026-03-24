@@ -1,4 +1,4 @@
-# KONTEKS PROYEK: DUNGEON OF THE HOLLOW CROWN
+# KONTEKS PROYEK: PROJECT-T
 ### Versi 2.1 — Updated Architecture + Progress Tracker
 
 > **Status dokumen:** Diperbarui setelah sesi development pertama.
