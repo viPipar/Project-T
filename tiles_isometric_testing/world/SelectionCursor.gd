@@ -2,7 +2,7 @@ extends Node2D
 
 @export var color_valid:   Color = Color(0.2, 1.0, 0.4, 0.55)
 @export var color_invalid: Color = Color(1.0, 0.2, 0.2, 0.45)
-@export var color_self:    Color = Color(0.1, 0.0, 0.0, 0.0)
+@export var color_self:    Color = Color(0.1, 0.1, 0.1, 0.3)
 
 var _player: Node2D = null
 var _state: String = "valid"
