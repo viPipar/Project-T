@@ -21,6 +21,7 @@ IsoUtils="*res://autoloads/IsoUtils.gd"
 GridManager="*res://autoloads/GridManager.gd"
 InputManager="*res://autoloads/InputManager.gd"
 DebugGrid="*res://world/DebugGrid.gd"
+ProjectileLine="*res://autoloads/ProjectileLine.gd"
 
 [display]
 

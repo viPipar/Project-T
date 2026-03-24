@@ -195,6 +195,7 @@ func set_state(new_state: GameState)
 func is_combat() -> bool
 func is_explore() -> bool
 func add_gold(amount: int)
+
 ```
 
 ---
@@ -211,6 +212,9 @@ func register_entity(pos: Vector2i, entity: Node)
 func unregister_entity(pos: Vector2i)
 func move_entity(from: Vector2i, to: Vector2i, entity: Node)
 func get_entity_at(pos: Vector2i) -> Node
+func setup_walls(coords_list: Array[Vector2i]) -> void:
+func load_walls_for_map(map_id: int) -> void:
+func set_tile_walkable(pos: Vector2i, can_walk: bool) -> void:
 func find_path(from: Vector2i, to: Vector2i) -> Array[Vector2i]
 # PENTING: find_path BUKAN get_path — get_path bentrok dengan built-in AStarGrid2D
 func get_path_cost(from: Vector2i, to: Vector2i) -> int   # -1 jika tidak bisa dicapai

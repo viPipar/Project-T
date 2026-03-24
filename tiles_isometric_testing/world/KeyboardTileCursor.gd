@@ -21,18 +21,22 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 func _move_cursor(delta: float) -> void:
+	# --- Kode gerakan yang sudah ada ---
 	var move := Vector2.ZERO
-	if InputManager.is_pressed(player_id, "move_right"):
-		move.x += 1.0
-	if InputManager.is_pressed(player_id, "move_left"):
-		move.x -= 1.0
-	if InputManager.is_pressed(player_id, "move_down"):
-		move.y += 1.0
-	if InputManager.is_pressed(player_id, "move_up"):
-		move.y -= 1.0
+	if InputManager.is_pressed(player_id, "move_right"): move.x += 1.0
+	if InputManager.is_pressed(player_id, "move_left"):  move.x -= 1.0
+	if InputManager.is_pressed(player_id, "move_down"):  move.y += 1.0
+	if InputManager.is_pressed(player_id, "move_up"):    move.y -= 1.0
 
 	if move != Vector2.ZERO:
 		global_position += move.normalized() * move_speed * delta
+
+	# --- LOGIKA "BALIK KE TENGAH" (TAMBAHKAN INI) ---
+	var center_px = IsoUtils.world_to_iso(Vector2i(7, 7)) # Titik tengah (7,7) dalam pixel
+	
+	# Jika jarak kursor ke tengah > 900 pixel , balikkan!
+	if global_position.distance_to(center_px) > 800.0:
+		global_position = center_px
 
 func _update_hovered_tile() -> void:
 	var grid_pos := _get_tile_under_point(global_position)

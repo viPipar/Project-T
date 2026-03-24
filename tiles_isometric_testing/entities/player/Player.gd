@@ -10,7 +10,6 @@ extends CharacterBody2D
 
 @export var player_id:  int    = 1
 @export var char_name:  String = "Player"
-
 @onready var sprite_p1:  AnimatedSprite2D  = $Player1Sprite
 @onready var sprite_p2:  AnimatedSprite2D  = $Player2Sprite
 @onready var movement:   MovementComponent = $MovementComponent
@@ -66,6 +65,16 @@ func _on_confirm() -> void:
 		# --- LOGIC INTERAKSI ATAU ATTACK KAMU MASUK SINI ---
 		print("Player ", player_id, " berinteraksi dengan: ", occupant.name)
 		# Contoh memanggil AttackComponent:
+		print("sementara hardcode disini dia nembak")
+		var shot = ProjectileLine.cast(grid_pos, target)
+
+		match shot.result:
+			"hit_entity":
+				print("Hit entity at ", shot.tile)
+			"hit_wall":
+				print("Blocked by wall at ", shot.tile)
+			"miss":
+				print("Nothing in the way — projectile flies through")
 		# if has_node("AttackComponent"):
 		# 	$AttackComponent.execute_attack(occupant) 
 	elif not is_walkable :
