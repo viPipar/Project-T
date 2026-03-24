@@ -1007,8 +1007,8 @@ Tile diamond polygon (dari center):
 
 ```
 Application > Run > Main Scene         = res://Main.tscn
-Application > Config > Name            = Dungeon of the Hollow Crown
-Rendering > 2D > Snap 2D Vertices     = ON
+Application > Config > Name            = Hollow Crown
+Rendering > 2D > Snap 2D Vertices      = ON
 Display > Window > Size                = 1280 x 720
 Display > Window > Stretch Mode        = canvas_items
 ```
@@ -1017,12 +1017,12 @@ Display > Window > Stretch Mode        = canvas_items
 
 ## INPUT MAP
 
-| Action     | P1      | P2           |
-|------------|---------|--------------|
-| move_up    | W       | Up Arrow     |
-| move_down  | S       | Down Arrow   |
-| move_left  | A       | Left Arrow   |
-| move_right | D       | Right Arrow  |
-| action     | Space   | Numpad Enter |
-| end_turn   | E       | Enter        |
-| inventory  | T       | Delete       |
+| Action                | P1      | P2           |
+|-----------------------|---------|--------------|
+| move_up               | W       | I            |
+| move_down             | S       | K            |
+| move_left             | A       | J            |
+| move_right            | D       | L            |
+| action                | E       | O            |
+| END TURN              | Space   | Enter        |
+| inventory             | Q       | U            |

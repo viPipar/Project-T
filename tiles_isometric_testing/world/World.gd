@@ -12,7 +12,8 @@ func _ready() -> void:
 	_draw_debug_grid()
 
 func _process(delta: float) -> void:
-	pass
+	var target_pos = get_party_centroid()
+	camera.position = camera.position.lerp(target_pos, 0.04) # 0.08 adalah nilai lerp kamu
 			
 func get_party_centroid() -> Vector2:
 	if players.is_empty():
