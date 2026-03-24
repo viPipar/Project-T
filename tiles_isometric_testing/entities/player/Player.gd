@@ -1,25 +1,101 @@
 extends CharacterBody2D
 
-@export var player_id: int
-@export var char_name: String = "Player"
+# ─────────────────────────────────────────────────────────────────────────────
+#  Player
+#
+#  Owns animation + input reading. Movement logic lives entirely in
+#  MovementComponent — this script only calls move_to() / interact_move_to()
+#  and reacts to the component's signals.
+# ─────────────────────────────────────────────────────────────────────────────
 
-@onready var sprite_p1: AnimatedSprite2D = $Player1Sprite
-@onready var sprite_p2: AnimatedSprite2D = $Player2Sprite
+@export var player_id:  int    = 1
+@export var char_name:  String = "Player"
+
+@onready var sprite_p1:  AnimatedSprite2D  = $Player1Sprite
+@onready var sprite_p2:  AnimatedSprite2D  = $Player2Sprite
+@onready var movement:   MovementComponent = $MovementComponent
 
 var anim_sprite: AnimatedSprite2D
 
-var _facing: String = "down"
-
+var _facing:  String   = "down"
 var grid_pos: Vector2i = Vector2i.ZERO
-var target_pos: Vector2i
-var movement_left: int = 6
-var _cursor: Node2D = null
+var _cursor:  Node2D   = null
+
+
+# ── Lifecycle ────────────────────────────────────────────────────────────────
 
 func _ready() -> void:
 	add_to_group("players")
-	target_pos = grid_pos
 	_setup_sprite()
 	anim_sprite.play("idle_" + _facing)
+
+	movement.move_finished.connect(_on_move_finished)
+
+
+func _process(_delta: float) -> void:
+	# Update facing from cursor hover, but only when not mid-travel
+	if not movement._is_moving and _cursor != null and _cursor.has_method("get_hovered_tile"):
+		var hovered: Vector2i = _cursor.get_hovered_tile()
+		if hovered.x >= 0:
+			_update_facing_towards(hovered)
+
+	anim_sprite.play("idle_" + _facing)
+
+	if InputManager.is_confirm_pressed(player_id):
+		_on_confirm()
+
+
+# ── Input Handler ────────────────────────────────────────────────────────────
+
+func _on_confirm() -> void:
+	if movement._is_moving:
+		return  # don't queue new move while animating
+
+	var target: Vector2i = Vector2i(-1, -1)
+	if _cursor != null and _cursor.has_method("get_hovered_tile"):
+		target = _cursor.get_hovered_tile()
+	if target.x < 0:
+		return
+
+	# If the tile holds an entity → walk adjacent for attack / interaction
+	var occupant := GridManager.get_entity_at(target)
+	if occupant != null:
+		movement.interact_move_to(target)
+	else:
+		movement.move_to(target)
+
+
+# ── Signal Callbacks ──────────────────────────────────────────────────────────
+
+func _on_move_finished(_from: Vector2i, to: Vector2i) -> void:
+	_update_facing_towards(to)
+
+
+# ── Public API ────────────────────────────────────────────────────────────────
+
+func get_grid_pos() -> Vector2i:
+	return grid_pos
+
+func get_player_id() -> int:
+	return player_id
+
+func get_movement_left() -> int:
+	return movement.movement_left
+
+func bind_cursor(cursor: Node2D) -> void:
+	_cursor = cursor
+
+func place_at(pos: Vector2i) -> void:
+	if grid_pos != Vector2i.ZERO:
+		GridManager.unregister_entity(grid_pos)
+
+	grid_pos = pos
+	GridManager.register_entity(pos, self)
+	position = IsoUtils.world_to_iso(pos)
+	z_index  = IsoUtils.get_depth(pos)
+
+
+# ── Internal ──────────────────────────────────────────────────────────────────
 
 func _setup_sprite() -> void:
 	if player_id == 1:
@@ -31,33 +107,6 @@ func _setup_sprite() -> void:
 		sprite_p2.visible = true
 		anim_sprite = sprite_p2
 
-func _process(_delta: float) -> void:
-	# Update target from the player's floating cursor
-	if _cursor != null and _cursor.has_method("get_hovered_tile"):
-		var hovered: Vector2i = _cursor.get_hovered_tile()
-		if hovered.x >= 0:
-			target_pos = hovered
-			_update_facing_towards(target_pos)
-
-	anim_sprite.play("idle_" + _facing)
-
-	# confirm move
-	if InputManager.is_confirm_pressed(player_id):
-		if _cursor != null and _cursor.has_method("get_hovered_tile"):
-			var hovered_confirm: Vector2i = _cursor.get_hovered_tile()
-			if hovered_confirm.x >= 0:
-				_try_move(hovered_confirm)
-		else:
-			_try_move(target_pos)
-
-func get_movement_left() -> int:
-	return movement_left
-	
-func get_player_id() -> int :
-	return player_id
-
-func bind_cursor(cursor: Node2D) -> void:
-	_cursor = cursor
 
 func _update_facing_towards(target: Vector2i) -> void:
 	var delta := target - grid_pos
@@ -67,40 +116,3 @@ func _update_facing_towards(target: Vector2i) -> void:
 		_facing = "right" if delta.x > 0 else "left"
 	else:
 		_facing = "down" if delta.y > 0 else "up"
-
-func _try_move(target: Vector2i) -> void:
-	if target == grid_pos:
-		return
-	if not GridManager.is_walkable(target):
-		return
-	var cost := GridManager.get_path_cost(grid_pos, target)
-
-	if cost < 0 or cost > movement_left:
-		return
-
-	var from := grid_pos
-	GridManager.move_entity(from, target, self)
-
-	grid_pos   = target
-	target_pos = grid_pos
-	movement_left -= cost
-
-	position = IsoUtils.world_to_iso(grid_pos)
-	z_index  = IsoUtils.get_depth(grid_pos)
-
-	EventBus.player_moved.emit(self, from, target)
-
-func get_grid_pos() -> Vector2i:
-	return grid_pos
-
-func place_at(pos: Vector2i) -> void:
-	if grid_pos != Vector2i.ZERO:
-		GridManager.unregister_entity(grid_pos)
-
-	grid_pos   = pos
-	target_pos = pos
-
-	GridManager.register_entity(pos, self)
-
-	position = IsoUtils.world_to_iso(pos)
-	z_index  = IsoUtils.get_depth(pos)
