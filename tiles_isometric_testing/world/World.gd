@@ -32,6 +32,9 @@ func spawn_entity(scene: PackedScene, grid_pos: Vector2i, data := {}) -> Node:
 	entity.position = IsoUtils.world_to_iso(grid_pos)
 	entity.z_index  = IsoUtils.get_depth(grid_pos)
 	GridManager.register_entity(grid_pos, entity)
+	
+	if entity.is_in_group("players"):
+		players.append(entity)
 	return entity
 
 func despawn_entity(entity: Node) -> void:

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cnr4h0g213apn"]
+
+[ext_resource type="Script" uid="uid://bxbwdmfiv8s4h" path="res://world/SelectionCursor.gd" id="1_bfvle"]
+
+[node name="SelectionCursor" type="Node2D"]
+script = ExtResource("1_bfvle")

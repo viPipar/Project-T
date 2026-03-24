@@ -20,7 +20,7 @@ EventBus="*res://autoloads/EventBus.gd"
 IsoUtils="*res://autoloads/IsoUtils.gd"
 GridManager="*res://autoloads/GridManager.gd"
 InputManager="*res://autoloads/InputManager.gd"
-DebugGrid="*res://ui/world/DebugGrid.gd"
+DebugGrid="*res://world/DebugGrid.gd"
 
 [display]
 

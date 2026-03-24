@@ -1,7 +1,7 @@
 [gd_scene load_steps=6 format=4 uid="uid://bv8gg8sp656ia"]
 
 [ext_resource type="Script" uid="uid://dsojupna5ib0g" path="res://main/main.gd" id="1_qv31u"]
-[ext_resource type="Script" uid="uid://bs23eu82b3oyh" path="res://ui/world/World.gd" id="2_wbnyf"]
+[ext_resource type="Script" uid="uid://bs23eu82b3oyh" path="res://world/World.gd" id="2_wbnyf"]
 [ext_resource type="Texture2D" uid="uid://dn0bmvwxp2kar" path="res://assets/tiles/spritesheet.png" id="3_5kcm4"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_cmtxc"]

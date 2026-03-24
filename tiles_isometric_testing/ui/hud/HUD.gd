@@ -1,6 +1,7 @@
 extends Control
 
 @export var player_id: int = 1
+@onready var _move_label: Label 
 
 var _player: Node = null
 var _coord_label: Label
@@ -31,11 +32,11 @@ func _build_ui() -> void:
 	_coord_label.add_theme_font_size_override("font_size", 11)
 	vbox.add_child(_coord_label)
 
-	var move_label := Label.new()
-	move_label.name = "MoveLabel"
-	move_label.text = "Move: -"
-	move_label.add_theme_font_size_override("font_size", 11)
-	vbox.add_child(move_label)
+	_move_label = Label.new()
+	_move_label.name = "MoveLabel"
+	_move_label.text = "Move: -"
+	_move_label.add_theme_font_size_override("font_size", 11)
+	vbox.add_child(_move_label)
 
 func _find_player() -> void:
 	# Retry sampai player ditemukan (spawn async)
@@ -58,9 +59,8 @@ func _process(_delta: float) -> void:
 	if _player == null:
 		return
 	_coord_label.text = "Pos: (%d, %d)" % [_player.grid_pos.x, _player.grid_pos.y]
-	if _player.get("movement_left") != null:
-		var ml := _player.movement_left
-		$"../VBoxContainer/MoveLabel".text = "Move: %d" % ml if has_node("../VBoxContainer/MoveLabel") else ""
+	if _player and _move_label:
+		_move_label.text = "Move: %d" % _player.movement_left
 
 func _on_player_moved(entity: Node, from: Vector2i, to: Vector2i) -> void:
 	if entity != _player:

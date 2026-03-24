@@ -12,9 +12,10 @@ var _facing: String = "down"
 
 var grid_pos: Vector2i = Vector2i.ZERO
 var target_pos: Vector2i
-var movement_left: int = 2
+var movement_left: int = 6
 
 func _ready() -> void:
+	add_to_group("players")
 	target_pos = grid_pos
 	_setup_sprite()
 	anim_sprite.play("idle_" + _facing)
@@ -60,10 +61,17 @@ func _process(_delta: float) -> void:
 	if InputManager.is_confirm_pressed(player_id):
 		_try_move(target_pos)
 
+func get_movement_left() -> int:
+	return movement_left
+	
+func get_player_id() -> int :
+	return player_id
+
 func _try_move(target: Vector2i) -> void:
 	if target == grid_pos:
 		return
-
+	if not GridManager.is_walkable(target):
+		return
 	var cost := GridManager.get_path_cost(grid_pos, target)
 
 	if cost < 0 or cost > movement_left:
