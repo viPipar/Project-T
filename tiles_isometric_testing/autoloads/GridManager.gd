@@ -32,8 +32,10 @@ func set_tile_walkable(pos: Vector2i, can_walk: bool) -> void:
 
 func is_walkable(pos: Vector2i) -> bool:
 	if not _walkable.has(pos):
+		print("not walkable\n")
 		return false
 	if _entities.has(pos):
+		print("not walkable has entity : ",_entities[pos])
 		return false
 	return _walkable[pos]
 
