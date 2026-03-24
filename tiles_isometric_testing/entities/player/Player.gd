@@ -13,6 +13,7 @@ var _facing: String = "down"
 var grid_pos: Vector2i = Vector2i.ZERO
 var target_pos: Vector2i
 var movement_left: int = 6
+var _cursor: Node2D = null
 
 func _ready() -> void:
 	add_to_group("players")
@@ -31,41 +32,41 @@ func _setup_sprite() -> void:
 		anim_sprite = sprite_p2
 
 func _process(_delta: float) -> void:
-	var dir := InputManager.get_movement_dir(player_id)
+	# Update target from the player's floating cursor
+	if _cursor != null and _cursor.has_method("get_hovered_tile"):
+		var hovered: Vector2i = _cursor.get_hovered_tile()
+		if hovered.x >= 0:
+			target_pos = hovered
+			_update_facing_towards(target_pos)
 
-	# 🟡 gerakin TARGET
-	if dir != Vector2i.ZERO:
-		target_pos += dir
+	anim_sprite.play("idle_" + _facing)
 
-		# clamp biar nggak keluar grid
-		target_pos.x = clamp(target_pos.x, 0, GridManager.grid_size.x - 1)
-		target_pos.y = clamp(target_pos.y, 0, GridManager.grid_size.y - 1)
-
-		# update facing
-		if dir.y < 0:
-			_facing = "up"
-		elif dir.y > 0:
-			_facing = "down"
-		elif dir.x < 0:
-			_facing = "left"
-		elif dir.x > 0:
-			_facing = "right"
-
-		anim_sprite.play("walk_" + _facing)
-
-		print(player_id, " TARGET:", target_pos)
-	else:
-		anim_sprite.play("idle_" + _facing)
-
-	# 🔵 confirm move
+	# confirm move
 	if InputManager.is_confirm_pressed(player_id):
-		_try_move(target_pos)
+		if _cursor != null and _cursor.has_method("get_hovered_tile"):
+			var hovered_confirm: Vector2i = _cursor.get_hovered_tile()
+			if hovered_confirm.x >= 0:
+				_try_move(hovered_confirm)
+		else:
+			_try_move(target_pos)
 
 func get_movement_left() -> int:
 	return movement_left
 	
 func get_player_id() -> int :
 	return player_id
+
+func bind_cursor(cursor: Node2D) -> void:
+	_cursor = cursor
+
+func _update_facing_towards(target: Vector2i) -> void:
+	var delta := target - grid_pos
+	if delta == Vector2i.ZERO:
+		return
+	if abs(delta.x) > abs(delta.y):
+		_facing = "right" if delta.x > 0 else "left"
+	else:
+		_facing = "down" if delta.y > 0 else "up"
 
 func _try_move(target: Vector2i) -> void:
 	if target == grid_pos:
