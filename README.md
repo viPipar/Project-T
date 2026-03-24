@@ -14,7 +14,7 @@
 - **Viewport:** SATU viewport, SATU Camera2D — map dilihat bersama
 - **Perspektif:** True isometric 2D (Diablo style), tile size 128x64
 - **Art style:** Hand-drawn sketchy 2D (referensi: Edmund McMillen / Mewgenics)
-- **Combat:** Turn-based D&D style (1 Action, 1 Bonus Action, Movement tiles per turn)
+- **Combat:** Turn-based D&D style (1 Action (Can be more), 1 Bonus Action (Can be more), Movement tiles per turn (Base : 6 Tiles))
 - **Map:** Room-based roguelike, bukan open world — map statis per room
 - **Save system:** JSON ke disk, 3 slot (slot 0 = auto save)
 - **Offline only**
@@ -1007,8 +1007,8 @@ Tile diamond polygon (dari center):
 
 ```
 Application > Run > Main Scene         = res://Main.tscn
-Application > Config > Name            = Hollow Crown
-Rendering > 2D > Snap 2D Vertices      = ON
+Application > Config > Name            = Dungeon of the Hollow Crown
+Rendering > 2D > Snap 2D Vertices     = ON
 Display > Window > Size                = 1280 x 720
 Display > Window > Stretch Mode        = canvas_items
 ```
@@ -1017,12 +1017,12 @@ Display > Window > Stretch Mode        = canvas_items
 
 ## INPUT MAP
 
-| Action                | P1      | P2           |
-|-----------------------|---------|--------------|
-| move_up               | W       | I            |
-| move_down             | S       | K            |
-| move_left             | A       | J            |
-| move_right            | D       | L            |
-| action                | E       | O            |
-| END TURN              | Space   | Enter        |
-| inventory             | Q       | U            |
+| Action     | P1      | P2           |
+|------------|---------|--------------|
+| move_up    | W       | Up Arrow     |
+| move_down  | S       | Down Arrow   |
+| move_left  | A       | Left Arrow   |
+| move_right | D       | Right Arrow  |
+| action     | Space   | Numpad Enter |
+| end_turn   | E       | Enter        |
+| inventory  | T       | Delete       |
