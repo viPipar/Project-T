@@ -6,6 +6,8 @@ func _ready() -> void:
 	var player_scene := preload("res://entities/player/Player.tscn")
 	var cursor_scene := preload("res://world/SelectionCursor.tscn")
 
+	GridManager.load_walls_for_map(1) #manggil mapping
+	
 	var p1 = world.spawn_entity(player_scene, Vector2i(0, 0), {
 		"player_id": 1, "char_name": "Aria"
 	})

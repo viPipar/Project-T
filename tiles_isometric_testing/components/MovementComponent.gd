@@ -30,9 +30,9 @@ signal move_blocked(target: Vector2i)
 @export var walk_speed: float = 6.0
 
 ## Base movement range in tiles (reset each turn)
-@export var base_movement: int = 6
+@export var base_movement: int = 100
 
-var movement_left: int = 6
+var movement_left: int = 100
 
 # Internal travel state
 var _is_moving:    bool           = false
@@ -77,7 +77,6 @@ func move_to(target: Vector2i) -> bool:
 	return true
 
 
-## Walk to the tile directly adjacent to an entity tile.
 ## Use this for attack / interaction — target itself may be blocked.
 ## Picks the reachable neighbour closest to the entity.
 func interact_move_to(entity_tile: Vector2i) -> bool:
@@ -109,6 +108,7 @@ func interact_move_to(entity_tile: Vector2i) -> bool:
 		return false
 
 	_begin_travel(path, best_cost)
+	print("Player menabrak: ", entity_tile)
 	return true
 
 

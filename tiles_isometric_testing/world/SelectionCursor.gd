@@ -50,6 +50,7 @@ func _process(_delta: float) -> void:
 		return
 
 	# Is there an entity on that tile?
+	# Is there an entity on that tile?
 	if GridManager.has_entity_at(target):
 		# Check whether an adjacent tile is reachable
 		var reachable_adj := _has_reachable_adjacent(origin, target, _player.get_movement_left())

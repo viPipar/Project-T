@@ -39,9 +39,26 @@ func setup_grid(width: int, height: int) -> void:
 		for y in range(height):
 			_walkable[Vector2i(x, y)] = true
 
-
 # ── Terrain ───────────────────────────────────────────────────────────────────
-
+func setup_walls(coords_list: Array[Vector2i]) -> void:
+	for pos in coords_list:
+		# Gunakan fungsi yang sudah ada untuk mematikan akses tile
+		set_tile_walkable(pos, false)
+	# Update AStar satu kali di akhir agar lebih efisien
+	_astar.update()
+	print("Tembok berhasil dipasang di ", coords_list.size(), " koordinat.")
+	
+func load_walls_for_map(map_id: int) -> void:
+	# Ambil data dari script MapData (file map.gd)
+	var walls_to_build: Array = MapData.get_walls(map_id)
+	
+	if walls_to_build.is_empty():
+		print("Map ID ", map_id, " tidak punya tembok atau tidak ditemukan.")
+		return
+		
+	# Lempar datanya ke fungsi setup_walls di atas
+	setup_walls(walls_to_build)
+	
 func set_tile_walkable(pos: Vector2i, can_walk: bool) -> void:
 	_walkable[pos] = can_walk
 	_astar.set_point_solid(pos, not can_walk)

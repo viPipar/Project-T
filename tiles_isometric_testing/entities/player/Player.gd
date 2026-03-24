@@ -40,9 +40,10 @@ func _process(_delta: float) -> void:
 			_update_facing_towards(hovered)
 
 	anim_sprite.play("idle_" + _facing)
-
+	
 	if InputManager.is_confirm_pressed(player_id):
 		_on_confirm()
+	
 
 
 # ── Input Handler ────────────────────────────────────────────────────────────
@@ -58,12 +59,19 @@ func _on_confirm() -> void:
 		return
 
 	# If the tile holds an entity → walk adjacent for attack / interaction
-	var occupant := GridManager.get_entity_at(target)
+	var occupant := GridManager.get_entity_at(target) #occupant melihat apakah ada npc,player dll
+	var is_walkable := GridManager.is_walkable(target) #walkable melihat apakah walkable apa enggak
+	
 	if occupant != null:
+		# --- LOGIC INTERAKSI ATAU ATTACK KAMU MASUK SINI ---
+		print("Player ", player_id, " berinteraksi dengan: ", occupant.name)
+		# Contoh memanggil AttackComponent:
+		# if has_node("AttackComponent"):
+		# 	$AttackComponent.execute_attack(occupant) 
+	elif not is_walkable :
 		movement.interact_move_to(target)
 	else:
 		movement.move_to(target)
-
 
 # ── Signal Callbacks ──────────────────────────────────────────────────────────
 
