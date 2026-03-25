@@ -1,0 +1,222 @@
+[gd_scene load_steps=15 format=3 uid="uid://2dccg0sen86v"]
+
+[ext_resource type="Script" uid="uid://bhb4yh5eti2d" path="res://ui/shared/HighlightLayer.gd" id="1_hlayer"]
+[ext_resource type="Texture2D" uid="uid://btj3vuedgodgx" path="res://assets/tiles/TileHighlightGreen.png" id="2_green"]
+[ext_resource type="Texture2D" uid="uid://y2s3ambb6wsl" path="res://assets/tiles/TileHighlightRed.png" id="3_red"]
+[ext_resource type="Texture2D" uid="uid://kvduv2baeklh" path="res://assets/tiles/TileHighlightBlue.png" id="4_blue"]
+[ext_resource type="Texture2D" uid="uid://djqucv8o2yk3k" path="res://assets/tiles/TileHighlightPurple.png" id="5_purple"]
+[ext_resource type="Texture2D" uid="uid://buxf3u26kucvn" path="res://assets/tiles/TileHighlightYellow.png" id="6_yellow"]
+
+[sub_resource type="SpriteFrames" id="SF_move"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_green")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_blue")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_purple")
+}],
+"loop": true,
+"name": &"move",
+"speed": 5.0
+}]
+
+[sub_resource type="SpriteFrames" id="SF_attack"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_red")
+}],
+"loop": true,
+"name": &"attack",
+"speed": 5.0
+}]
+
+[sub_resource type="SpriteFrames" id="SF_select"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_blue")
+}],
+"loop": true,
+"name": &"select",
+"speed": 5.0
+}]
+
+[sub_resource type="SpriteFrames" id="SF_skill"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("5_purple")
+}],
+"loop": true,
+"name": &"skill",
+"speed": 5.0
+}]
+
+[sub_resource type="SpriteFrames" id="SF_hover"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("6_yellow")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_green")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_purple")
+}],
+"loop": true,
+"name": &"hover",
+"speed": 5.0
+}]
+
+[sub_resource type="SpriteFrames" id="SF_danger"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_red")
+}],
+"loop": true,
+"name": &"danger",
+"speed": 8.0
+}]
+
+[sub_resource type="SpriteFrames" id="SF_cursor_p1"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("6_yellow")
+}],
+"loop": true,
+"name": &"entity",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_red")
+}],
+"loop": true,
+"name": &"invalid",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_blue")
+}],
+"loop": true,
+"name": &"self",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("5_purple")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_blue")
+}],
+"loop": true,
+"name": &"valid",
+"speed": 5.0
+}]
+
+[sub_resource type="SpriteFrames" id="SF_cursor_p2"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("6_yellow")
+}],
+"loop": true,
+"name": &"entity",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_red")
+}],
+"loop": true,
+"name": &"invalid",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_blue")
+}],
+"loop": true,
+"name": &"self",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("5_purple")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_green")
+}],
+"loop": true,
+"name": &"valid",
+"speed": 5.0
+}]
+
+[node name="HighlightLayer" type="Node2D"]
+script = ExtResource("1_hlayer")
+
+[node name="MoveHighlight" type="AnimatedSprite2D" parent="."]
+visible = false
+texture_filter = 1
+scale = Vector2(4, 4)
+sprite_frames = SubResource("SF_move")
+animation = &"move"
+autoplay = "move"
+
+[node name="AttackHighlight" type="AnimatedSprite2D" parent="."]
+visible = false
+texture_filter = 1
+scale = Vector2(4, 4)
+sprite_frames = SubResource("SF_attack")
+animation = &"attack"
+
+[node name="SelectHighlight" type="AnimatedSprite2D" parent="."]
+visible = false
+texture_filter = 1
+scale = Vector2(4, 4)
+sprite_frames = SubResource("SF_select")
+animation = &"select"
+
+[node name="SkillHighlight" type="AnimatedSprite2D" parent="."]
+visible = false
+texture_filter = 1
+scale = Vector2(4, 4)
+sprite_frames = SubResource("SF_skill")
+animation = &"skill"
+
+[node name="HoverHighlight" type="AnimatedSprite2D" parent="."]
+visible = false
+texture_filter = 1
+scale = Vector2(4, 4)
+sprite_frames = SubResource("SF_hover")
+animation = &"hover"
+
+[node name="DangerHighlight" type="AnimatedSprite2D" parent="."]
+visible = false
+texture_filter = 1
+scale = Vector2(4, 4)
+sprite_frames = SubResource("SF_danger")
+animation = &"danger"
+
+[node name="CursorP1Highlight" type="AnimatedSprite2D" parent="."]
+visible = false
+texture_filter = 1
+scale = Vector2(4, 4)
+sprite_frames = SubResource("SF_cursor_p1")
+animation = &"valid"
+
+[node name="CursorP2Highlight" type="AnimatedSprite2D" parent="."]
+visible = false
+texture_filter = 1
+scale = Vector2(4, 4)
+sprite_frames = SubResource("SF_cursor_p2")
+animation = &"entity"

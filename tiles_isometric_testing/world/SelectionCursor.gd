@@ -3,33 +3,25 @@ extends Node2D
 # ─────────────────────────────────────────────────────────────────────────────
 #  SelectionCursor
 #
-#  States:
-#    "self"      — cursor is on the player's own tile  (dark grey)
-#    "valid"     — empty walkable tile in range         (green)
-#    "entity"    — occupied tile, adjacent tile reachable (yellow/orange)
-#    "invalid"   — out of range or blocked              (red)
+#  Logic-only node — tidak ada rendering di sini.
+#  Semua highlight ditampilkan lewat HighlightManager.show_cursor().
+#
+#  States cursor:
+#    "valid"   — tile kosong, masih dalam jangkauan    → P1: hijau  / P2: ungu
+#    "invalid" — di luar jangkauan atau terblokir      → P1&P2: merah
+#    "entity"  — ada entitas, tile sebelahnya reachable → P1&P2: kuning
+#    "self"    — tile player sendiri                   → P1&P2: biru
+#
+#  Highlight di-update hanya saat tile atau state berubah (bukan tiap frame),
+#  sehingga aman dipanggil banyak cursor sekaligus.
 # ─────────────────────────────────────────────────────────────────────────────
 
-@export var color_valid:   Color = Color(0.2, 1.0, 0.4,  0.55)
-@export var color_invalid: Color = Color(1.0, 0.2, 0.2,  0.45)
-@export var color_self:    Color = Color(0.1, 0.1, 0.1,  0.30)
-@export var color_entity:  Color = Color(1.0, 0.7, 0.1,  0.60)  # orange-yellow
-
-var _player: Node2D = null
-var _state:  String = "valid"
+var _player:     Node2D   = null
+var _last_pos:   Vector2i = Vector2i(-1, -1)
+var _last_state: String   = ""
 
 
-func bind(player: Node) -> void:
-	_player = player
-	var player_id: int = _player.get_player_id()
-	var factor := float(player_id) * 0.3
-	color_valid = Color(
-		0.2,
-		clamp(1.0 + factor, 0.0, 1.0),
-		clamp(0.4 + factor, 0.0, 1.0),
-		0.55
-	)
-
+# ── Lifecycle ─────────────────────────────────────────────────────────────────
 
 func _process(_delta: float) -> void:
 	if _player == null:
@@ -40,58 +32,49 @@ func _process(_delta: float) -> void:
 		target = _player._cursor.get_hovered_tile()
 
 	if target.x < 0:
-		visible = false
+		_clear_highlight()
 		return
 
 	var origin: Vector2i = _player.grid_pos
+	var new_state: String
 
 	if target == origin:
-		_show("self", target)
-		return
-
-	# Is there an entity on that tile?
-# Is there an entity on that tile?
-	if GridManager.has_entity_at(target):
-		# Check whether an adjacent tile is reachable
+		new_state = "self"
+	elif GridManager.has_entity_at(target):
 		var reachable_adj := _has_reachable_adjacent(origin, target, _player.get_movement_left())
-		_show("entity" if reachable_adj else "invalid", target)
+		new_state = "entity" if reachable_adj else "invalid"
+	else:
+		var cost := GridManager.get_path_cost(origin, target)
+		var reachable: bool = cost >= 0 and cost <= _player.get_movement_left()
+		new_state = "valid" if reachable else "invalid"
+
+	# Update HighlightManager hanya kalau tile atau state berubah
+	if target != _last_pos or new_state != _last_state:
+		_last_pos   = target
+		_last_state = new_state
+		HighlightManager.show_cursor(target, _player.player_id, new_state)
+
+
+func _exit_tree() -> void:
+	_clear_highlight()
+
+
+# ── Public API ────────────────────────────────────────────────────────────────
+
+## Bind cursor ini ke sebuah Player node.
+func bind(player: Node) -> void:
+	_player = player
+
+
+# ── Internal ──────────────────────────────────────────────────────────────────
+
+func _clear_highlight() -> void:
+	if _player == null:
 		return
+	HighlightManager.clear_cursor(_player.player_id)
+	_last_pos   = Vector2i(-1, -1)
+	_last_state = ""
 
-	# Normal walkable tile
-	var cost := GridManager.get_path_cost(origin, target)
-	var reachable: bool = cost >= 0 and cost <= _player.get_movement_left()
-	_show("valid" if reachable else "invalid", target)
-
-
-func _show(state: String, grid_pos: Vector2i) -> void:
-	_state   = state
-	position = IsoUtils.world_to_iso(grid_pos)
-	z_index  = IsoUtils.get_depth(grid_pos) + 1
-	visible  = true
-	queue_redraw()
-
-
-func _draw() -> void:
-	var hw  := IsoUtils.TILE_W / 2.0
-	var hh  := IsoUtils.TILE_H / 2.0
-	var pts := PackedVector2Array([
-		Vector2(0, -hh), Vector2(hw, 0),
-		Vector2(0,  hh), Vector2(-hw, 0),
-	])
-	var col: Color = match_color(_state)
-	draw_colored_polygon(pts, col)
-	draw_polyline(pts + PackedVector2Array([pts[0]]), col.lightened(0.3), 2.0)
-
-
-func match_color(state: String) -> Color:
-	match state:
-		"invalid": return color_invalid
-		"self":    return color_self
-		"entity":  return color_entity
-		_:         return color_valid
-
-
-# ── Helpers ───────────────────────────────────────────────────────────────────
 
 func _has_reachable_adjacent(origin: Vector2i, entity_tile: Vector2i, budget: int) -> bool:
 	for dx in [-1, 0, 1]:
