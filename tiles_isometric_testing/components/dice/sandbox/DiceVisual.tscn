@@ -1,15 +1,21 @@
-[gd_scene load_steps=2 format=3 uid="uid://chlnuo67fclfp"]
+[gd_scene load_steps=3 format=3 uid="uid://chlnuo67fclfp"]
 
 [ext_resource type="Script" uid="uid://bo8ohmdhdk78l" path="res://components/dice/sandbox/DiceVisual.gd" id="1_nwbtj"]
+[ext_resource type="Texture2D" uid="uid://i8jndmrjbher" path="res://components/dice/sandbox/sprites/00_large_dice.png" id="2_uehu7"]
 
 [node name="DiceVisual" type="Node2D"]
 script = ExtResource("1_nwbtj")
 
-[node name="Anim" type="AnimatedSprite2D" parent="."]
+[node name="DiceSprite" type="Sprite2D" parent="."]
+texture = ExtResource("2_uehu7")
 
 [node name="NumberLabel" type="Label" parent="."]
-offset_right = 40.0
-offset_bottom = 23.0
+offset_left = -1.0
+offset_top = -23.0
+offset_right = 39.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="RollTimer" type="Timer" parent="."]
 one_shot = true
