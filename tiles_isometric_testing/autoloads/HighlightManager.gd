@@ -7,39 +7,58 @@ extends Node
 #  Setiap warna/tipe highlight punya AnimatedSprite2D sendiri di HighlightLayer.tscn,
 #  sehingga tiap ubin yang menyala pakai animasi gerak — bukan sekadar tint warna.
 #
-#  CARA PAKAI:
+#  ─── CARA PAKAI UMUM ───────────────────────────────────────────────────────
 #    HighlightManager.show_tiles(tiles, "move")      # highlight banyak tile
 #    HighlightManager.show_tile(pos, "attack")       # highlight satu tile
 #    HighlightManager.clear("move")                  # hapus satu tipe
 #    HighlightManager.clear_all()                    # hapus semua
 #
-#  TIPE HIGHLIGHT YANG TERSEDIA:
+#  ─── CARA PAKAI CURSOR (per player) ────────────────────────────────────────
+#    HighlightManager.show_cursor(pos, 1, "valid")   # cursor P1 state valid
+#    HighlightManager.show_cursor(pos, 2, "entity")  # cursor P2 state entity
+#    HighlightManager.clear_cursor(1)                # hapus cursor P1
+#
+#  ─── STATE CURSOR YANG VALID ────────────────────────────────────────────────
+#    "valid"   → tile kosong, dalam jangkauan        (P1: hijau,  P2: ungu)
+#    "invalid" → di luar jangkauan / terblokir       (P1&P2: merah)
+#    "entity"  → ada entitas, adjacent reachable     (P1&P2: kuning)
+#    "self"    → tile milik player sendiri           (P1&P2: biru)
+#
+#  ─── TIPE HIGHLIGHT GAMEPLAY ────────────────────────────────────────────────
 #    "move"     → hijau   (tile yang bisa dilewati)
 #    "attack"   → merah   (tile serangan / jangkauan)
 #    "select"   → biru    (tile yang sedang dipilih)
 #    "skill"    → ungu    (tile efek skill)
 #    "hover"    → kuning  (tile yang sedang di-hover)
 #    "danger"   → oranye  (tile bahaya / ancaman musuh)
-#    Tambah tipe baru cukup di HIGHLIGHT_CONFIG + HighlightLayer.tscn
 # =============================================================================
 
 # -- Konfigurasi tipe highlight -----------------------------------------------
 #  "node_name" → nama AnimatedSprite2D di dalam HighlightLayer.tscn
-#  "anim"      → nama animasi di SpriteFrames node tersebut
+#  "anim"      → animasi default; untuk cursor dioverride via show_cursor()
 #  "z_offset"  → z_index relatif di atas tile (hindari z-fighting)
 const HIGHLIGHT_CONFIG: Dictionary = {
-	"move":   { "node_name": "MoveHighlight",   "anim": "move",   "z_offset": 1 },
-	"attack": { "node_name": "AttackHighlight", "anim": "attack", "z_offset": 2 },
-	"select": { "node_name": "SelectHighlight", "anim": "select", "z_offset": 3 },
-	"skill":  { "node_name": "SkillHighlight",  "anim": "skill",  "z_offset": 2 },
-	"hover":  { "node_name": "HoverHighlight",  "anim": "hover",  "z_offset": 4 },
-	"danger": { "node_name": "DangerHighlight", "anim": "danger", "z_offset": 1 },
+	# ── Gameplay highlights ──────────────────────────────────────────────────
+	"move":      { "node_name": "MoveHighlight",      "anim": "move",   "z_offset": 1 },
+	"attack":    { "node_name": "AttackHighlight",    "anim": "attack", "z_offset": 2 },
+	"select":    { "node_name": "SelectHighlight",    "anim": "select", "z_offset": 3 },
+	"skill":     { "node_name": "SkillHighlight",     "anim": "skill",  "z_offset": 2 },
+	"hover":     { "node_name": "HoverHighlight",     "anim": "hover",  "z_offset": 4 },
+	"danger":    { "node_name": "DangerHighlight",    "anim": "danger", "z_offset": 1 },
+	# ── Cursor highlights (multi-animasi, gunakan show_cursor()) ─────────────
+	# CursorP1Highlight punya animasi: valid(hijau), invalid(merah), entity(kuning), self(biru)
+	# CursorP2Highlight punya animasi: valid(ungu),  invalid(merah), entity(kuning), self(biru)
+	"cursor_p1": { "node_name": "CursorP1Highlight", "anim": "valid",  "z_offset": 5 },
+	"cursor_p2": { "node_name": "CursorP2Highlight", "anim": "valid",  "z_offset": 5 },
 }
+
+# State cursor yang boleh dipakai di show_cursor()
+const CURSOR_STATES: Array[String] = ["valid", "invalid", "entity", "self"]
 
 # -- State internal -----------------------------------------------------------
 var _layer: Node2D = null                              # referensi ke HighlightLayer node
-var _active: Dictionary = {}                           # tipe → Array[AnimatedSprite2D] yang sedang aktif
-var _pool:   Dictionary = {}                           # tipe → Array[AnimatedSprite2D] (pool reuse)
+var _active: Dictionary = {}                           # tipe → Array[AnimatedSprite2D]
+var _pool:   Dictionary = {}                           # tipe → Array[AnimatedSprite2D] (reuse)
 
 
 # =============================================================================
@@ -47,7 +66,6 @@ var _pool:   Dictionary = {}                           # tipe → Array[Animated
 # =============================================================================
 
 ## Daftarkan HighlightLayer ke manager ini.
-## HighlightLayer.gd memanggil fungsi ini di _ready() miliknya.
 func register_layer(layer: Node2D) -> void:
 	_layer = layer
 	_active.clear()
@@ -58,7 +76,7 @@ func register_layer(layer: Node2D) -> void:
 
 
 # =============================================================================
-#  Public API
+#  Public API — Gameplay Highlights
 # =============================================================================
 
 ## Tampilkan highlight untuk SATU tile.
@@ -89,7 +107,7 @@ func clear(type: String) -> void:
 	_active[type].clear()
 
 
-## Hapus SEMUA highlight dari semua tipe.
+## Hapus SEMUA highlight dari semua tipe (termasuk cursor).
 func clear_all() -> void:
 	for type in _active.keys():
 		clear(type)
@@ -113,15 +131,61 @@ func is_highlighted(grid_pos: Vector2i, type: String) -> bool:
 
 
 # =============================================================================
+#  Public API — Cursor Highlights
+# =============================================================================
+
+## Tampilkan cursor highlight untuk satu player di tile tertentu.
+##
+## Contoh penggunaan:
+##   HighlightManager.show_cursor(Vector2i(3, 4), 1, "valid")
+##   HighlightManager.show_cursor(Vector2i(5, 2), 2, "invalid")
+##
+## [param grid_pos]  posisi grid (Vector2i)
+## [param player_id] nomor player (1 atau 2)
+## [param state]     "valid" | "invalid" | "entity" | "self"
+func show_cursor(grid_pos: Vector2i, player_id: int, state: String) -> void:
+	var type := "cursor_p%d" % player_id
+	if not _is_valid_type(type):
+		return
+	if not state in CURSOR_STATES:
+		push_warning("HighlightManager: state cursor '%s' tidak valid. Gunakan: %s" % [state, CURSOR_STATES])
+		return
+	# Cursor hanya 1 tile aktif sekaligus — clear dulu sebelum place
+	clear(type)
+	_place_sprite(grid_pos, type, state)
+
+
+## Hapus cursor highlight untuk player tertentu.
+##
+## Contoh: HighlightManager.clear_cursor(1)
+func clear_cursor(player_id: int) -> void:
+	clear("cursor_p%d" % player_id)
+
+
+## Pindahkan cursor ke tile baru (clear + show dalam satu call).
+## Berguna dipanggil setiap frame jika posisi berubah.
+##
+## [param grid_pos]  posisi grid baru
+## [param player_id] nomor player (1 atau 2)
+## [param state]     "valid" | "invalid" | "entity" | "self"
+func move_cursor(grid_pos: Vector2i, player_id: int, state: String) -> void:
+	show_cursor(grid_pos, player_id, state)  # show_cursor sudah clear sebelum place
+
+
+# =============================================================================
 #  Internal — Pool & Placement
 # =============================================================================
 
-func _place_sprite(grid_pos: Vector2i, type: String) -> void:
+## Tempatkan sprite highlight di grid_pos.
+## [param anim_override] jika tidak kosong, pakai animasi ini alih-alih cfg.anim
+## (digunakan oleh cursor yang satu node-template-nya punya banyak animasi)
+func _place_sprite(grid_pos: Vector2i, type: String, anim_override: String = "") -> void:
 	if _layer == null:
 		push_error("HighlightManager: layer belum diregister! Pastikan HighlightLayer ada di scene.")
 		return
 
 	var cfg: Dictionary = HIGHLIGHT_CONFIG[type]
+	var anim: String    = anim_override if anim_override != "" else cfg.anim
 
 	# Ambil sprite dari pool, atau buat baru dari template di HighlightLayer
 	var sprite: AnimatedSprite2D = _get_from_pool(type)
@@ -136,19 +200,18 @@ func _place_sprite(grid_pos: Vector2i, type: String) -> void:
 	sprite.set_meta("grid_pos", grid_pos)
 	sprite.visible  = true
 
-	# Mulai / pastikan animasi berjalan
-	if sprite.animation != cfg.anim or not sprite.is_playing():
-		sprite.play(cfg.anim)
+	# Mulai / ganti animasi jika perlu
+	if sprite.animation != anim or not sprite.is_playing():
+		sprite.play(anim)
 
 	_active[type].append(sprite)
 
 
 func _create_sprite(type: String, cfg: Dictionary) -> AnimatedSprite2D:
-	# Tambahkan 'as String' agar Godot tahu tipenya
-	var template_path: String = cfg["node_name"] as String 
-	
+	var template_path: String = cfg["node_name"] as String
+
 	if not _layer.has_node(template_path):
-		push_warning("HighlightManager: node '%s' tidak ditemukan." % template_path)
+		push_warning("HighlightManager: node '%s' tidak ditemukan di HighlightLayer." % template_path)
 		return null
 
 	var template := _layer.get_node(template_path) as AnimatedSprite2D

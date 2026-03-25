@@ -1,58 +1,6 @@
-[gd_scene load_steps=7 format=3 uid="uid://cnr4h0g213apn"]
+[gd_scene load_steps=2 format=3 uid="uid://cnr4h0g213apn"]
 
 [ext_resource type="Script" uid="uid://bxbwdmfiv8s4h" path="res://world/SelectionCursor.gd" id="1_bfvle"]
-[ext_resource type="Texture2D" uid="uid://btj3vuedgodgx" path="res://assets/tiles/TileHighlightGreen.png" id="2_green"]
-[ext_resource type="Texture2D" uid="uid://y2s3ambb6wsl" path="res://assets/tiles/TileHighlightRed.png" id="3_red"]
-[ext_resource type="Texture2D" uid="uid://buxf3u26kucvn" path="res://assets/tiles/TileHighlightYellow.png" id="4_yellow"]
-[ext_resource type="Texture2D" uid="uid://kvduv2baeklh" path="res://assets/tiles/TileHighlightBlue.png" id="5_blue"]
-
-[sub_resource type="SpriteFrames" id="SF_cursor"]
-animations = [{
-"frames": [{
-"duration": 1.0,
-"texture": ExtResource("4_yellow")
-}],
-"loop": true,
-"name": &"entity",
-"speed": 5.0
-}, {
-"frames": [{
-"duration": 1.0,
-"texture": ExtResource("3_red")
-}],
-"loop": true,
-"name": &"invalid",
-"speed": 5.0
-}, {
-"frames": [{
-"duration": 1.0,
-"texture": ExtResource("5_blue")
-}],
-"loop": true,
-"name": &"self",
-"speed": 5.0
-}, {
-"frames": [{
-"duration": 1.0,
-"texture": ExtResource("2_green")
-}, {
-"duration": 1.0,
-"texture": ExtResource("5_blue")
-}, {
-"duration": 1.0,
-"texture": ExtResource("3_red")
-}],
-"loop": true,
-"name": &"valid",
-"speed": 5.0
-}]
 
 [node name="SelectionCursor" type="Node2D"]
 script = ExtResource("1_bfvle")
-
-[node name="CursorSprite" type="AnimatedSprite2D" parent="."]
-texture_filter = 1
-scale = Vector2(4, 4)
-sprite_frames = SubResource("SF_cursor")
-animation = &"valid"
-autoplay = "valid"

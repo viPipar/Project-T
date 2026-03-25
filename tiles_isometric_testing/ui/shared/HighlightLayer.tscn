@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://2dccg0sen86v"]
+[gd_scene load_steps=15 format=3 uid="uid://2dccg0sen86v"]
 
 [ext_resource type="Script" uid="uid://bhb4yh5eti2d" path="res://ui/shared/HighlightLayer.gd" id="1_hlayer"]
 [ext_resource type="Texture2D" uid="uid://btj3vuedgodgx" path="res://assets/tiles/TileHighlightGreen.png" id="2_green"]
@@ -85,6 +85,82 @@ animations = [{
 "speed": 8.0
 }]
 
+[sub_resource type="SpriteFrames" id="SF_cursor_p1"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("6_yellow")
+}],
+"loop": true,
+"name": &"entity",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_red")
+}],
+"loop": true,
+"name": &"invalid",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_blue")
+}],
+"loop": true,
+"name": &"self",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("5_purple")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_blue")
+}],
+"loop": true,
+"name": &"valid",
+"speed": 5.0
+}]
+
+[sub_resource type="SpriteFrames" id="SF_cursor_p2"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("6_yellow")
+}],
+"loop": true,
+"name": &"entity",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_red")
+}],
+"loop": true,
+"name": &"invalid",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_blue")
+}],
+"loop": true,
+"name": &"self",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("5_purple")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_green")
+}],
+"loop": true,
+"name": &"valid",
+"speed": 5.0
+}]
+
 [node name="HighlightLayer" type="Node2D"]
 script = ExtResource("1_hlayer")
 
@@ -130,3 +206,17 @@ texture_filter = 1
 scale = Vector2(4, 4)
 sprite_frames = SubResource("SF_danger")
 animation = &"danger"
+
+[node name="CursorP1Highlight" type="AnimatedSprite2D" parent="."]
+visible = false
+texture_filter = 1
+scale = Vector2(4, 4)
+sprite_frames = SubResource("SF_cursor_p1")
+animation = &"entity"
+
+[node name="CursorP2Highlight" type="AnimatedSprite2D" parent="."]
+visible = false
+texture_filter = 1
+scale = Vector2(4, 4)
+sprite_frames = SubResource("SF_cursor_p2")
+animation = &"entity"

@@ -3,25 +3,25 @@ extends Node2D
 # ─────────────────────────────────────────────────────────────────────────────
 #  SelectionCursor
 #
-#  States (sesuai nama animasi di CursorSprite SpriteFrames):
-#    "valid"   — tile kosong, masih dalam jangkauan    → hijau
-#    "invalid" — di luar jangkauan atau terblokir      → merah
-#    "entity"  — ada entitas, tile sebelahnya reachable → kuning
-#    "self"    — tile player sendiri                   → biru
+#  Logic-only node — tidak ada rendering di sini.
+#  Semua highlight ditampilkan lewat HighlightManager.show_cursor().
 #
-#  Highlight ditampilkan lewat AnimatedSprite2D ($CursorSprite),
-#  bukan lagi draw_colored_polygon (tint).
+#  States cursor:
+#    "valid"   — tile kosong, masih dalam jangkauan    → P1: hijau  / P2: ungu
+#    "invalid" — di luar jangkauan atau terblokir      → P1&P2: merah
+#    "entity"  — ada entitas, tile sebelahnya reachable → P1&P2: kuning
+#    "self"    — tile player sendiri                   → P1&P2: biru
+#
+#  Highlight di-update hanya saat tile atau state berubah (bukan tiap frame),
+#  sehingga aman dipanggil banyak cursor sekaligus.
 # ─────────────────────────────────────────────────────────────────────────────
 
-@onready var _sprite: AnimatedSprite2D = $CursorSprite
+var _player:     Node2D   = null
+var _last_pos:   Vector2i = Vector2i(-1, -1)
+var _last_state: String   = ""
 
-var _player: Node2D = null
-var _state:  String = "valid"
 
-
-func bind(player: Node) -> void:
-	_player = player
-
+# ── Lifecycle ─────────────────────────────────────────────────────────────────
 
 func _process(_delta: float) -> void:
 	if _player == null:
@@ -32,37 +32,49 @@ func _process(_delta: float) -> void:
 		target = _player._cursor.get_hovered_tile()
 
 	if target.x < 0:
-		visible = false
+		_clear_highlight()
 		return
 
 	var origin: Vector2i = _player.grid_pos
+	var new_state: String
 
 	if target == origin:
-		_show("self", target)
-		return
-
-	if GridManager.has_entity_at(target):
+		new_state = "self"
+	elif GridManager.has_entity_at(target):
 		var reachable_adj := _has_reachable_adjacent(origin, target, _player.get_movement_left())
-		_show("entity" if reachable_adj else "invalid", target)
+		new_state = "entity" if reachable_adj else "invalid"
+	else:
+		var cost := GridManager.get_path_cost(origin, target)
+		var reachable: bool = cost >= 0 and cost <= _player.get_movement_left()
+		new_state = "valid" if reachable else "invalid"
+
+	# Update HighlightManager hanya kalau tile atau state berubah
+	if target != _last_pos or new_state != _last_state:
+		_last_pos   = target
+		_last_state = new_state
+		HighlightManager.show_cursor(target, _player.player_id, new_state)
+
+
+func _exit_tree() -> void:
+	_clear_highlight()
+
+
+# ── Public API ────────────────────────────────────────────────────────────────
+
+## Bind cursor ini ke sebuah Player node.
+func bind(player: Node) -> void:
+	_player = player
+
+
+# ── Internal ──────────────────────────────────────────────────────────────────
+
+func _clear_highlight() -> void:
+	if _player == null:
 		return
+	HighlightManager.clear_cursor(_player.player_id)
+	_last_pos   = Vector2i(-1, -1)
+	_last_state = ""
 
-	var cost := GridManager.get_path_cost(origin, target)
-	var reachable: bool = cost >= 0 and cost <= _player.get_movement_left()
-	_show("valid" if reachable else "invalid", target)
-
-
-func _show(state: String, grid_pos: Vector2i) -> void:
-	_state   = state
-	position = IsoUtils.world_to_iso(grid_pos)
-	z_index  = IsoUtils.get_depth(grid_pos) + 1
-	visible  = true
-
-	# Ganti animasi hanya kalau state berubah (hindari restart animasi tiap frame)
-	if _sprite.animation != state or not _sprite.is_playing():
-		_sprite.play(state)
-
-
-# ── Helpers ───────────────────────────────────────────────────────────────────
 
 func _has_reachable_adjacent(origin: Vector2i, entity_tile: Vector2i, budget: int) -> bool:
 	for dx in [-1, 0, 1]:
