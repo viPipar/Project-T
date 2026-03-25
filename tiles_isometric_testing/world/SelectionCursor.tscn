@@ -35,6 +35,12 @@ animations = [{
 "frames": [{
 "duration": 1.0,
 "texture": ExtResource("2_green")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_blue")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_red")
 }],
 "loop": true,
 "name": &"valid",
@@ -49,3 +55,4 @@ texture_filter = 1
 scale = Vector2(4, 4)
 sprite_frames = SubResource("SF_cursor")
 animation = &"valid"
+autoplay = "valid"
