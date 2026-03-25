@@ -64,12 +64,16 @@ func _on_confirm() -> void:
 	if occupant != null:
 		# --- LOGIC INTERAKSI ATAU ATTACK KAMU MASUK SINI ---
 		print("Player ", player_id, " berinteraksi dengan: ", occupant.name)
-		# Contoh memanggil AttackComponent:
+		# Contoh memanggil AttackComponent: // ini nanti diganti dengan milih menu dan skill dulu
 		print("sementara hardcode disini dia nembak")
 		var shot = ProjectileLine.cast(grid_pos, target)
 
 		match shot.result:
 			"hit_entity":
+				if(player_id==1) :
+					AttackCam.play(true, false)
+				elif(player_id==2) :
+					AttackCam.play(false, true)
 				print("Hit entity at ", shot.tile)
 			"hit_wall":
 				print("Blocked by wall at ", shot.tile)

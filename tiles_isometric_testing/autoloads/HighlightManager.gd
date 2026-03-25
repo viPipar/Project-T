@@ -50,6 +50,8 @@ const HIGHLIGHT_CONFIG: Dictionary = {
 	# CursorP2Highlight punya animasi: valid(ungu),  invalid(merah), entity(kuning), self(biru)
 	"cursor_p1": { "node_name": "CursorP1Highlight", "anim": "valid",  "z_offset": 5 },
 	"cursor_p2": { "node_name": "CursorP2Highlight", "anim": "valid",  "z_offset": 5 },
+	"cursor_p1_back": {"node_name" : "CursorP1HighlightBack", "anim": "valid","z_offset": 0 },
+	"cursor_p2_back": {"node_name" : "CursorP2HighlightBack", "anim": "valid","z_offset": 0 },
 }
 
 # State cursor yang boleh dipakai di show_cursor()
@@ -154,12 +156,25 @@ func show_cursor(grid_pos: Vector2i, player_id: int, state: String) -> void:
 	clear(type)
 	_place_sprite(grid_pos, type, state)
 
+func show_back_cursor(grid_pos: Vector2i, player_id: int, state: String) -> void:
+	var type := "cursor_p%d_back" % player_id
+	if not _is_valid_type(type):
+		return
+	if not state in CURSOR_STATES:
+		push_warning("HighlightManager: state cursor '%s' tidak valid. Gunakan: %s" % [state, CURSOR_STATES])
+		return
+	# Cursor hanya 1 tile aktif sekaligus — clear dulu sebelum place
+	clear(type)
+	_place_sprite(grid_pos, type, state)
 
 ## Hapus cursor highlight untuk player tertentu.
 ##
 ## Contoh: HighlightManager.clear_cursor(1)
 func clear_cursor(player_id: int) -> void:
 	clear("cursor_p%d" % player_id)
+	
+func clear_cursor_back(player_id: int) -> void:
+	clear("cursor_p%d_back" % player_id)
 
 
 ## Pindahkan cursor ke tile baru (clear + show dalam satu call).
@@ -170,7 +185,7 @@ func clear_cursor(player_id: int) -> void:
 ## [param state]     "valid" | "invalid" | "entity" | "self"
 func move_cursor(grid_pos: Vector2i, player_id: int, state: String) -> void:
 	show_cursor(grid_pos, player_id, state)  # show_cursor sudah clear sebelum place
-
+	show_back_cursor(grid_pos,player_id,state)
 
 # =============================================================================
 #  Internal — Pool & Placement
@@ -180,6 +195,7 @@ func move_cursor(grid_pos: Vector2i, player_id: int, state: String) -> void:
 ## [param anim_override] jika tidak kosong, pakai animasi ini alih-alih cfg.anim
 ## (digunakan oleh cursor yang satu node-template-nya punya banyak animasi)
 func _place_sprite(grid_pos: Vector2i, type: String, anim_override: String = "") -> void:
+	
 	if _layer == null:
 		push_error("HighlightManager: layer belum diregister! Pastikan HighlightLayer ada di scene.")
 		return
@@ -199,6 +215,8 @@ func _place_sprite(grid_pos: Vector2i, type: String, anim_override: String = "")
 	#ngatur z-index
 	var template_node := _layer.get_node(cfg["node_name"]) as AnimatedSprite2D
 	var inspector_z_offset: int = template_node.z_index  # baca dari inspector
+	var inspector_pos_offset: Vector2 = template_node.position
+	sprite.position = IsoUtils.world_to_iso(grid_pos) + inspector_pos_offset  # ← pakai offset
 	sprite.z_index = IsoUtils.get_depth(grid_pos) + inspector_z_offset
 	sprite.set_meta("grid_pos", grid_pos)
 	sprite.visible  = true

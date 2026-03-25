@@ -24,7 +24,11 @@ DebugGrid="*res://world/DebugGrid.gd"
 ProjectileLine="*res://autoloads/ProjectileLine.gd"
 HighlightManager="*res://autoloads/HighlightManager.gd"
 DiceSystem="*res://components/dice/DiceSystem.gd"
+<<<<<<< Updated upstream
 HighlightManager="*res://autoloads/HighlightManager.gd"
+=======
+AttackCam="*res://ui/shared/AttackCam.tscn"
+>>>>>>> Stashed changes
 
 [display]
 

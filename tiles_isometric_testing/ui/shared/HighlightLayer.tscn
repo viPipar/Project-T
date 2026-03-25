@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://2dccg0sen86v"]
+[gd_scene load_steps=19 format=3 uid="uid://2dccg0sen86v"]
 
 [ext_resource type="Script" uid="uid://bhb4yh5eti2d" path="res://ui/shared/HighlightLayer.gd" id="1_hlayer"]
 [ext_resource type="Texture2D" uid="uid://btj3vuedgodgx" path="res://assets/tiles/TileHighlightGreen.png" id="2_green"]
@@ -6,6 +6,8 @@
 [ext_resource type="Texture2D" uid="uid://kvduv2baeklh" path="res://assets/tiles/TileHighlightBlue.png" id="4_blue"]
 [ext_resource type="Texture2D" uid="uid://djqucv8o2yk3k" path="res://assets/tiles/TileHighlightPurple.png" id="5_purple"]
 [ext_resource type="Texture2D" uid="uid://buxf3u26kucvn" path="res://assets/tiles/TileHighlightYellow.png" id="6_yellow"]
+[ext_resource type="Texture2D" uid="uid://bhuhce1el26t4" path="res://assets/tiles/TileHighlightTemplate depan (1).png" id="7_55dbe"]
+[ext_resource type="Texture2D" uid="uid://v3mgjbeldhs8" path="res://assets/tiles/TileHighlightTemplate belakang (1).png" id="9_6r1vb"]
 
 [sub_resource type="SpriteFrames" id="SF_move"]
 animations = [{
@@ -89,7 +91,7 @@ animations = [{
 animations = [{
 "frames": [{
 "duration": 1.0,
-"texture": ExtResource("6_yellow")
+"texture": ExtResource("7_55dbe")
 }],
 "loop": true,
 "name": &"entity",
@@ -97,7 +99,7 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": ExtResource("3_red")
+"texture": ExtResource("7_55dbe")
 }],
 "loop": true,
 "name": &"invalid",
@@ -105,7 +107,7 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": ExtResource("4_blue")
+"texture": ExtResource("7_55dbe")
 }],
 "loop": true,
 "name": &"self",
@@ -113,10 +115,7 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": ExtResource("5_purple")
-}, {
-"duration": 1.0,
-"texture": ExtResource("4_blue")
+"texture": ExtResource("7_55dbe")
 }],
 "loop": true,
 "name": &"valid",
@@ -127,7 +126,7 @@ animations = [{
 animations = [{
 "frames": [{
 "duration": 1.0,
-"texture": ExtResource("6_yellow")
+"texture": ExtResource("7_55dbe")
 }],
 "loop": true,
 "name": &"entity",
@@ -135,7 +134,7 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": ExtResource("3_red")
+"texture": ExtResource("7_55dbe")
 }],
 "loop": true,
 "name": &"invalid",
@@ -143,7 +142,7 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": ExtResource("4_blue")
+"texture": ExtResource("7_55dbe")
 }],
 "loop": true,
 "name": &"self",
@@ -151,10 +150,77 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": ExtResource("5_purple")
-}, {
+"texture": ExtResource("7_55dbe")
+}],
+"loop": true,
+"name": &"valid",
+"speed": 5.0
+}]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_55dbe"]
+animations = [{
+"frames": [{
 "duration": 1.0,
-"texture": ExtResource("2_green")
+"texture": ExtResource("9_6r1vb")
+}],
+"loop": true,
+"name": &"entity",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("9_6r1vb")
+}],
+"loop": true,
+"name": &"invalid",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("9_6r1vb")
+}],
+"loop": true,
+"name": &"self",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("9_6r1vb")
+}],
+"loop": true,
+"name": &"valid",
+"speed": 5.0
+}]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_6r1vb"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("9_6r1vb")
+}],
+"loop": true,
+"name": &"entity",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("9_6r1vb")
+}],
+"loop": true,
+"name": &"invalid",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("9_6r1vb")
+}],
+"loop": true,
+"name": &"self",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("9_6r1vb")
 }],
 "loop": true,
 "name": &"valid",
@@ -209,14 +275,28 @@ animation = &"danger"
 
 [node name="CursorP1Highlight" type="AnimatedSprite2D" parent="."]
 visible = false
+z_index = 4
 texture_filter = 1
-scale = Vector2(4, 4)
+position = Vector2(0, -19)
 sprite_frames = SubResource("SF_cursor_p1")
 animation = &"valid"
 
 [node name="CursorP2Highlight" type="AnimatedSprite2D" parent="."]
 visible = false
+z_index = 4
 texture_filter = 1
-scale = Vector2(4, 4)
+position = Vector2(0, -19)
 sprite_frames = SubResource("SF_cursor_p2")
-animation = &"entity"
+animation = &"valid"
+
+[node name="CursorP1HighlightBack" type="AnimatedSprite2D" parent="."]
+visible = false
+position = Vector2(0, -19)
+sprite_frames = SubResource("SpriteFrames_55dbe")
+animation = &"valid"
+
+[node name="CursorP2HighlightBack" type="AnimatedSprite2D" parent="."]
+visible = false
+sprite_frames = SubResource("SpriteFrames_6r1vb")
+animation = &"valid"
+offset = Vector2(0, -19)

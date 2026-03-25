@@ -53,6 +53,7 @@ func _process(_delta: float) -> void:
 		_last_pos   = target
 		_last_state = new_state
 		HighlightManager.show_cursor(target, _player.player_id, new_state)
+		HighlightManager.show_back_cursor(target, _player.player_id,new_state)
 
 
 func _exit_tree() -> void:
@@ -72,6 +73,7 @@ func _clear_highlight() -> void:
 	if _player == null:
 		return
 	HighlightManager.clear_cursor(_player.player_id)
+	HighlightManager.clear_cursor_back(_player.player_id)
 	_last_pos   = Vector2i(-1, -1)
 	_last_state = ""
 
