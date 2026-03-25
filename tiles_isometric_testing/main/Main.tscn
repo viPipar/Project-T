@@ -144,9 +144,10 @@ tile_map_data = PackedByteArray("AAD//wYAAQADAAYAAAD//wcAAQADAAYAAAD//wgAAQABAAc
 tile_set = SubResource("TileSet_tv7ag")
 script = ExtResource("4_cmtxc")
 
+[node name="HighlightLayer" parent="World" instance=ExtResource("5_hlyr")]
+
 [node name="Entities" type="Node2D" parent="World"]
+z_index = 2
 
 [node name="Camera2D" type="Camera2D" parent="World"]
 position = Vector2(0, 488)
-
-[node name="HighlightLayer" parent="." instance=ExtResource("5_hlyr")]

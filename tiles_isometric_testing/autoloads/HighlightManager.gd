@@ -196,7 +196,10 @@ func _place_sprite(grid_pos: Vector2i, type: String, anim_override: String = "")
 
 	# Posisikan di tile
 	sprite.position = IsoUtils.world_to_iso(grid_pos)
-	sprite.z_index  = IsoUtils.get_depth(grid_pos) + cfg.z_offset
+	#ngatur z-index
+	var template_node := _layer.get_node(cfg["node_name"]) as AnimatedSprite2D
+	var inspector_z_offset: int = template_node.z_index  # baca dari inspector
+	sprite.z_index = IsoUtils.get_depth(grid_pos) + inspector_z_offset
 	sprite.set_meta("grid_pos", grid_pos)
 	sprite.visible  = true
 
