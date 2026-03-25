@@ -1,9 +1,10 @@
-[gd_scene load_steps=7 format=4 uid="uid://bv8gg8sp656ia"]
+[gd_scene load_steps=8 format=4 uid="uid://bv8gg8sp656ia"]
 
 [ext_resource type="Script" uid="uid://dsojupna5ib0g" path="res://main/main.gd" id="1_qv31u"]
 [ext_resource type="Script" uid="uid://bs23eu82b3oyh" path="res://world/World.gd" id="2_wbnyf"]
 [ext_resource type="Texture2D" uid="uid://dn0bmvwxp2kar" path="res://assets/tiles/spritesheet.png" id="3_5kcm4"]
 [ext_resource type="Script" uid="uid://xqjx33r0sq7q" path="res://world/mapping_grid/map.gd" id="4_cmtxc"]
+[ext_resource type="PackedScene" uid="uid://2dccg0sen86v" path="res://ui/shared/HighlightLayer.tscn" id="5_hlyr"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_cmtxc"]
 texture = ExtResource("3_5kcm4")
@@ -147,3 +148,5 @@ script = ExtResource("4_cmtxc")
 
 [node name="Camera2D" type="Camera2D" parent="World"]
 position = Vector2(0, 488)
+
+[node name="HighlightLayer" parent="." instance=ExtResource("5_hlyr")]
