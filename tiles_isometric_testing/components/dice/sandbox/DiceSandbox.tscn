@@ -40,6 +40,18 @@ text = "Roll D4"
 layout_mode = 2
 text = "Roll D6"
 
+[node name="BtnD8" type="Button" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+text = "Roll D8"
+
+[node name="BtnD10" type="Button" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+text = "Roll D10"
+
+[node name="BtnD12" type="Button" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+text = "Roll D12"
+
 [node name="BtnD20" type="Button" parent="VBoxContainer/HBoxContainer"]
 layout_mode = 2
 text = "Roll D20
@@ -50,9 +62,16 @@ layout_mode = 2
 text = "Roll Custom
 "
 
+[node name="FormulaInput" type="LineEdit" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+
 [node name="DiceVisual" parent="." instance=ExtResource("1_03ybs")]
+position = Vector2(627, 218)
 
 [connection signal="pressed" from="VBoxContainer/HBoxContainer/BtnD4" to="." method="_on_btn_d4_pressed"]
 [connection signal="pressed" from="VBoxContainer/HBoxContainer/BtnD6" to="." method="_on_btn_d6_pressed"]
+[connection signal="pressed" from="VBoxContainer/HBoxContainer/BtnD8" to="." method="_on_btn_d8_pressed"]
+[connection signal="pressed" from="VBoxContainer/HBoxContainer/BtnD10" to="." method="_on_btn_d10_pressed"]
+[connection signal="pressed" from="VBoxContainer/HBoxContainer/BtnD12" to="." method="_on_btn_d12_pressed"]
 [connection signal="pressed" from="VBoxContainer/HBoxContainer/BtnD20" to="." method="_on_btn_d20_pressed"]
 [connection signal="pressed" from="VBoxContainer/HBoxContainer/BtnCustom" to="." method="_on_btn_custom_pressed"]

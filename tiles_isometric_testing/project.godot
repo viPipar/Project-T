@@ -24,6 +24,7 @@ DebugGrid="*res://world/DebugGrid.gd"
 ProjectileLine="*res://autoloads/ProjectileLine.gd"
 HighlightManager="*res://autoloads/HighlightManager.gd"
 DiceSystem="*res://components/dice/DiceSystem.gd"
+HighlightManager="*res://autoloads/HighlightManager.gd"
 
 [display]
 
