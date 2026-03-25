@@ -22,7 +22,7 @@ func _do_single_roll(sides: int) -> void:
 	_last_roll_type = "d" + str(sides)
 	result_label.text = "Mengocok " + _last_roll_type + "..."
 	var hasil = DiceSystem.roll_single(sides)
-	dice_visual.start_roll(hasil, _last_roll_type, 2.0)
+	dice_visual.start_roll(hasil, _last_roll_type, 2.5)
 
 # ── KONEKSI TOMBOL ──
 func _on_btn_d4_pressed() -> void: _do_single_roll(4)
