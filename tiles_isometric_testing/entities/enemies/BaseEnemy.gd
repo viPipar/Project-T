@@ -78,7 +78,7 @@ func place_at(pos: Vector2i) -> void:
 	if grid_pos != Vector2i.ZERO:
 		GridManager.unregister_entity(grid_pos)
 	grid_pos  = pos
-	GridManager.register_entity(pos, self)
+	GridManager.register_entity(pos, self, GridManager.EntityType.ENEMY)
 	position  = IsoUtils.world_to_iso(pos)
 	z_index   = IsoUtils.get_depth(pos)
 

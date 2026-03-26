@@ -57,31 +57,47 @@ func _on_confirm() -> void:
 	if target.x < 0:
 		return
 
-	# If the tile holds an entity → walk adjacent for attack / interaction
-	var occupant := GridManager.get_entity_at(target) #occupant melihat apakah ada npc,player dll
-	var is_walkable := GridManager.is_walkable(target) #walkable melihat apakah walkable apa enggak
-	
-	if occupant != null:
-		# --- LOGIC INTERAKSI ATAU ATTACK KAMU MASUK SINI ---
-		print("Player ", player_id, " berinteraksi dengan: ", occupant.name)
-		# Contoh memanggil AttackComponent: // ini nanti diganti dengan milih menu dan skill dulu
-		print("sementara hardcode disini dia nembak")
-		var shot = ProjectileLine.cast(grid_pos, target)
+	var occupant := GridManager.get_entity_at(target)
+	var entity_type := GridManager.get_entity_type(target)
+	var walkable := GridManager.is_walkable(target)
 
-		match shot.result:
-			"hit_entity":
-				if(player_id==1) :
-					AttackCam.play(true, false)
-				elif(player_id==2) :
-					AttackCam.play(false, true)
-				print("Hit entity at ", shot.tile)
-			"hit_wall":
-				print("Blocked by wall at ", shot.tile)
-			"miss":
-				print("Nothing in the way — projectile flies through")
-		# if has_node("AttackComponent"):
-		# 	$AttackComponent.execute_attack(occupant) 
-	elif not is_walkable :
+	if occupant != null:
+		match entity_type:
+			GridManager.EntityType.ENEMY:
+				print("Player ", player_id, " menyerang musuh: ", occupant.name)
+				var shot = ProjectileLine.cast(grid_pos, target)
+				match shot.result:
+					"hit_entity":
+						if player_id == 1:
+							AttackCam.play(true, false)
+						elif player_id == 2:
+							AttackCam.play(false, true)
+						print("Hit entity at ", shot.tile)
+					"hit_wall":
+						print("Blocked by wall at ", shot.tile)
+					"miss":
+						print("Nothing in the way — projectile flies through")
+
+			GridManager.EntityType.NPC:
+				print("Player ", player_id, " bicara dengan NPC: ", occupant.name)
+				# TODO: tampilkan dialog NPC
+
+			GridManager.EntityType.PLAYER:
+				print("Player ", player_id, " Interaksi Player : ", occupant.player_id)
+				var shot = ProjectileLine.cast(grid_pos, target)
+				match shot.result:
+					"hit_entity":
+						if player_id == 1:
+							AttackCam.play(true, false)
+						elif player_id == 2:
+							AttackCam.play(false, true)
+						print("Hit entity at ", shot.tile)
+					"hit_wall":
+						print("Blocked by wall at ", shot.tile)
+					"miss":
+						print("Nothing in the way — projectile flies through")
+				# TODO: co-op / pass turn
+	elif not walkable:
 		movement.interact_move_to(target)
 	else:
 		movement.move_to(target)
@@ -111,7 +127,7 @@ func place_at(pos: Vector2i) -> void:
 		GridManager.unregister_entity(grid_pos)
 
 	grid_pos = pos
-	GridManager.register_entity(pos, self)
+	GridManager.register_entity(pos, self, GridManager.EntityType.PLAYER)
 	position = IsoUtils.world_to_iso(pos)
 	z_index  = IsoUtils.get_depth(pos)
 
