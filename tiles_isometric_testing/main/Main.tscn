@@ -1,10 +1,11 @@
-[gd_scene load_steps=8 format=4 uid="uid://bv8gg8sp656ia"]
+[gd_scene load_steps=9 format=4 uid="uid://bv8gg8sp656ia"]
 
 [ext_resource type="Script" uid="uid://dsojupna5ib0g" path="res://main/main.gd" id="1_qv31u"]
 [ext_resource type="Script" uid="uid://bs23eu82b3oyh" path="res://world/World.gd" id="2_wbnyf"]
 [ext_resource type="Texture2D" uid="uid://dn0bmvwxp2kar" path="res://assets/tiles/spritesheet.png" id="3_5kcm4"]
 [ext_resource type="Script" uid="uid://xqjx33r0sq7q" path="res://world/mapping_grid/map.gd" id="4_cmtxc"]
 [ext_resource type="PackedScene" uid="uid://2dccg0sen86v" path="res://ui/shared/HighlightLayer.tscn" id="5_hlyr"]
+[ext_resource type="PackedScene" uid="uid://k7xhasw85ea0" path="res://components/dice/sandbox/DiceSandbox.tscn" id="6_dice"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_cmtxc"]
 texture = ExtResource("3_5kcm4")
@@ -151,3 +152,69 @@ z_index = 2
 
 [node name="Camera2D" type="Camera2D" parent="World"]
 position = Vector2(0, 488)
+
+[node name="DebugUI" type="CanvasLayer" parent="."]
+layer = 20
+
+[node name="Root" type="Control" parent="DebugUI"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="DebugPanel" type="Control" parent="DebugUI/Root"]
+anchors_preset = 0
+offset_left = 10.0
+offset_top = 36.0
+offset_right = 640.0
+offset_bottom = 260.0
+
+[node name="DebugPanelBg" type="ColorRect" parent="DebugUI/Root/DebugPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -9.0
+offset_top = -37.0
+offset_right = -251.0
+offset_bottom = 132.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.666667)
+
+[node name="DebugLabel" type="Label" parent="DebugUI/Root/DebugPanel"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 8.0
+offset_right = 383.0
+offset_bottom = 362.0
+theme_override_font_sizes/font_size = 13
+text = "Controls:
+- P1 Move: WASD | Confirm: E
+- P2 Move: IJKL | Confirm: O
+
+Current Features:
+- Tile highlight: valid / invalid / entity / self
+- Move to empty tiles with pathing
+- Interact/attack on entity (plays AttackCam)
+- Camera follows party centroid
+- Debug grid overlay
+- Dice sandbox: d4/d6/d8/d10/d12/d20 + custom formula
+
+Toggles:
+- F1: Debug Info
+- F2: Dice Sandbox
+- F3: Debug Grid"
+
+[node name="DiceSandbox" parent="DebugUI/Root" instance=ExtResource("6_dice")]
+layout_mode = 1
+
+[node name="DebugTooltip" type="Label" parent="DebugUI/Root"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 360.0
+offset_bottom = 33.0
+text = "F1: Toggle Debug Info"

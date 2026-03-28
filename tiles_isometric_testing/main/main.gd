@@ -1,10 +1,17 @@
 extends Node2D
 
 @onready var world: Node2D = $World
+@onready var debug_panel: Control = $DebugUI/Root/DebugPanel
+@onready var dice_sandbox: Control = $DebugUI/Root/DiceSandbox
+
+var _show_debug_panel: bool = true
+var _show_dice_sandbox: bool = true
+var _show_debug_grid: bool = true
 
 func _ready() -> void:
 	var player_scene := preload("res://entities/player/Player.tscn")
 	var cursor_scene := preload("res://world/SelectionCursor.tscn")
+	
 
 	GridManager.load_walls_for_map(1) #manggil mapping
 	
@@ -40,3 +47,31 @@ func _ready() -> void:
 	world.entities.add_child(kb_cursor_p2)
 	kb_cursor_p2.global_position = p2.position
 	p2.bind_cursor(kb_cursor_p2)
+
+	_apply_debug_visibility()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		match event.keycode:
+			KEY_F1:
+				_show_debug_panel = not _show_debug_panel
+			KEY_F2:
+				_show_dice_sandbox = not _show_dice_sandbox
+			KEY_F3:
+				_show_debug_grid = not _show_debug_grid
+			_:
+				return
+		_apply_debug_visibility()
+
+
+func _apply_debug_visibility() -> void:
+	if debug_panel != null:
+		debug_panel.visible = _show_debug_panel
+	if dice_sandbox != null:
+		dice_sandbox.visible = _show_dice_sandbox
+	if world != null and world.has_method("set_debug_grid_visible"):
+		world.set_debug_grid_visible(_show_debug_grid)
+	var autoload_debug := get_node_or_null("/root/DebugGrid")
+	if autoload_debug != null:
+		autoload_debug.visible = _show_debug_grid

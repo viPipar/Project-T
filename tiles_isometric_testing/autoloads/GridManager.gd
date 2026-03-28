@@ -73,7 +73,10 @@ func setup_grid(width: int, height: int) -> void:
 ## Pasang banyak wall sekaligus dari array koordinat.
 func setup_walls(coords_list: Array[Vector2i]) -> void:
 	for pos in coords_list:
-		set_tile_walkable(pos, false)
+		if _is_in_bounds(pos):
+			set_tile_walkable(pos, false)
+		else:
+			push_warning("[GridManager] setup_walls: pos %s di luar grid, di-skip." % pos)
 	_astar.update()
 	print("[GridManager] %d wall dipasang." % coords_list.size())
 
@@ -89,6 +92,9 @@ func load_walls_for_map(map_id: int) -> void:
 
 ## Set satu tile walkable atau tidak (wall).
 func set_tile_walkable(pos: Vector2i, can_walk: bool) -> void:
+	if not _is_in_bounds(pos):
+		push_warning("[GridManager] set_tile_walkable: pos %s di luar grid, di-skip." % pos)
+		return
 	_walkable[pos] = can_walk
 	_astar.set_point_solid(pos, not can_walk)
 
@@ -314,3 +320,7 @@ func _guess_type(entity: Node) -> EntityType:
 	if entity.is_in_group("enemies"):
 		return EntityType.ENEMY
 	return EntityType.NPC
+
+
+func _is_in_bounds(pos: Vector2i) -> bool:
+	return pos.x >= 0 and pos.y >= 0 and pos.x < grid_size.x and pos.y < grid_size.y

@@ -6,6 +6,7 @@ extends Node2D
 
 # Referensi ke semua player hidup — diisi oleh Main.gd saat spawn
 var players: Array[Node] = []
+var _debug_grid: Node2D = null
 
 func _ready() -> void:
 	GridManager.setup_grid(16, 16)
@@ -49,3 +50,9 @@ func _draw_debug_grid() -> void:
 	debug.name = "DebugGrid"
 	entities.add_child(debug)
 	debug.set_script(load("res://world/DebugGrid.gd") if ResourceLoader.exists("res://world/DebugGrid.gd") else null)
+	_debug_grid = debug
+
+
+func set_debug_grid_visible(is_visible: bool) -> void:
+	if _debug_grid != null:
+		_debug_grid.visible = is_visible
