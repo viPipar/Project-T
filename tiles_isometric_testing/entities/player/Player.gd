@@ -20,12 +20,16 @@ var _facing:  String   = "down"
 var grid_pos: Vector2i = Vector2i.ZERO
 var _cursor:  Node2D   = null
 
+const INSECT1_DIR := "res://assets/characters/insect1_placeholder"
+const INSECT2_DIR := "res://assets/characters/insect2_placeholder"
+
 
 # ── Lifecycle ────────────────────────────────────────────────────────────────
 
 func _ready() -> void:
 	add_to_group("players")
 	_setup_sprite()
+	_apply_idle_frames()
 	anim_sprite.play("idle_" + _facing)
 
 	movement.move_finished.connect(_on_move_finished)
@@ -143,6 +147,45 @@ func _setup_sprite() -> void:
 		sprite_p1.visible = false
 		sprite_p2.visible = true
 		anim_sprite = sprite_p2
+
+
+func _apply_idle_frames() -> void:
+	var dir_path := INSECT1_DIR if player_id == 1 else INSECT2_DIR
+	var frames := _load_frames_from_dir(dir_path)
+	if frames.is_empty():
+		return
+
+	var sprite_frames := SpriteFrames.new()
+	var anims := ["idle_down", "idle_left", "idle_right", "idle_up"]
+
+	for anim_name in anims:
+		sprite_frames.add_animation(anim_name)
+		sprite_frames.set_animation_speed(anim_name, 8.0)
+		sprite_frames.set_animation_loop(anim_name, true)
+		for tex in frames:
+			sprite_frames.add_frame(anim_name, tex)
+
+	anim_sprite.sprite_frames = sprite_frames
+
+
+func _load_frames_from_dir(dir_path: String) -> Array[Texture2D]:
+	var result: Array[Texture2D] = []
+	var dir := DirAccess.open(dir_path)
+	if dir == null:
+		push_warning("Player: tidak bisa buka folder sprite: %s" % dir_path)
+		return result
+
+	var files: Array[String] = []
+	for f in dir.get_files():
+		if f.to_lower().ends_with(".png"):
+			files.append(f)
+	files.sort()
+
+	for f in files:
+		var tex := load(dir_path + "/" + f) as Texture2D
+		if tex != null:
+			result.append(tex)
+	return result
 
 
 func _update_facing_towards(target: Vector2i) -> void:

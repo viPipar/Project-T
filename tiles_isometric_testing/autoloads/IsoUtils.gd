@@ -1,7 +1,7 @@
 extends Node
 
-const TILE_W: int = 128
-const TILE_H: int = 64
+const TILE_W: int = 256
+const TILE_H: int = 128
 
 # Grid (x,y) -> pixel di layar
 func world_to_iso(grid_pos: Vector2i) -> Vector2:
