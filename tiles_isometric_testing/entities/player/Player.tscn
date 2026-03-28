@@ -336,10 +336,11 @@ shape = SubResource("RectangleShape2D_mab2k")
 
 [node name="Player1Sprite" type="AnimatedSprite2D" parent="."]
 texture_filter = 1
-position = Vector2(14, -113)
-scale = Vector2(0.75, 0.75)
+position = Vector2(-1.90735e-06, -113)
+scale = Vector2(-0.75, 0.75)
 sprite_frames = SubResource("SpriteFrames_mab2k")
 animation = &"idle_down"
+offset = Vector2(18.495, 0)
 
 [node name="Player2Sprite" type="AnimatedSprite2D" parent="."]
 texture_filter = 1

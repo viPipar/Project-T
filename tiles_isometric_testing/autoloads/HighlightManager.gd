@@ -40,6 +40,8 @@ extends Node
 const HIGHLIGHT_CONFIG: Dictionary = {
 	# ── Gameplay highlights ──────────────────────────────────────────────────
 	"move":      { "node_name": "MoveHighlight",      "anim": "move",   "z_offset": 1 },
+	"move_p1":   { "node_name": "MoveHighlight",      "anim": "move",   "z_offset": 1 },
+	"move_p2":   { "node_name": "MoveHighlight",      "anim": "move",   "z_offset": 1 },
 	"attack":    { "node_name": "AttackHighlight",    "anim": "attack", "z_offset": 2 },
 	"select":    { "node_name": "SelectHighlight",    "anim": "select", "z_offset": 3 },
 	"skill":     { "node_name": "SkillHighlight",     "anim": "skill",  "z_offset": 2 },

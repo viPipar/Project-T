@@ -25,11 +25,9 @@ ProjectileLine="*res://autoloads/ProjectileLine.gd"
 HighlightManager="*res://autoloads/HighlightManager.gd"
 DiceSystem="*res://components/dice/DiceSystem.gd"
 AttackCam="*res://ui/shared/AttackCam.tscn"
-GameManager="*res://autoloads/GameManager.gd"
 TurnManager="*res://autoloads/TurnManager.gd"
-DataManager="*res://autoloads/DataManager.gd"
-ClassDB="*res://autoloads/ClassDB.gd"
 OrderDB="*res://autoloads/ClassDB.gd"
+MovementRangeManager="*res://autoloads/MovementRangeManager.gd"
 
 [display]
 

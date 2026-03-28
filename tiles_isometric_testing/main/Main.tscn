@@ -138,6 +138,10 @@ texture_region_size = Vector2i(256, 256)
 [sub_resource type="TileSet" id="TileSet_tv7ag"]
 tile_shape = 1
 tile_size = Vector2i(256, 128)
+custom_data_layer_0/name = "Blocked"
+custom_data_layer_0/type = 1
+custom_data_layer_1/name = ""
+custom_data_layer_1/type = 0
 sources/1 = SubResource("TileSetAtlasSource_cmtxc")
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_0h8po"]

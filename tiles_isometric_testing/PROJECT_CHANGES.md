@@ -15,6 +15,9 @@ This file summarizes the changes applied and the current implemented systems.
 - Debug panel option to show live stats/classes/buffs for players and enemies.
 - Debug UI, grid, and dice sandbox hidden by default (toggle via F-keys).
 - "F1: Toggle Debug Info" tooltip always visible.
+- Movement range highlights from each player's tile (pathing-aware).
+- Default movement range reduced (smaller highlight footprint).
+- Cursor movement is unlimited by default (no clamping); optional safety clamp available.
 
 ## Control Scheme (Current)
 - P1: Move WASD, Confirm E, End Turn Q
@@ -60,6 +63,7 @@ This file summarizes the changes applied and the current implemented systems.
 
 ## Files Added
 - `autoloads/TurnManager.gd`
+- `autoloads/MovementRangeManager.gd`
 - `ui/shared/TurnLabel.gd`
 - `entities/enemies/EnemyPlaceholder.gd`
 - `entities/enemies/EnemyPlaceholder.tscn`
@@ -77,12 +81,14 @@ This file summarizes the changes applied and the current implemented systems.
 - `entities/player/Player.tscn` (StatsComponent + ClassComponent nodes)
 - `entities/enemies/EnemyPlaceholder.gd` (start_grid_pos support)
 - `entities/enemies/EnemyPlaceholder.tscn` (StatsComponent + ClassComponent nodes, previewable sprite)
-- `components/MovementComponent.gd` (MOV stat bonus applied to movement range, respects occupancy)
+- `components/MovementComponent.gd` (MOV stat bonus applied to movement range, respects occupancy, smaller default range)
 - `autoloads/GridManager.gd` (centralized occupancy rules, can_enter_tile)
 - `autoloads/EventBus.gd` (class/stats events)
 - `autoloads/InputManager.gd` (turn-phase input gating + end turn)
 - `ui/debug/DebugPanel.gd` (uses scene nodes for stats UI)
 - `main/main.gd` (debug tooltip always visible)
+- `world/KeyboardTileCursor.gd` (unlimited cursor movement by default, optional safety clamp)
+- `autoloads/MovementRangeManager.gd` (typed range caching helpers)
 
 ## Known Gaps / Next Steps
 - Combat resolution system is stubbed (no damage application yet).

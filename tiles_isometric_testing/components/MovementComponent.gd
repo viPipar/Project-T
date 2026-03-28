@@ -25,14 +25,15 @@ class_name MovementComponent
 signal move_started(from: Vector2i, to: Vector2i)
 signal move_finished(from: Vector2i, to: Vector2i)
 signal move_blocked(target: Vector2i)
+signal step_started(from: Vector2i, to: Vector2i)
 
 ## Steps per second while walking
 @export var walk_speed: float = 6.0
 
 ## Base movement range in tiles (reset each turn)
-@export var base_movement: int = 100
+@export var base_movement: int = 4
 
-var movement_left: int = 100
+var movement_left: int = 4
 
 # Internal travel state
 var _is_moving:    bool           = false
@@ -175,12 +176,15 @@ func _process(delta: float) -> void:
 
 
 func _start_step(index: int) -> void:
-	_step_origin = IsoUtils.world_to_iso(_path[index])
-	_step_target = IsoUtils.world_to_iso(_path[index + 1])
+	var from_tile := _path[index]
+	var to_tile := _path[index + 1]
+	_step_origin = IsoUtils.world_to_iso(from_tile)
+	_step_target = IsoUtils.world_to_iso(to_tile)
 
 	# Control point: lift slightly above the midpoint for a gentle arc
 	var mid := (_step_origin + _step_target) * 0.5
 	_ctrl_offset = mid + Vector2(0, -IsoUtils.TILE_H * 0.35)
+	step_started.emit(from_tile, to_tile)
 
 
 ## Quadratic Bézier: origin → ctrl → target

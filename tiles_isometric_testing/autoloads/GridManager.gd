@@ -298,14 +298,43 @@ func can_enter_tile(pos: Vector2i, mover: Node = null) -> bool:
 ## Semua tile yang bisa dicapai dalam `max_steps` langkah
 ## (walkable, tidak ada entity, dalam jangkauan).
 func get_reachable_tiles(origin: Vector2i, max_steps: int) -> Array[Vector2i]:
+	return get_reachable_tiles_pathing(origin, max_steps, null)
+
+
+## Semua tile yang bisa dicapai dengan pathing (cardinal only),
+## menghormati wall dan entity blocking.
+func get_reachable_tiles_pathing(origin: Vector2i, max_steps: int, mover: Node = null) -> Array[Vector2i]:
 	var result: Array[Vector2i] = []
-	for x in range(origin.x - max_steps, origin.x + max_steps + 1):
-		for y in range(origin.y - max_steps, origin.y + max_steps + 1):
-			var pos := Vector2i(x, y)
-			if pos == origin:
+	if max_steps <= 0:
+		return result
+	if not _is_in_bounds(origin):
+		return result
+
+	var frontier: Array[Vector2i] = []
+	var cost: Dictionary = {}
+	frontier.append(origin)
+	cost[origin] = 0
+
+	while not frontier.is_empty():
+		var current: Vector2i = frontier.pop_front()
+		var current_cost: int = int(cost[current])
+
+		for dir: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var next_tile: Vector2i = current + dir
+			if not _is_in_bounds(next_tile):
 				continue
-			if get_distance(origin, pos) <= max_steps and is_walkable(pos):
-				result.append(pos)
+			if not can_enter_tile(next_tile, mover):
+				continue
+			var new_cost := current_cost + 1
+			if new_cost > max_steps:
+				continue
+			if not cost.has(next_tile):
+				cost[next_tile] = new_cost
+				frontier.append(next_tile)
+
+	for pos: Vector2i in cost.keys():
+		if pos != origin:
+			result.append(pos)
 	return result
 
 
