@@ -3,17 +3,18 @@
 This file summarizes the changes applied and the current implemented systems.
 
 ## Implemented Systems
-- Isometric grid movement with A* pathing, grid occupancy, and wall blocking.
+- Isometric grid movement with A* pathing, grid occupancy, and wall blocking (entities mark tiles solid).
 - Two-player control with independent cursors and highlight states.
 - Line-of-sight projectile check for attacks (hit entity / hit wall / miss).
 - AttackCam visual/sfx trigger on hit.
 - Turn system with shared player phase and queued enemy phase.
-- Turn number display (“Turn N — Players/Enemies”).
-- Enemy placeholder target with red-tinted sprite.
+- Turn number display ("Turn N - Players/Enemies").
+- Enemy placeholder target with red-tinted sprite (previewable in its own scene).
 - Stats system with derived modifiers based on VIT/STR/INT/CON/ACC/DEX/MOV/ATT/LCK.
 - Class/Order system with cross-class buff pickups (roguelike style).
 - Debug panel option to show live stats/classes/buffs for players and enemies.
 - Debug UI, grid, and dice sandbox hidden by default (toggle via F-keys).
+- "F1: Toggle Debug Info" tooltip always visible.
 
 ## Control Scheme (Current)
 - P1: Move WASD, Confirm E, End Turn Q
@@ -50,7 +51,7 @@ This file summarizes the changes applied and the current implemented systems.
   - P2 primary class: `scholar`
 
 ## Debug Panel: Stats & Classes
-- Toggle inside the debug menu: “Show Stats & Classes”.
+- Toggle inside the debug menu: "Show Stats & Classes".
 - Displays per-entity:
   - Primary class
   - Buff list
@@ -66,17 +67,22 @@ This file summarizes the changes applied and the current implemented systems.
 - `components/ClassComponent.gd`
 - `autoloads/ClassDB.gd` (autoloaded as `OrderDB`)
 - `ui/debug/DebugPanel.gd`
+- `PROJECT_CHANGES.md`
 
 ## Files Updated
 - `project.godot` (autoloads, input actions)
-- `main/main.gd` (turn label, turn start, player class defaults, debug defaults)
-- `main/Main.tscn` (debug panel script)
+- `main/main.gd` (turn start, player class defaults, debug defaults)
+- `main/Main.tscn` (turn label node, enemy instance, debug panel nodes)
 - `entities/player/Player.gd` (turn end input, class/stats refs)
 - `entities/player/Player.tscn` (StatsComponent + ClassComponent nodes)
-- `entities/enemies/EnemyPlaceholder.tscn` (StatsComponent + ClassComponent nodes)
-- `components/MovementComponent.gd` (MOV stat bonus applied to movement range)
+- `entities/enemies/EnemyPlaceholder.gd` (start_grid_pos support)
+- `entities/enemies/EnemyPlaceholder.tscn` (StatsComponent + ClassComponent nodes, previewable sprite)
+- `components/MovementComponent.gd` (MOV stat bonus applied to movement range, respects occupancy)
+- `autoloads/GridManager.gd` (centralized occupancy rules, can_enter_tile)
 - `autoloads/EventBus.gd` (class/stats events)
 - `autoloads/InputManager.gd` (turn-phase input gating + end turn)
+- `ui/debug/DebugPanel.gd` (uses scene nodes for stats UI)
+- `main/main.gd` (debug tooltip always visible)
 
 ## Known Gaps / Next Steps
 - Combat resolution system is stubbed (no damage application yet).
