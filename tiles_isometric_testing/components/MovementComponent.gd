@@ -45,7 +45,7 @@ var _ctrl_offset:  Vector2        = Vector2.ZERO  # Bézier control-point lift
 
 
 func _ready() -> void:
-	movement_left = base_movement
+	movement_left = base_movement + _get_movement_bonus()
 
 
 # ── Public API ───────────────────────────────────────────────────────────────
@@ -59,7 +59,7 @@ func move_to(target: Vector2i) -> bool:
 		return false
 
 	# Must be a walkable tile with no entity on it
-	if not GridManager.is_walkable(target):
+	if not GridManager.can_enter_tile(target, owner):
 		move_blocked.emit(target)
 		return false
 
@@ -117,7 +117,7 @@ func has_movement() -> bool:
 
 
 func reset_movement() -> void:
-	movement_left = base_movement
+	movement_left = base_movement + _get_movement_bonus()
 
 
 func get_reachable_tiles() -> Array[Vector2i]:
@@ -131,7 +131,9 @@ func _begin_travel(path: Array[Vector2i], cost: int) -> void:
 	var to:   Vector2i = path[path.size() - 1]
 
 	# Commit to grid immediately so other systems see the new position
-	GridManager.move_entity(from, to, owner)
+	if not GridManager.move_entity(from, to, owner):
+		move_blocked.emit(to)
+		return
 	owner.set("grid_pos", to)
 	movement_left -= cost
 
@@ -191,6 +193,13 @@ func _bezier(p0: Vector2, p1: Vector2, p2: Vector2, t: float) -> Vector2:
 
 func _owner_grid_pos() -> Vector2i:
 	return owner.get("grid_pos") as Vector2i
+
+
+func _get_movement_bonus() -> int:
+	var stats := owner.get_node_or_null("StatsComponent") as StatsComponent
+	if stats == null:
+		return 0
+	return stats.bonus_movement_tiles()
 
 
 func _walkable_neighbours(center: Vector2i) -> Array[Vector2i]:

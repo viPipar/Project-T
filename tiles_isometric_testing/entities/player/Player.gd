@@ -13,6 +13,8 @@ extends CharacterBody2D
 @onready var sprite_p1:  AnimatedSprite2D  = $Player1Sprite
 @onready var sprite_p2:  AnimatedSprite2D  = $Player2Sprite
 @onready var movement:   MovementComponent = $MovementComponent
+@onready var stats:      StatsComponent    = $StatsComponent
+@onready var class_comp: ClassComponent    = $ClassComponent
 
 var anim_sprite: AnimatedSprite2D
 
@@ -44,6 +46,12 @@ func _process(_delta: float) -> void:
 
 	anim_sprite.play("idle_" + _facing)
 	
+	if InputManager.is_end_turn_pressed(player_id):
+		if not movement._is_moving:
+			if TurnManager != null:
+				TurnManager.request_end_turn(player_id)
+		return
+
 	if InputManager.is_confirm_pressed(player_id):
 		_on_confirm()
 	

@@ -3,10 +3,12 @@ extends Node2D
 @onready var world: Node2D = $World
 @onready var debug_panel: Control = $DebugUI/Root/DebugPanel
 @onready var dice_sandbox: Control = $DebugUI/Root/DiceSandbox
+@onready var debug_tooltip: Label = $DebugUI/Root/DebugTooltip
+@onready var ui_root: Control = $DebugUI/Root
 
-var _show_debug_panel: bool = true
-var _show_dice_sandbox: bool = true
-var _show_debug_grid: bool = true
+var _show_debug_panel: bool = false
+var _show_dice_sandbox: bool = false
+var _show_debug_grid: bool = false
 
 func _ready() -> void:
 	var player_scene := preload("res://entities/player/Player.tscn")
@@ -24,6 +26,17 @@ func _ready() -> void:
 		"player_id": 2, "char_name": "Kael"
 	})
 	p2.place_at(Vector2i(7, 7))
+
+	var p1_class := p1.get_node_or_null("ClassComponent") as ClassComponent
+	if p1_class != null:
+		p1_class.set_primary_class("slayer")
+
+	var p2_class := p2.get_node_or_null("ClassComponent") as ClassComponent
+	if p2_class != null:
+		p2_class.set_primary_class("scholar")
+
+	TurnManager.register_player(p1)
+	TurnManager.register_player(p2)
 
 	var c1 = cursor_scene.instantiate()
 	var c2 = cursor_scene.instantiate()
@@ -48,6 +61,8 @@ func _ready() -> void:
 	kb_cursor_p2.global_position = p2.position
 	p2.bind_cursor(kb_cursor_p2)
 
+	TurnManager.start_battle()
+
 	_apply_debug_visibility()
 
 
@@ -70,6 +85,8 @@ func _apply_debug_visibility() -> void:
 		debug_panel.visible = _show_debug_panel
 	if dice_sandbox != null:
 		dice_sandbox.visible = _show_dice_sandbox
+	if debug_tooltip != null:
+		debug_tooltip.visible = true
 	if world != null and world.has_method("set_debug_grid_visible"):
 		world.set_debug_grid_visible(_show_debug_grid)
 	var autoload_debug := get_node_or_null("/root/DebugGrid")

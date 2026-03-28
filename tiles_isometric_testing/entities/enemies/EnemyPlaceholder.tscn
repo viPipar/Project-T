@@ -1,0 +1,37 @@
+[gd_scene load_steps=7 format=3 uid="uid://bbdf8j3lnq4x3"]
+
+[ext_resource type="Script" uid="uid://csd3h2kxj7v0f" path="res://entities/enemies/EnemyPlaceholder.gd" id="1_h7x2k"]
+[ext_resource type="Script" uid="uid://b5e8838ogl3f7" path="res://components/StatsComponent.gd" id="2_stats"]
+[ext_resource type="Script" uid="uid://c6x647xq2wo8i" path="res://components/ClassComponent.gd" id="3_class"]
+[ext_resource type="Texture2D" uid="uid://8h2eh3u353t5" path="res://assets/characters/insect1_placeholder/New Project (87)_00000.png" id="4_tex"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_enemy"]
+atlas = ExtResource("4_tex")
+region = Rect2(0, 0, 234, 307)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_enemy"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_enemy")
+}],
+"loop": true,
+"name": &"idle_down",
+"speed": 5.0
+}]
+
+[node name="EnemyPlaceholder" type="CharacterBody2D"]
+script = ExtResource("1_h7x2k")
+
+[node name="StatsComponent" type="Node" parent="."]
+script = ExtResource("2_stats")
+
+[node name="ClassComponent" type="Node" parent="."]
+script = ExtResource("3_class")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+texture_filter = 1
+position = Vector2(14, -113)
+scale = Vector2(0.75, 0.75)
+sprite_frames = SubResource("SpriteFrames_enemy")
+animation = &"idle_down"

@@ -14,3 +14,8 @@ signal miss_occurred(attacker: Node, target: Node)
 signal dice_rolled(player_id: int, natural: int, total: int, vs_ac: int, is_hit: bool, is_crit: bool)
 signal attackcam_started(attacker: Node, target: Node, ability_id: String)
 signal attackcam_finished(attacker: Node)
+
+# Phase 2 — class / stats events (scalable hooks)
+signal class_changed(entity: Node, class_id: String)
+signal buffs_changed(entity: Node)
+signal stats_changed(entity: Node)
