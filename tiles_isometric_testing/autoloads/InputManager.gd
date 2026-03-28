@@ -13,16 +13,19 @@ func _can_accept_input(player_id: int) -> bool:
 # action = "move_up" | "move_down" | "move_left" | "move_right" | "end_turn"
 func is_just_pressed(player_id: int, action: String) -> bool:
 	if not _can_accept_input(player_id):
+	if killcam_active or is_in_menu:
 		return false
 	return Input.is_action_just_pressed("p%d_%s" % [player_id, action])
 
 func is_pressed(player_id: int, action: String) -> bool:
 	if not _can_accept_input(player_id):
+	if killcam_active or is_in_menu:
 		return false
 	return Input.is_action_pressed("p%d_%s" % [player_id, action])
 
 func get_movement_dir(player_id: int) -> Vector2i:
 	if not _can_accept_input(player_id):
+	if killcam_active or is_in_menu:
 		return Vector2i.ZERO
 	var up_pressed := is_pressed(player_id, "move_up")
 	var down_pressed := is_pressed(player_id, "move_down")

@@ -1,0 +1,69 @@
+[gd_scene load_steps=2 format=3 uid="uid://0usmt4clg1yi"]
+
+[ext_resource type="PackedScene" uid="uid://bbwemedkpc6lc" path="res://ui/action_wheel/ActionWheel.tscn" id="1_faht1"]
+
+[node name="Control" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CenterDividerGlow" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 13
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -6.0
+offset_right = 6.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.94902, 0.788235, 0.368627, 0.12)
+
+[node name="CenterDivider" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 13
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -1.0
+offset_right = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.95, 0.95, 0.98, 0.6)
+
+[node name="LeftSide" type="Control" parent="."]
+clip_contents = true
+layout_mode = 1
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_right = -6.0
+grow_vertical = 2
+
+[node name="ActionWheelLeft" parent="LeftSide" instance=ExtResource("1_faht1")]
+layout_mode = 1
+title_text = "Player 1"
+
+[node name="RightSide" type="Control" parent="."]
+clip_contents = true
+layout_mode = 1
+anchor_left = 0.5
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ActionWheelRight" parent="RightSide" instance=ExtResource("1_faht1")]
+layout_mode = 1
+title_text = "Player 2"
+subtitle_text = "IJKL pilih arah, U / O geser wheel"
+player_id = 2
+hover_up_key = 73
+hover_left_key = 74
+hover_down_key = 75
+hover_right_key = 76
+previous_page_key = 85
+next_page_key = 79
