@@ -13,6 +13,8 @@ extends CharacterBody2D
 @onready var sprite_p1:  AnimatedSprite2D  = $Player1Sprite
 @onready var sprite_p2:  AnimatedSprite2D  = $Player2Sprite
 @onready var movement:   MovementComponent = $MovementComponent
+@onready var stats:      StatsComponent    = $StatsComponent
+@onready var class_comp: ClassComponent    = $ClassComponent
 
 var anim_sprite: AnimatedSprite2D
 
@@ -30,9 +32,10 @@ func _ready() -> void:
 	add_to_group("players")
 	_setup_sprite()
 	_apply_idle_frames()
-	anim_sprite.play("idle_" + _facing)
+	_play_facing_anim()
 
 	movement.move_finished.connect(_on_move_finished)
+	movement.step_started.connect(_on_step_started)
 
 
 func _process(_delta: float) -> void:
@@ -40,10 +43,17 @@ func _process(_delta: float) -> void:
 	if not movement._is_moving and _cursor != null and _cursor.has_method("get_hovered_tile"):
 		var hovered: Vector2i = _cursor.get_hovered_tile()
 		if hovered.x >= 0:
-			_update_facing_towards(hovered)
+			_update_facing_from_to(grid_pos, hovered)
 
-	anim_sprite.play("idle_" + _facing)
+	_play_facing_anim()
+	_apply_facing_flip()
 	
+	if InputManager.is_end_turn_pressed(player_id):
+		if not movement._is_moving:
+			if TurnManager != null:
+				TurnManager.request_end_turn(player_id)
+		return
+
 	if InputManager.is_confirm_pressed(player_id):
 		_on_confirm()
 	
@@ -60,6 +70,7 @@ func _on_confirm() -> void:
 		target = _cursor.get_hovered_tile()
 	if target.x < 0:
 		return
+	_update_facing_from_to(grid_pos, target)
 
 	var occupant := GridManager.get_entity_at(target)
 	var entity_type := GridManager.get_entity_type(target)
@@ -108,8 +119,12 @@ func _on_confirm() -> void:
 
 # ── Signal Callbacks ──────────────────────────────────────────────────────────
 
-func _on_move_finished(_from: Vector2i, to: Vector2i) -> void:
-	_update_facing_towards(to)
+func _on_move_finished(from: Vector2i, to: Vector2i) -> void:
+	_update_facing_from_to(from, to)
+
+
+func _on_step_started(from: Vector2i, to: Vector2i) -> void:
+	_update_facing_from_to(from, to)
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
@@ -188,11 +203,35 @@ func _load_frames_from_dir(dir_path: String) -> Array[Texture2D]:
 	return result
 
 
-func _update_facing_towards(target: Vector2i) -> void:
-	var delta := target - grid_pos
-	if delta == Vector2i.ZERO:
+func _update_facing_from_to(from: Vector2i, to: Vector2i) -> void:
+	if from == to:
 		return
-	if abs(delta.x) > abs(delta.y):
+	var screen_from := IsoUtils.world_to_iso(from)
+	var screen_to := IsoUtils.world_to_iso(to)
+	var delta := screen_to - screen_from
+	if abs(delta.x) >= abs(delta.y):
 		_facing = "right" if delta.x > 0 else "left"
 	else:
 		_facing = "down" if delta.y > 0 else "up"
+
+
+func _play_facing_anim() -> void:
+	if anim_sprite == null or anim_sprite.sprite_frames == null:
+		return
+	var walk_anim := "walk_" + _facing
+	var idle_anim := "idle_" + _facing
+	var anim := idle_anim
+	if movement != null and movement._is_moving and anim_sprite.sprite_frames.has_animation(walk_anim):
+		anim = walk_anim
+	elif anim_sprite.sprite_frames.has_animation(idle_anim):
+		anim = idle_anim
+	anim_sprite.play(anim)
+
+
+func _apply_facing_flip() -> void:
+	if anim_sprite == null:
+		return
+	if _facing == "left":
+		anim_sprite.flip_h = true
+	elif _facing == "right":
+		anim_sprite.flip_h = false

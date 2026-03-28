@@ -25,14 +25,15 @@ class_name MovementComponent
 signal move_started(from: Vector2i, to: Vector2i)
 signal move_finished(from: Vector2i, to: Vector2i)
 signal move_blocked(target: Vector2i)
+signal step_started(from: Vector2i, to: Vector2i)
 
 ## Steps per second while walking
 @export var walk_speed: float = 6.0
 
 ## Base movement range in tiles (reset each turn)
-@export var base_movement: int = 100
+@export var base_movement: int = 4
 
-var movement_left: int = 100
+var movement_left: int = 4
 
 # Internal travel state
 var _is_moving:    bool           = false
@@ -45,7 +46,7 @@ var _ctrl_offset:  Vector2        = Vector2.ZERO  # Bézier control-point lift
 
 
 func _ready() -> void:
-	movement_left = base_movement
+	movement_left = base_movement + _get_movement_bonus()
 
 
 # ── Public API ───────────────────────────────────────────────────────────────
@@ -59,7 +60,7 @@ func move_to(target: Vector2i) -> bool:
 		return false
 
 	# Must be a walkable tile with no entity on it
-	if not GridManager.is_walkable(target):
+	if not GridManager.can_enter_tile(target, owner):
 		move_blocked.emit(target)
 		return false
 
@@ -117,7 +118,7 @@ func has_movement() -> bool:
 
 
 func reset_movement() -> void:
-	movement_left = base_movement
+	movement_left = base_movement + _get_movement_bonus()
 
 
 func get_reachable_tiles() -> Array[Vector2i]:
@@ -131,7 +132,9 @@ func _begin_travel(path: Array[Vector2i], cost: int) -> void:
 	var to:   Vector2i = path[path.size() - 1]
 
 	# Commit to grid immediately so other systems see the new position
-	GridManager.move_entity(from, to, owner)
+	if not GridManager.move_entity(from, to, owner):
+		move_blocked.emit(to)
+		return
 	owner.set("grid_pos", to)
 	movement_left -= cost
 
@@ -173,12 +176,15 @@ func _process(delta: float) -> void:
 
 
 func _start_step(index: int) -> void:
-	_step_origin = IsoUtils.world_to_iso(_path[index])
-	_step_target = IsoUtils.world_to_iso(_path[index + 1])
+	var from_tile := _path[index]
+	var to_tile := _path[index + 1]
+	_step_origin = IsoUtils.world_to_iso(from_tile)
+	_step_target = IsoUtils.world_to_iso(to_tile)
 
 	# Control point: lift slightly above the midpoint for a gentle arc
 	var mid := (_step_origin + _step_target) * 0.5
 	_ctrl_offset = mid + Vector2(0, -IsoUtils.TILE_H * 0.35)
+	step_started.emit(from_tile, to_tile)
 
 
 ## Quadratic Bézier: origin → ctrl → target
@@ -191,6 +197,13 @@ func _bezier(p0: Vector2, p1: Vector2, p2: Vector2, t: float) -> Vector2:
 
 func _owner_grid_pos() -> Vector2i:
 	return owner.get("grid_pos") as Vector2i
+
+
+func _get_movement_bonus() -> int:
+	var stats := owner.get_node_or_null("StatsComponent") as StatsComponent
+	if stats == null:
+		return 0
+	return stats.bonus_movement_tiles()
 
 
 func _walkable_neighbours(center: Vector2i) -> Array[Vector2i]:

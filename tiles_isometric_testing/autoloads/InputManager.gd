@@ -3,6 +3,14 @@ extends Node
 var killcam_active: bool = false
 var is_in_menu: bool = false
 # action = "move_up" | "move_down" | "move_left" | "move_right" | "end_turn"
+func _can_accept_input(player_id: int) -> bool:
+	if killcam_active or is_in_menu:
+		return false
+	if TurnManager != null and not TurnManager.can_player_act(player_id):
+		return false
+	return true
+
+# action = "move_up" | "move_down" | "move_left" | "move_right" | "end_turn"
 func is_just_pressed(player_id: int, action: String) -> bool:
 	if killcam_active or is_in_menu:
 		return false
@@ -59,8 +67,15 @@ func get_movement_dir(player_id: int) -> Vector2i:
 func is_confirm_pressed(player_id: int) -> bool:
 	if is_in_menu:
 		return false
+	if TurnManager != null and not TurnManager.can_player_act(player_id):
+		return false
 	if player_id == 1:
 		return Input.is_action_just_pressed("p1_confirm")
 	elif player_id == 2:
 		return Input.is_action_just_pressed("p2_confirm")
 	return false
+
+func is_end_turn_pressed(player_id: int) -> bool:
+	if not _can_accept_input(player_id):
+		return false
+	return Input.is_action_just_pressed("p%d_end_turn" % player_id)

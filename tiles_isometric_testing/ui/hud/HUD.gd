@@ -1,11 +1,11 @@
 extends Control
 
 @export var player_id: int = 1
-@onready var _move_label: Label 
+var _move_label: Label = null
 
 var _player: Node = null
-var _coord_label: Label
-var _name_label: Label
+var _coord_label: Label = null
+var _name_label: Label = null
 
 func _ready() -> void:
 	_build_ui()

@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=4 uid="uid://bv8gg8sp656ia"]
+[gd_scene load_steps=15 format=4 uid="uid://bv8gg8sp656ia"]
 
 [ext_resource type="Script" uid="uid://dsojupna5ib0g" path="res://main/main.gd" id="1_qv31u"]
 [ext_resource type="Script" uid="uid://bs23eu82b3oyh" path="res://world/World.gd" id="2_wbnyf"]
@@ -7,6 +7,9 @@
 [ext_resource type="PackedScene" uid="uid://2dccg0sen86v" path="res://ui/shared/HighlightLayer.tscn" id="5_hlyr"]
 [ext_resource type="PackedScene" uid="uid://k7xhasw85ea0" path="res://components/dice/sandbox/DiceSandbox.tscn" id="6_dice"]
 [ext_resource type="Shader" uid="uid://bsybx8uac0dtp" path="res://main/vignette.gdshader" id="7_o80qs"]
+[ext_resource type="Script" uid="uid://cak2h4j1m6p7q" path="res://ui/debug/DebugPanel.gd" id="8_dbgpanel"]
+[ext_resource type="Script" uid="uid://rilw7k3qw22" path="res://ui/shared/TurnLabel.gd" id="9_turnlabel"]
+[ext_resource type="PackedScene" uid="uid://bbdf8j3lnq4x3" path="res://entities/enemies/EnemyPlaceholder.tscn" id="10_enemy"]
 
 [sub_resource type="Environment" id="Environment_qtrhv"]
 background_mode = 3
@@ -135,6 +138,10 @@ texture_region_size = Vector2i(256, 256)
 [sub_resource type="TileSet" id="TileSet_tv7ag"]
 tile_shape = 1
 tile_size = Vector2i(256, 128)
+custom_data_layer_0/name = "Blocked"
+custom_data_layer_0/type = 1
+custom_data_layer_1/name = ""
+custom_data_layer_1/type = 0
 sources/1 = SubResource("TileSetAtlasSource_cmtxc")
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_0h8po"]
@@ -164,6 +171,9 @@ script = ExtResource("4_cmtxc")
 [node name="Entities" type="Node2D" parent="World"]
 z_index = 2
 
+[node name="EnemyPlaceholder" parent="World/Entities" instance=ExtResource("10_enemy")]
+start_grid_pos = Vector2i(9, 7)
+
 [node name="Camera2D" type="Camera2D" parent="World"]
 position = Vector2(0, 488)
 zoom = Vector2(0.5, 0.5)
@@ -185,6 +195,7 @@ offset_left = 10.0
 offset_top = 36.0
 offset_right = 640.0
 offset_bottom = 260.0
+script = ExtResource("8_dbgpanel")
 
 [node name="DebugPanelBg" type="ColorRect" parent="DebugUI/Root/DebugPanel"]
 layout_mode = 1
@@ -207,8 +218,8 @@ offset_right = 383.0
 offset_bottom = 362.0
 theme_override_font_sizes/font_size = 13
 text = "Controls:
-- P1 Move: WASD | Confirm: E
-- P2 Move: IJKL | Confirm: O
+- P1 Move: WASD | Confirm: E | End Turn: Q
+- P2 Move: IJKL | Confirm: O | End Turn: U
 
 Current Features:
 - Tile highlight: valid / invalid / entity / self
@@ -223,16 +234,42 @@ Toggles:
 - F2: Dice Sandbox
 - F3: Debug Grid"
 
+[node name="StatsToggle" type="CheckBox" parent="DebugUI/Root/DebugPanel"]
+layout_mode = 0
+offset_left = -3.0
+offset_top = 388.0
+offset_right = 237.0
+offset_bottom = 419.0
+text = "Show Stats & Classes"
+
+[node name="StatsLabel" type="Label" parent="DebugUI/Root/DebugPanel"]
+layout_mode = 0
+offset_left = -1.0
+offset_top = 430.0
+offset_right = 315.0
+offset_bottom = 670.0
+theme_override_font_sizes/font_size = 11
+
 [node name="DiceSandbox" parent="DebugUI/Root" instance=ExtResource("6_dice")]
 layout_mode = 1
 
 [node name="DebugTooltip" type="Label" parent="DebugUI/Root"]
 layout_mode = 0
 offset_left = 10.0
+offset_top = 399.0
+offset_right = 360.0
+offset_bottom = 422.0
+text = "F1: Toggle Debug Info"
+
+[node name="TurnLabel" type="Label" parent="DebugUI/Root"]
+layout_mode = 0
+offset_left = 10.0
 offset_top = 10.0
 offset_right = 360.0
 offset_bottom = 33.0
-text = "F1: Toggle Debug Info"
+theme_override_font_sizes/font_size = 16
+text = "Turn ?"
+script = ExtResource("9_turnlabel")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
