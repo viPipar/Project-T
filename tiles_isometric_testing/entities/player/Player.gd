@@ -160,7 +160,7 @@ func _apply_idle_frames() -> void:
 
 	for anim_name in anims:
 		sprite_frames.add_animation(anim_name)
-		sprite_frames.set_animation_speed(anim_name, 8.0)
+		sprite_frames.set_animation_speed(anim_name, 24.0)
 		sprite_frames.set_animation_loop(anim_name, true)
 		for tex in frames:
 			sprite_frames.add_frame(anim_name, tex)
