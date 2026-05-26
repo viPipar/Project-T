@@ -37,22 +37,22 @@ func roll_luck_coop(p1_lck: int, p2_lck: int) -> int:
 ## D20 + LCK/5 per player — reroll otomatis jika tie (sesuai GDD)
 ## Return: 1 (P1 menang) atau 2 (P2 menang)
 func roll_contested_pick(p1_lck: int, p2_lck: int) -> int:
-	var p1_roll := 0
-	var p2_roll := 0
-	var attempts := 0
-	var max_attempts := 100  # safety guard
+	var p1_roll : int = 0
+	var p2_roll : int = 0
+	var attempts: int = 0
 
-	while attempts < max_attempts:
-		p1_roll = roll_luck(p1_lck, "P1_CONTESTED")
-		p2_roll = roll_luck(p2_lck, "P2_CONTESTED")
+	while attempts < 20:
+		p1_roll  = roll_luck(p1_lck, "P1")
+		p2_roll  = roll_luck(p2_lck, "P2")
 		if p1_roll != p2_roll:
 			break
 		attempts += 1
-		print("[LuckRoller] Tie pada contested pick! Rerolling... (attempt %d)" % attempts)
+		print("[LuckRoller] Tie! Reroll %d..." % attempts)
 
-	var winner := 1 if p1_roll > p2_roll else 2
+	# Safety fallback — jika 20x masih tie, P1 menang
+	var winner : int = 1 if p1_roll >= p2_roll else 2
 	contested_result.emit(winner, p1_roll, p2_roll)
-	print("[LuckRoller] Contested Pick — P1: %d vs P2: %d → Pemenang: P%d" % [p1_roll, p2_roll, winner])
+	print("[LuckRoller] Contested: P1=%d vs P2=%d → Pemenang: P%d" % [p1_roll, p2_roll, winner])
 	return winner
 
 
