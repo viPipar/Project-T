@@ -31,12 +31,12 @@ func setup(stat_prov) -> void:
 func resolve(attacker: Node, target: Node, is_magical: bool = false) -> Dictionary:
 	assert(_stat_provider != null, "[HitMissResolver] stat_provider belum di-setup!")
 
-	var acc      := _stat_provider.get_acc(attacker)
-	var modifier := floori(acc / 2.0)
-	var raw_d20  := _dice.d20()
-	var roll     := raw_d20 + modifier
+	var acc      : int = _stat_provider.get_acc(attacker)
+	var modifier : int = floori(acc / 2.0)
+	var raw_d20  : int = _dice.d20()
+	var roll     : int = raw_d20 + modifier
 
-	var threshold: int
+	var threshold : int
 	if is_magical:
 		threshold = _stat_provider.get_resist(target)
 	else:

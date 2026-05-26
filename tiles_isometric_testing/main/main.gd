@@ -61,6 +61,27 @@ func _ready() -> void:
 	kb_cursor_p2.global_position = p2.position
 	p2.bind_cursor(kb_cursor_p2)
 
+	# ── Spawn enemy placeholder untuk testing combat_core ─────────────────────
+	var enemy_scene := preload("res://entities/enemies/EnemyPlaceholder.tscn")
+
+	var e1 := enemy_scene.instantiate()
+	e1.set("enemy_name", "Goblin")
+	e1.set("tint_color", Color(0.3, 0.9, 0.3, 1.0))  # hijau
+	world.entities.add_child(e1)
+	e1.call_deferred("place_at", Vector2i(5, 5))
+
+	var e2 := enemy_scene.instantiate()
+	e2.set("enemy_name", "Orc")
+	e2.set("tint_color", Color(0.9, 0.4, 0.1, 1.0))  # oranye
+	world.entities.add_child(e2)
+	e2.call_deferred("place_at", Vector2i(8, 5))
+
+	# ── CombatTestBridge: hubungkan combat_core ke scene ini ──────────────────
+	var bridge := Node.new()
+	bridge.name = "CombatTestBridge"
+	bridge.set_script(load("res://combat_core/tests/CombatTestBridge.gd"))
+	add_child(bridge)
+
 	TurnManager.start_battle()
 
 	_apply_debug_visibility()
