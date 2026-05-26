@@ -24,7 +24,7 @@ func setup(stat_prov) -> void:
 ## Hitung crit threshold berdasarkan ACC
 func get_crit_threshold(attacker: Node) -> int:
 	assert(_stat_provider != null, "[CritResolver] stat_provider belum di-setup!")
-	var acc := _stat_provider.get_acc(attacker)
+	var acc : int = _stat_provider.get_acc(attacker)
 	return 20 - floori(acc / 10.0)
 
 
@@ -48,9 +48,9 @@ func is_critical(raw_roll: int, attacker: Node) -> bool:
 func resolve_with_crit(attacker: Node, target: Node, is_magical: bool = false) -> Dictionary:
 	assert(_stat_provider != null, "[CritResolver] stat_provider belum di-setup!")
 
-	var acc            := _stat_provider.get_acc(attacker)
-	var modifier       := floori(acc / 2.0)
-	var crit_threshold := 20 - floori(acc / 10.0)
+	var acc            : int = _stat_provider.get_acc(attacker)
+	var modifier       : int = floori(acc / 2.0)
+	var crit_threshold : int = 20 - floori(acc / 10.0)
 
 	var hit_threshold: int
 	if is_magical:
