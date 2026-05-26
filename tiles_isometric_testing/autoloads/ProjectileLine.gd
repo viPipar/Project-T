@@ -24,6 +24,8 @@ extends Node
 ## `origin` is excluded from collision checks (the shooter never blocks itself).
 func cast(origin: Vector2i, target: Vector2i) -> Dictionary:
 	var tiles: Array[Vector2i] = _bresenham(origin, target)
+	print("[ProjectileLine] Casting from %s to %s" % [origin, target])
+	print("[ProjectileLine] Tiles traversed: %s" % [tiles])
 
 	for i in range(tiles.size()):
 		var tile := tiles[i]
@@ -36,7 +38,7 @@ func cast(origin: Vector2i, target: Vector2i) -> Dictionary:
 		if not GridManager.is_terrain_walkable(tile):
 			return {
 				"result": "hit_wall",
-				"tile":   tile,
+					"tile":   tile,
 				"tiles":  tiles.slice(0, i + 1),
 			}
 
