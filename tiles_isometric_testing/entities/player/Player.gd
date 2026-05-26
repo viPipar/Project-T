@@ -83,6 +83,8 @@ func _on_confirm() -> void:
 				var shot = ProjectileLine.cast(grid_pos, target)
 				match shot.result:
 					"hit_entity":
+						# Emit signal supaya CombatTestBridge bisa resolve hit/miss/crit
+						EventBus.attackcam_started.emit(self, occupant, "main_attack")
 						if player_id == 1:
 							AttackCam.play(true, false)
 						elif player_id == 2:
