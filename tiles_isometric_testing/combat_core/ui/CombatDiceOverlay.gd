@@ -206,9 +206,10 @@ func play_attack_sequence(
 	tw_in.tween_property(_dice_panel, "position:x", cx, 0.5)
 	await tw_in.finished
 
+	var target_pos := _dice_panel.global_position + Vector2(72, PANEL_H * 0.52)
 	# ── Phase 2: Roll D20 ─────────────────────────────────────────────────────
 	if _dice_visual.has_method("start_roll"):
-		_dice_visual.start_roll(raw_d20, "d20", 2.0)
+		_dice_visual.start_roll(raw_d20, "d20", 2.0, target_pos, player_id)
 		if _dice_visual.has_signal("roll_finished"):
 			await _dice_visual.roll_finished
 		else:
@@ -280,7 +281,7 @@ func play_attack_sequence(
 		for i in range(dmg_rolls.size()):
 			_title_label.text = "🎲 Damage %d/%d — %s" % [i + 1, dmg_rolls.size(), dmg_formula]
 			if _dice_visual.has_method("start_roll"):
-				_dice_visual.start_roll(dmg_rolls[i], _formula_dice(dmg_formula), 1.5)
+				_dice_visual.start_roll(dmg_rolls[i], _formula_dice(dmg_formula), 1.5, target_pos, player_id)
 				if _dice_visual.has_signal("roll_finished"):
 					await _dice_visual.roll_finished
 				else:
@@ -323,6 +324,10 @@ func _offscreen_x(vp_size: Vector2, opposite: bool) -> float:
 
 
 func _reset_state() -> void:
+	if _dice_visual != null and _dice_visual.has_node("DiceSprite"):
+		_dice_visual.get_node("DiceSprite").visible = false
+	if _dice_visual != null and _dice_visual.has_node("NumberLabel"):
+		_dice_visual.get_node("NumberLabel").visible = false
 	_mod_label.modulate.a   = 0
 	_total_label.modulate.a = 0
 	_result_lbl.modulate.a  = 0

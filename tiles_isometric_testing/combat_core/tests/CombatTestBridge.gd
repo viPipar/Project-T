@@ -187,11 +187,14 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 
 	# ── Apply damage ke target SETELAH animasi selesai ───────────────────────
 	if hit:
-		if target.has_method("take_damage"):
-			target.take_damage(dmg_total)
+		if is_instance_valid(target):
+			if target.has_method("take_damage"):
+				target.take_damage(dmg_total)
+			else:
+				print("[COMBAT] ⚠️  Target tidak punya take_damage() — damage tidak di-apply")
+			EventBus.damage_dealt.emit(target, dmg_total, "physical", crit)
 		else:
-			print("[COMBAT] ⚠️  Target tidak punya take_damage() — damage tidak di-apply")
-		EventBus.damage_dealt.emit(target, dmg_total, "physical", crit)
+			print("[COMBAT] ⚠️  Target sudah dikalahkan sebelum serangan mendarat!")
 
 	# Buka blok input player ini
 	if pid == 1: _p1_busy = false
