@@ -17,7 +17,7 @@ func _ready() -> void:
 
 	GridManager.load_walls_for_map(1) # manggil mapping
 
-	# ── Setup Split-Screen SEBELUM spawn player ────────────────────────────────
+	# ── Setup Split-Screen ────────────────────────────────────────────────────
 	_setup_split_screen()
 
 	# ── Spawn Player 1 ────────────────────────────────────────────────────────
@@ -52,8 +52,6 @@ func _ready() -> void:
 	c2.bind(p2)
 
 	# ── Spawn Keyboard Cursors ────────────────────────────────────────────────
-	# Penting: cursor bergerak bebas tapi hanya update hovered tile.
-	# Camera yang pan mengikuti arah input (bukan cursor yang bergerak di world)
 	var kb_cursor_p1 := Node2D.new()
 	kb_cursor_p1.name = "KeyboardTileCursor_P1"
 	kb_cursor_p1.set_script(load("res://world/KeyboardTileCursor.gd"))
@@ -100,6 +98,8 @@ func _ready() -> void:
 	_apply_debug_visibility()
 
 
+# ── SPLIT-SCREEN SETUP ───────────────────────────────────────────────────────
+
 func _setup_split_screen() -> void:
 	# Nonaktifkan Camera2D lama di World
 	var old_cam := world.get_node_or_null("Camera2D")
@@ -111,10 +111,10 @@ func _setup_split_screen() -> void:
 	_split_screen = SplitScreenManager.new()
 	_split_screen.name = "SplitScreenManager"
 
-	# Simpan world ref SEBELUM add_child — saat _ready() dipanggil otomatis,
-	# SplitScreenManager akan build layout di sana (is_inside_tree() = true)
-	_split_screen.setup(world)  # simpan ref, build terjadi di _ready()
-	add_child(_split_screen)    # trigger _ready() → _build_layout() + _attach_cameras()
+	# Simpan world ref SEBELUM add_child — _ready() SplitScreenManager
+	# akan build layout saat is_inside_tree() = true
+	_split_screen.setup(world)   # simpan ref
+	add_child(_split_screen)     # trigger _ready() → _build_layout() + _attach_cameras()
 
 	# Hapus Camera2D lama setelah split-screen siap
 	if old_cam != null and is_instance_valid(old_cam):
