@@ -29,11 +29,13 @@ var _p1_ec  : EnergyChargeManager
 var _p2_ss  : SpellSlotManager
 var _mana   : ManaConverter
 
-# ── Dice Overlay ──────────────────────────────────────────────────────────────
-var _overlay: CombatDiceOverlay
+# ── Dice Overlay (satu per player) ──────────────────────────────────────────
+var _overlay_p1: CombatDiceOverlay
+var _overlay_p2: CombatDiceOverlay
 
-# Flag blok input selama animasi berlangsung
-var _input_blocked: bool = false
+# Per-player block flag (terpisah dari InputManager untuk tracking internal)
+var _p1_busy: bool = false
+var _p2_busy: bool = false
 
 
 func _ready() -> void:
@@ -75,11 +77,19 @@ func _setup_combat_core() -> void:
 	_mana = ManaConverter.new(); add_child(_mana)
 	_mana.setup(_p1_ec, _p2_ss)
 
-	# ── Dice Overlay (CanvasLayer, ditambahkan ke root scene tree) ─────────────
+	# ── Dice Overlay — instansiate 2 (satu untuk kiri/P1, satu untuk kanan/P2) ──
 	var overlay_scene := preload("res://combat_core/ui/CombatDiceOverlay.tscn")
-	_overlay = overlay_scene.instantiate() as CombatDiceOverlay
-	# Tambah ke root agar muncul di atas semua layer (termasuk AttackCam)
-	get_tree().root.add_child.call_deferred(_overlay)
+
+	_overlay_p1 = overlay_scene.instantiate() as CombatDiceOverlay
+	_overlay_p1.player_id = 1
+	get_tree().root.add_child.call_deferred(_overlay_p1)
+
+	_overlay_p2 = overlay_scene.instantiate() as CombatDiceOverlay
+	_overlay_p2.player_id = 2
+	get_tree().root.add_child.call_deferred(_overlay_p2)
+
+	# Subscribe ke EventBus untuk sync InputManager
+	EventBus.combat_input_blocked.connect(_on_combat_input_blocked)
 
 	print("[CombatTestBridge] Combat core systems ready ✅")
 
@@ -106,13 +116,19 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 	if attacker == null or target == null:
 		return
 
-	# Blok jika animasi sedang berjalan (cegah spam serangan)
-	if _input_blocked:
-		print("[COMBAT] ⚠️ Animasi sedang berjalan — input diblok")
+	# Tentukan player_id penyerang
+	var pid: int = attacker.get("player_id") if attacker.get("player_id") else 1
+
+	# Blok jika animasi player ini sedang berjalan (cegah spam serangan)
+	var is_busy := _p1_busy if pid == 1 else _p2_busy
+	if is_busy:
+		print("[COMBAT] ⚠️ P%d — Animasi sedang berjalan, input diblok" % pid)
 		return
 
-	_input_blocked = true
-	EventBus.combat_input_blocked.emit(true)
+	# Set busy & blok input hanya untuk player ini
+	if pid == 1: _p1_busy = true
+	else:         _p2_busy = true
+	EventBus.combat_input_blocked.emit(pid, true)
 
 	var attacker_name: String = attacker.get("char_name") if attacker.get("char_name") else attacker.name
 	var target_name:   String = target.get("enemy_name")  if target.get("enemy_name")  else target.name
@@ -156,8 +172,9 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 	print("[COMBAT] ────────────────────────────")
 
 	# ── Jalankan animasi overlay (AWAIT — blok sampai selesai) ────────────────
-	if _overlay != null:
-		await _overlay.play_attack_sequence(
+	var overlay := _overlay_p1 if pid == 1 else _overlay_p2
+	if overlay != null:
+		await overlay.play_attack_sequence(
 			attacker, target,
 			result,
 			dmg_rolls,
@@ -165,8 +182,7 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 			dmg_formula
 		)
 	else:
-		# Fallback jika overlay gagal load — langsung apply damage tanpa animasi
-		push_warning("[CombatTestBridge] Overlay null! Langsung apply damage.")
+		push_warning("[CombatTestBridge] Overlay P%d null! Langsung apply damage." % pid)
 		await get_tree().process_frame
 
 	# ── Apply damage ke target SETELAH animasi selesai ───────────────────────
@@ -177,8 +193,16 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 			print("[COMBAT] ⚠️  Target tidak punya take_damage() — damage tidak di-apply")
 		EventBus.damage_dealt.emit(target, dmg_total, "physical", crit)
 
-	_input_blocked = false
-	EventBus.combat_input_blocked.emit(false)
+	# Buka blok input player ini
+	if pid == 1: _p1_busy = false
+	else:         _p2_busy = false
+	EventBus.combat_input_blocked.emit(pid, false)
+
+
+# ── CALLBACK — sync InputManager saat signal diterima ────────────────────────
+
+func _on_combat_input_blocked(player_id: int, blocked: bool) -> void:
+	InputManager.set_player_blocked(player_id, blocked)
 
 
 # ── PHASE TRACKING ────────────────────────────────────────────────────────────

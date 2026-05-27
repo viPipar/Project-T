@@ -16,7 +16,8 @@ signal attackcam_started(attacker: Node, target: Node, ability_id: String)
 signal attackcam_finished(attacker: Node)
 
 # Phase 4+ — blok input player saat animasi combat sedang berjalan
-signal combat_input_blocked(blocked: bool)
+# player_id: 1 atau 2. blocked: true = blok, false = buka
+signal combat_input_blocked(player_id: int, blocked: bool)
 
 # Phase 2 — class / stats events (scalable hooks)
 signal class_changed(entity: Node, class_id: String)

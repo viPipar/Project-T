@@ -13,9 +13,12 @@ func _ready() -> void:
 	_draw_debug_grid()
 
 func _process(delta: float) -> void:
-	var target_pos = get_party_centroid()
-	camera.position = camera.position.lerp(target_pos, 0.04) # 0.08 adalah nilai lerp kamu
-			
+	# Kamera lama (single-camera mode) tidak dipakai saat split-screen aktif.
+	# SplitScreenManager menghapus Camera2D dari scene — cek dulu sebelum pakai.
+	if camera != null and is_instance_valid(camera) and camera.enabled:
+		var target_pos = get_party_centroid()
+		camera.position = camera.position.lerp(target_pos, 0.04)
+	
 func get_party_centroid() -> Vector2:
 	if players.is_empty():
 		return Vector2.ZERO

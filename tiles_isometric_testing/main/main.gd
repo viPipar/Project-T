@@ -6,22 +6,27 @@ extends Node2D
 @onready var debug_tooltip: Label = $DebugUI/Root/DebugTooltip
 @onready var ui_root: Control = $DebugUI/Root
 
-var _show_debug_panel: bool = false
+var _show_debug_panel:  bool = false
 var _show_dice_sandbox: bool = false
-var _show_debug_grid: bool = false
+var _show_debug_grid:   bool = false
+var _split_screen: SplitScreenManager = null
 
 func _ready() -> void:
 	var player_scene := preload("res://entities/player/Player.tscn")
 	var cursor_scene := preload("res://world/SelectionCursor.tscn")
-	
 
-	GridManager.load_walls_for_map(1) #manggil mapping
-	
+	GridManager.load_walls_for_map(1) # manggil mapping
+
+	# ── Setup Split-Screen SEBELUM spawn player ────────────────────────────────
+	_setup_split_screen()
+
+	# ── Spawn Player 1 ────────────────────────────────────────────────────────
 	var p1 = world.spawn_entity(player_scene, Vector2i(0, 0), {
 		"player_id": 1, "char_name": "Aria"
 	})
 	p1.place_at(Vector2i(5, 7))
 
+	# ── Spawn Player 2 ────────────────────────────────────────────────────────
 	var p2 = world.spawn_entity(player_scene, Vector2i(0, 0), {
 		"player_id": 2, "char_name": "Kael"
 	})
@@ -38,6 +43,7 @@ func _ready() -> void:
 	TurnManager.register_player(p1)
 	TurnManager.register_player(p2)
 
+	# ── Spawn Selection Cursor ────────────────────────────────────────────────
 	var c1 = cursor_scene.instantiate()
 	var c2 = cursor_scene.instantiate()
 	world.entities.add_child(c1)
@@ -45,6 +51,9 @@ func _ready() -> void:
 	c1.bind(p1)
 	c2.bind(p2)
 
+	# ── Spawn Keyboard Cursors ────────────────────────────────────────────────
+	# Penting: cursor bergerak bebas tapi hanya update hovered tile.
+	# Camera yang pan mengikuti arah input (bukan cursor yang bergerak di world)
 	var kb_cursor_p1 := Node2D.new()
 	kb_cursor_p1.name = "KeyboardTileCursor_P1"
 	kb_cursor_p1.set_script(load("res://world/KeyboardTileCursor.gd"))
@@ -61,7 +70,12 @@ func _ready() -> void:
 	kb_cursor_p2.global_position = p2.position
 	p2.bind_cursor(kb_cursor_p2)
 
-	# ── Spawn enemy placeholder untuk testing combat_core ─────────────────────
+	# ── Fokus kamera ke posisi spawn masing-masing player ────────────────────
+	if _split_screen != null:
+		_split_screen.focus_camera(1, p1.position)
+		_split_screen.focus_camera(2, p2.position)
+
+	# ── Spawn Enemy Placeholder ───────────────────────────────────────────────
 	var enemy_scene := preload("res://entities/enemies/EnemyPlaceholder.tscn")
 
 	var e1 := enemy_scene.instantiate()
@@ -76,15 +90,36 @@ func _ready() -> void:
 	world.entities.add_child(e2)
 	e2.call_deferred("place_at", Vector2i(8, 5))
 
-	# ── CombatTestBridge: hubungkan combat_core ke scene ini ──────────────────
+	# ── CombatTestBridge ──────────────────────────────────────────────────────
 	var bridge := Node.new()
 	bridge.name = "CombatTestBridge"
 	bridge.set_script(load("res://combat_core/tests/CombatTestBridge.gd"))
 	add_child(bridge)
 
 	TurnManager.start_battle()
-
 	_apply_debug_visibility()
+
+
+# ── SPLIT-SCREEN SETUP ───────────────────────────────────────────────────────────
+
+func _setup_split_screen() -> void:
+	# Nonaktifkan Camera2D lama yang ada di World (single camera mode)
+	var old_cam := world.get_node_or_null("Camera2D")
+	if old_cam != null:
+		old_cam.enabled = false
+		old_cam.queue_free()
+		print("[Main] Camera2D lama dihapus — digantikan split-screen cameras")
+
+	# Buat dan pasang SplitScreenManager sebagai CanvasLayer di atas DebugUI
+	_split_screen = SplitScreenManager.new()
+	_split_screen.name = "SplitScreenManager"
+	# Tambahkan SEBELUM DebugUI agar debug UI tetap tampil di atas
+	add_child(_split_screen)
+	move_child(_split_screen, 0)  # Paling bawah z-order canvas
+
+	# Setup split-screen dengan referensi ke World
+	_split_screen.setup(world)
+
 
 
 func _unhandled_input(event: InputEvent) -> void:

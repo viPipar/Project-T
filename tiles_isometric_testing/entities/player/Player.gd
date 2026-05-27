@@ -18,10 +18,10 @@ extends CharacterBody2D
 
 var anim_sprite: AnimatedSprite2D
 
-var _facing:         String   = "down"
-var grid_pos:        Vector2i = Vector2i.ZERO
-var _cursor:         Node2D   = null
-var _combat_blocked: bool     = false  # true saat animasi dice sedang berjalan
+var _facing:  String   = "down"
+var grid_pos: Vector2i = Vector2i.ZERO
+var _cursor:  Node2D   = null
+# Tidak ada _combat_blocked lokal — InputManager.set_player_blocked() yang handle
 
 const INSECT1_DIR := "res://assets/characters/insect1_placeholder"
 const INSECT2_DIR := "res://assets/characters/insect2_placeholder"
@@ -68,8 +68,7 @@ func _process(_delta: float) -> void:
 func _on_confirm() -> void:
 	if movement._is_moving:
 		return  # don't queue new move while animating
-	if _combat_blocked:
-		return  # animasi dice sedang berjalan
+	# Blok dicek via InputManager (is_confirm_pressed sudah cek _player_blocked di sana)
 
 	var target: Vector2i = Vector2i(-1, -1)
 	if _cursor != null and _cursor.has_method("get_hovered_tile"):
@@ -135,8 +134,10 @@ func _on_step_started(from: Vector2i, to: Vector2i) -> void:
 	_update_facing_from_to(from, to)
 
 
-func _on_combat_input_blocked(blocked: bool) -> void:
-	_combat_blocked = blocked
+## Dipanggil saat combat_input_blocked signal diterima dari EventBus.
+## Player hanya peduli jika player_id-nya yang diblok.
+func _on_combat_input_blocked(blocked_player_id: int, _blocked: bool) -> void:
+	pass  # InputManager.set_player_blocked() sudah dipanggil oleh CombatTestBridge
 
 
 # ── Public API ────────────────────────────────────────────────────────────────

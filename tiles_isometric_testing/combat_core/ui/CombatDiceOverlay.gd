@@ -26,6 +26,10 @@ signal sequence_finished
 # ── State ─────────────────────────────────────────────────────────────────────
 var _is_playing: bool = false
 
+## player_id menentukan overlay muncul di setengah layar mana
+## 1 = kiri, 2 = kanan
+var player_id: int = 1
+
 # Durasi animasi (sesuai pilihan user)
 const DURATION_D20:    float = 2.0
 const DURATION_DAMAGE: float = 1.5
@@ -36,6 +40,39 @@ const PAUSE_END:       float = 1.8   # jeda sebelum overlay ditutup
 func _ready() -> void:
 	layer = 10  # Pastikan di atas AttackCam dan semua UI
 	visible = false
+	# Posisikan overlay sesuai player_id (dipanggil setelah node masuk tree)
+	call_deferred("_apply_half_screen")
+
+
+## Set layout overlay ke setengah layar sesuai player_id
+func _apply_half_screen() -> void:
+	var root: Control = $OverlayRoot
+	if root == null:
+		return
+	if player_id == 1:
+		# Kiri: anchor 0..0.5
+		root.anchor_left   = 0.0
+		root.anchor_right  = 0.5
+		root.anchor_top    = 0.0
+		root.anchor_bottom = 1.0
+		root.offset_left   = 0
+		root.offset_right  = 0
+		root.offset_top    = 0
+		root.offset_bottom = 0
+	else:
+		# Kanan: anchor 0.5..1.0
+		root.anchor_left   = 0.5
+		root.anchor_right  = 1.0
+		root.anchor_top    = 0.0
+		root.anchor_bottom = 1.0
+		root.offset_left   = 0
+		root.offset_right  = 0
+		root.offset_top    = 0
+		root.offset_bottom = 0
+	# Reposisi DiceVisual ke tengah dari area overlay
+	var dv: Node2D = $OverlayRoot/DiceVisual
+	if dv != null:
+		dv.position = root.size / 2.0 if root.size != Vector2.ZERO else Vector2(320, 360)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
