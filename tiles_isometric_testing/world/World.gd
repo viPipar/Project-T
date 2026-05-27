@@ -2,13 +2,16 @@ extends Node2D
 
 @onready var tile_map: TileMapLayer = $TileMapLayer
 @onready var entities: Node2D       = $Entities
-@onready var camera: Camera2D       = $Camera2D
+# Camera2D bisa dihapus oleh SplitScreenManager — pakai get_node_or_null di runtime
+var camera: Camera2D = null
 
 # Referensi ke semua player hidup — diisi oleh Main.gd saat spawn
 var players: Array[Node] = []
 var _debug_grid: Node2D = null
 
 func _ready() -> void:
+	# Ambil Camera2D jika ada (single-camera mode). Null = split-screen mode.
+	camera = get_node_or_null("Camera2D")
 	GridManager.setup_grid(16, 16)
 	_draw_debug_grid()
 
