@@ -68,10 +68,13 @@ func _ready() -> void:
 	kb_cursor_p2.global_position = p2.position
 	p2.bind_cursor(kb_cursor_p2)
 
-	# ── Fokus kamera ke posisi spawn masing-masing player ────────────────────
+	# ── Fokus kamera ke posisi spawn + bind camera_ref ke cursor ────────────
 	if _split_screen != null:
 		_split_screen.focus_camera(1, p1.position)
 		_split_screen.focus_camera(2, p2.position)
+		# Bind camera ke cursor agar cursor selalu terkunci di tengah viewport
+		kb_cursor_p1.set("camera_ref", _split_screen.cam_p1)
+		kb_cursor_p2.set("camera_ref", _split_screen.cam_p2)
 
 	# ── Spawn Enemy Placeholder ───────────────────────────────────────────────
 	var enemy_scene := preload("res://entities/enemies/EnemyPlaceholder.tscn")
