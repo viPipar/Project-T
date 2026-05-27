@@ -29,6 +29,12 @@ var _p1_ec  : EnergyChargeManager
 var _p2_ss  : SpellSlotManager
 var _mana   : ManaConverter
 
+# ── Dice Overlay ──────────────────────────────────────────────────────────────
+var _overlay: CombatDiceOverlay
+
+# Flag blok input selama animasi berlangsung
+var _input_blocked: bool = false
+
 
 func _ready() -> void:
 	await get_tree().process_frame
@@ -69,6 +75,12 @@ func _setup_combat_core() -> void:
 	_mana = ManaConverter.new(); add_child(_mana)
 	_mana.setup(_p1_ec, _p2_ss)
 
+	# ── Dice Overlay (CanvasLayer, ditambahkan ke root scene tree) ─────────────
+	var overlay_scene := preload("res://combat_core/ui/CombatDiceOverlay.tscn")
+	_overlay = overlay_scene.instantiate() as CombatDiceOverlay
+	# Tambah ke root agar muncul di atas semua layer (termasuk AttackCam)
+	get_tree().root.add_child.call_deferred(_overlay)
+
 	print("[CombatTestBridge] Combat core systems ready ✅")
 
 
@@ -94,13 +106,21 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 	if attacker == null or target == null:
 		return
 
-	print("\n[COMBAT] ────────────────────────────")
-	print("[COMBAT] %s → menyerang → %s" % [
-		attacker.get("char_name") if attacker.get("char_name") else attacker.name,
-		target.get("enemy_name")  if target.get("enemy_name")  else target.name
-	])
+	# Blok jika animasi sedang berjalan (cegah spam serangan)
+	if _input_blocked:
+		print("[COMBAT] ⚠️ Animasi sedang berjalan — input diblok")
+		return
 
-	# Resolve Hit/Crit
+	_input_blocked = true
+	EventBus.combat_input_blocked.emit(true)
+
+	var attacker_name: String = attacker.get("char_name") if attacker.get("char_name") else attacker.name
+	var target_name:   String = target.get("enemy_name")  if target.get("enemy_name")  else target.name
+
+	print("\n[COMBAT] ────────────────────────────")
+	print("[COMBAT] %s → menyerang → %s" % [attacker_name, target_name])
+
+	# ── Resolve Hit/Crit (logika tidak berubah) ───────────────────────────────
 	var result        := _crit_resolver.resolve_with_crit(attacker, target, false)
 	var raw    : int   = result["raw_roll"]
 	var total  : int   = result["roll"]
@@ -110,30 +130,55 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 
 	print("[COMBAT] D20: %d (raw) + modifier → %d  vs  Armor: %d" % [raw, total, thresh])
 
-	if not hit:
-		print("[COMBAT] 💨 MISS!")
-		print("[COMBAT] ────────────────────────────")
-		return
-
-	# Roll damage
+	# ── Siapkan data damage (diroll di sini, tapi diapply SETELAH animasi) ────
 	var dmg_formula := "1D8"
-	var dmg         : int
-	if crit:
-		dmg = _dice_roller.roll_crit(dmg_formula)
-		print("[COMBAT] 💥 CRITICAL HIT! Damage (%s × 2) = %d" % [dmg_formula, dmg])
-	else:
-		dmg = _dice_roller.roll_from_string(dmg_formula)
-		print("[COMBAT] ⚔️  HIT! Damage (%s) = %d" % [dmg_formula, dmg])
+	var dmg_rolls   : Array[int] = []
+	var dmg_total   : int = 0
 
-	# Apply damage ke target
-	if target.has_method("take_damage"):
-		target.take_damage(dmg)
-	else:
-		print("[COMBAT] ⚠️  Target tidak punya take_damage() — damage tidak di-apply")
+	if hit:
+		# Roll detail: ambil Array tiap dadu agar bisa divisualisasikan satu per satu
+		var base_detail := _dice_roller.roll_detailed(dmg_formula)
+		dmg_rolls = base_detail["rolls"]
+		dmg_total = base_detail["total"]
 
-	# Emit ke EventBus untuk HUD/sistem lain
-	EventBus.damage_dealt.emit(target, dmg, "physical", crit)
+		if crit:
+			# Crit = dadu ganda: tambah satu set lagi
+			var extra_detail := _dice_roller.roll_detailed(dmg_formula)
+			for r: int in extra_detail["rolls"]:
+				dmg_rolls.append(r)
+				dmg_total += r
+			print("[COMBAT] 💥 CRITICAL HIT! Damage (%s × 2) = %d" % [dmg_formula, dmg_total])
+		else:
+			print("[COMBAT] ⚔️  HIT! Damage (%s) = %d" % [dmg_formula, dmg_total])
+	else:
+		print("[COMBAT] 💨 MISS!")
+
 	print("[COMBAT] ────────────────────────────")
+
+	# ── Jalankan animasi overlay (AWAIT — blok sampai selesai) ────────────────
+	if _overlay != null:
+		await _overlay.play_attack_sequence(
+			attacker, target,
+			result,
+			dmg_rolls,
+			dmg_total,
+			dmg_formula
+		)
+	else:
+		# Fallback jika overlay gagal load — langsung apply damage tanpa animasi
+		push_warning("[CombatTestBridge] Overlay null! Langsung apply damage.")
+		await get_tree().process_frame
+
+	# ── Apply damage ke target SETELAH animasi selesai ───────────────────────
+	if hit:
+		if target.has_method("take_damage"):
+			target.take_damage(dmg_total)
+		else:
+			print("[COMBAT] ⚠️  Target tidak punya take_damage() — damage tidak di-apply")
+		EventBus.damage_dealt.emit(target, dmg_total, "physical", crit)
+
+	_input_blocked = false
+	EventBus.combat_input_blocked.emit(false)
 
 
 # ── PHASE TRACKING ────────────────────────────────────────────────────────────
@@ -184,6 +229,9 @@ func _on_enemy_turn_started(enemy: Node) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not (event is InputEventKey and event.pressed and not event.echo):
+		return
+	# Blok semua debug input juga saat animasi berjalan
+	if _input_blocked:
 		return
 	match event.keycode:
 		KEY_F5:

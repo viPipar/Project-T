@@ -18,9 +18,10 @@ extends CharacterBody2D
 
 var anim_sprite: AnimatedSprite2D
 
-var _facing:  String   = "down"
-var grid_pos: Vector2i = Vector2i.ZERO
-var _cursor:  Node2D   = null
+var _facing:         String   = "down"
+var grid_pos:        Vector2i = Vector2i.ZERO
+var _cursor:         Node2D   = null
+var _combat_blocked: bool     = false  # true saat animasi dice sedang berjalan
 
 const INSECT1_DIR := "res://assets/characters/insect1_placeholder"
 const INSECT2_DIR := "res://assets/characters/insect2_placeholder"
@@ -36,6 +37,9 @@ func _ready() -> void:
 
 	movement.move_finished.connect(_on_move_finished)
 	movement.step_started.connect(_on_step_started)
+
+	# Subscribe ke sinyal blok input dari CombatTestBridge via EventBus
+	EventBus.combat_input_blocked.connect(_on_combat_input_blocked)
 
 
 func _process(_delta: float) -> void:
@@ -64,6 +68,8 @@ func _process(_delta: float) -> void:
 func _on_confirm() -> void:
 	if movement._is_moving:
 		return  # don't queue new move while animating
+	if _combat_blocked:
+		return  # animasi dice sedang berjalan
 
 	var target: Vector2i = Vector2i(-1, -1)
 	if _cursor != null and _cursor.has_method("get_hovered_tile"):
@@ -127,6 +133,10 @@ func _on_move_finished(from: Vector2i, to: Vector2i) -> void:
 
 func _on_step_started(from: Vector2i, to: Vector2i) -> void:
 	_update_facing_from_to(from, to)
+
+
+func _on_combat_input_blocked(blocked: bool) -> void:
+	_combat_blocked = blocked
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
