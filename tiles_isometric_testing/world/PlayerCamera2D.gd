@@ -34,6 +34,7 @@ var _origin: Vector2 = Vector2.ZERO
 
 
 func _ready() -> void:
+	process_priority = -10
 	_origin = position
 	_target_pos = position
 	# Nonaktifkan dulu — SplitScreenManager yang akan make_current()

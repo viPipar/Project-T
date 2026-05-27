@@ -22,6 +22,10 @@ var _player_cache: Node = null
 var camera_ref: Camera2D = null
 
 
+func _ready() -> void:
+	process_priority = 10
+
+
 func get_hovered_tile() -> Vector2i:
 	return hovered_tile
 
@@ -51,8 +55,8 @@ func _update_hovered_tile() -> void:
 	elif clamp_to_range and not _is_tile_allowed(grid_pos, player):
 		target = _get_fallback_tile(player)
 
-	if target.x >= 0 and target != grid_pos:
-		global_position = IsoUtils.world_to_iso(target)
+	# JANGAN pernah ubah global_position visual agar dia tetap di tengah persis!
+	# global_position = IsoUtils.world_to_iso(target)
 
 	if target != hovered_tile:
 		hovered_tile = target
