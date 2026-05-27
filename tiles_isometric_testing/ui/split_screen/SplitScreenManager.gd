@@ -21,8 +21,12 @@ var _cam_p2                : PlayerCamera2D
 var _world_node            : Node2D  # disimpan saat setup() dipanggil
 
 # ── Public API ────────────────────────────────────────────────────────────────
-var cam_p1: PlayerCamera2D: get: return _cam_p1
-var cam_p2: PlayerCamera2D: get: return _cam_p2
+var cam_p1: PlayerCamera2D:
+	get:
+		return _cam_p1
+var cam_p2: PlayerCamera2D:
+	get:
+		return _cam_p2
 
 
 func _ready() -> void:
