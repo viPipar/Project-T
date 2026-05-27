@@ -160,16 +160,15 @@ func _attach_cameras_to_world(world_node: Node2D) -> void:
 func _activate_cameras() -> void:
 	# Set posisi awal kamera (tengah map, sama dengan nilai yang ada di Main.tscn)
 	var start_pos := Vector2(0, 488)  # Nilai default dari Main.tscn
-	_cam_p1.position    = start_pos
-	_cam_p1._target_pos = start_pos
-	_cam_p1._origin     = start_pos
-	_cam_p1.enabled     = true
+
+	_cam_p1.set_target(start_pos)
+	_cam_p1.position = start_pos
+	_cam_p1.enabled  = true
 	_cam_p1.make_current()
 
-	_cam_p2.position    = start_pos
-	_cam_p2._target_pos = start_pos
-	_cam_p2._origin     = start_pos
-	_cam_p2.enabled     = true
+	_cam_p2.set_target(start_pos)
+	_cam_p2.position = start_pos
+	_cam_p2.enabled  = true
 	_cam_p2.make_current()
 
 	print("[SplitScreenManager] P1 Cam & P2 Cam aktif, shared World2D ✅")

@@ -254,8 +254,8 @@ func _on_enemy_turn_started(enemy: Node) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not (event is InputEventKey and event.pressed and not event.echo):
 		return
-	# Blok semua debug input juga saat animasi berjalan
-	if _input_blocked:
+	# Blok semua debug input juga saat kedua player animasi berjalan
+	if _p1_busy and _p2_busy:
 		return
 	match event.keycode:
 		KEY_F5:

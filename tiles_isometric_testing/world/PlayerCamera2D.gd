@@ -51,11 +51,13 @@ func _process(delta: float) -> void:
 func _handle_pan_input(delta: float) -> void:
 	var dir := Vector2.ZERO
 
-	# Baca input pan dari arah cursor player ini
-	if InputManager.is_pressed(player_id, "move_right"): dir.x += 1.0
-	if InputManager.is_pressed(player_id, "move_left"):  dir.x -= 1.0
-	if InputManager.is_pressed(player_id, "move_down"):  dir.y += 1.0
-	if InputManager.is_pressed(player_id, "move_up"):    dir.y -= 1.0
+	# Pakai raw Input — kamera pan tidak diblok oleh InputManager
+	# (player tetap bisa pan kamera meskipun animasi dice sedang berjalan)
+	var prefix := "p%d_" % player_id
+	if Input.is_action_pressed(prefix + "move_right"): dir.x += 1.0
+	if Input.is_action_pressed(prefix + "move_left"):  dir.x -= 1.0
+	if Input.is_action_pressed(prefix + "move_down"):  dir.y += 1.0
+	if Input.is_action_pressed(prefix + "move_up"):    dir.y -= 1.0
 
 	if dir != Vector2.ZERO:
 		_target_pos += dir.normalized() * pan_speed * delta
