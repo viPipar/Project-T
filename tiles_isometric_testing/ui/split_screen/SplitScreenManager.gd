@@ -18,6 +18,7 @@ var _p1_viewport           : SubViewport
 var _p2_viewport           : SubViewport
 var _cam_p1                : PlayerCamera2D
 var _cam_p2                : PlayerCamera2D
+var _world_node            : Node2D  # disimpan saat setup() dipanggil
 
 # ── Public API ────────────────────────────────────────────────────────────────
 var cam_p1: PlayerCamera2D: get: return _cam_p1
@@ -26,13 +27,21 @@ var cam_p2: PlayerCamera2D: get: return _cam_p2
 
 func _ready() -> void:
 	layer = 0  # Di bawah DebugUI (layer 20) tapi di atas 2D world
+	# Jika world_node sudah disimpan sebelum _ready() (dari setup() dini), init sekarang
+	if _world_node != null:
+		_build_layout()
+		_attach_cameras(_world_node)
+		print("[SplitScreenManager] Split-screen ready ✅")
 
 
-## Entry point — panggil dari main.gd setelah add_child(SplitScreenManager)
+## Entry point — boleh dipanggil sebelum atau sesudah add_child
 func setup(world_node: Node2D) -> void:
-	_build_layout()
-	_attach_cameras(world_node)
-	print("[SplitScreenManager] Split-screen ready ✅")
+	_world_node = world_node
+	# Jika sudah di dalam tree, langsung build. Jika belum, _ready() yang akan build.
+	if is_inside_tree():
+		_build_layout()
+		_attach_cameras(world_node)
+		print("[SplitScreenManager] Split-screen ready ✅")
 
 
 # ─────────────────────────────────────────────────────────────────────────────

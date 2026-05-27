@@ -101,24 +101,22 @@ func _ready() -> void:
 
 
 func _setup_split_screen() -> void:
-	# Nonaktifkan Camera2D lama di World — biarkan node-nya ada dulu
-	# (biar World._ready() sudah ambil ref-nya via get_node_or_null)
+	# Nonaktifkan Camera2D lama di World
 	var old_cam := world.get_node_or_null("Camera2D")
 	if old_cam != null:
 		(old_cam as Camera2D).enabled = false
 		print("[Main] Camera2D lama dinonaktifkan — split-screen akan handle rendering")
 
-	# Buat SplitScreenManager (extends CanvasLayer, layer=0)
+	# Buat SplitScreenManager (extends CanvasLayer)
 	_split_screen = SplitScreenManager.new()
 	_split_screen.name = "SplitScreenManager"
-	add_child(_split_screen)
-	# layer CanvasLayer diatur di dalam class (layer=0)
-	# DebugUI punya layer=20, jadi split-screen ada di bawahnya
 
-	# Setup: bangun SubViewports + Cameras + share World2D
-	_split_screen.setup(world)
+	# Simpan world ref SEBELUM add_child — saat _ready() dipanggil otomatis,
+	# SplitScreenManager akan build layout di sana (is_inside_tree() = true)
+	_split_screen.setup(world)  # simpan ref, build terjadi di _ready()
+	add_child(_split_screen)    # trigger _ready() → _build_layout() + _attach_cameras()
 
-	# Hapus Camera2D lama dari scene tree setelah split-screen siap
+	# Hapus Camera2D lama setelah split-screen siap
 	if old_cam != null and is_instance_valid(old_cam):
 		old_cam.queue_free()
 		print("[Main] Camera2D lama dihapus ✅")
