@@ -18,6 +18,12 @@ var hovered_tile: Vector2i = Vector2i(-1, -1)
 var _tile_valid: bool = false
 var _last_valid_tile: Vector2i = Vector2i(-1, -1)
 var _player_cache: Node = null
+# Referensi ke PlayerCamera2D — di-set oleh main.gd setelah split-screen setup
+var camera_ref: Camera2D = null
+
+
+func _ready() -> void:
+	process_priority = 10
 
 
 func get_hovered_tile() -> Vector2i:
@@ -30,21 +36,12 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
-func _move_cursor(delta: float) -> void:
-	var move := Vector2.ZERO
-	if InputManager.is_pressed(player_id, "move_right"): move.x += 1.0
-	if InputManager.is_pressed(player_id, "move_left"):  move.x -= 1.0
-	if InputManager.is_pressed(player_id, "move_down"):  move.y += 1.0
-	if InputManager.is_pressed(player_id, "move_up"):    move.y -= 1.0
-
-	if move != Vector2.ZERO:
-		global_position += move.normalized() * move_speed * delta
-
-	# Optional safety clamp to keep cursor near the map center (0 = unlimited)
-	if max_distance_from_center > 0.0:
-		var center_px = IsoUtils.world_to_iso(_get_center_tile())
-		if global_position.distance_to(center_px) > max_distance_from_center:
-			global_position = center_px
+func _move_cursor(_delta: float) -> void:
+	# BG3-style: cursor SELALU di tengah viewport (posisi kamera).
+	# Kamera yang pan mengikuti input — cursor hanya mengikuti kamera.
+	if camera_ref != null and is_instance_valid(camera_ref):
+		global_position = camera_ref.global_position
+	# Jika belum ada camera_ref, biarkan di posisi terakhir
 
 
 func _update_hovered_tile() -> void:
@@ -58,8 +55,8 @@ func _update_hovered_tile() -> void:
 	elif clamp_to_range and not _is_tile_allowed(grid_pos, player):
 		target = _get_fallback_tile(player)
 
-	if target.x >= 0 and target != grid_pos:
-		global_position = IsoUtils.world_to_iso(target)
+	# JANGAN pernah ubah global_position visual agar dia tetap di tengah persis!
+	# global_position = IsoUtils.world_to_iso(target)
 
 	if target != hovered_tile:
 		hovered_tile = target

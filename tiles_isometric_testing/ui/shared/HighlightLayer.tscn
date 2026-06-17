@@ -36,6 +36,28 @@
 [ext_resource type="Texture2D" uid="uid://xq1ot8o1mugn" path="res://assets/tiles/panah p2/5.png" id="26_bel0l"]
 [ext_resource type="Texture2D" uid="uid://bpn1k5o4qjae2" path="res://assets/tiles/TileHighlightTransparent.png" id="28_1honq"]
 
+[sub_resource type="SpriteFrames" id="SF_move_p1"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_red")
+}],
+"loop": true,
+"name": &"move",
+"speed": 5.0
+}]
+
+[sub_resource type="SpriteFrames" id="SF_move_p2"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_blue")
+}],
+"loop": true,
+"name": &"move",
+"speed": 5.0
+}]
+
 [sub_resource type="SpriteFrames" id="SF_move"]
 animations = [{
 "frames": [{
@@ -514,6 +536,22 @@ visible = false
 texture_filter = 1
 scale = Vector2(8, 8)
 sprite_frames = SubResource("SF_move")
+animation = &"move"
+autoplay = "move"
+
+[node name="MoveP1Highlight" type="AnimatedSprite2D" parent="."]
+visible = false
+texture_filter = 1
+scale = Vector2(8, 8)
+sprite_frames = SubResource("SF_move_p1")
+animation = &"move"
+autoplay = "move"
+
+[node name="MoveP2Highlight" type="AnimatedSprite2D" parent="."]
+visible = false
+texture_filter = 1
+scale = Vector2(8, 8)
+sprite_frames = SubResource("SF_move_p2")
 animation = &"move"
 autoplay = "move"
 

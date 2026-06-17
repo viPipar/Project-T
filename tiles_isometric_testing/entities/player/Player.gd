@@ -36,6 +36,7 @@ var anim_sprite: AnimatedSprite2D
 var _facing:  String   = "down"
 var grid_pos: Vector2i = Vector2i.ZERO
 var _cursor:  Node2D   = null
+# Tidak ada _combat_blocked lokal — InputManager.set_player_blocked() yang handle
 
 const INSECT1_DIR := "res://assets/characters/insect1_placeholder"
 const INSECT2_DIR := "res://assets/characters/insect2_placeholder"
@@ -54,6 +55,9 @@ func _ready() -> void:
 	if health != null and not health.died.is_connected(_on_died):
 		health.died.connect(_on_died)
 
+	# Subscribe ke sinyal blok input dari CombatTestBridge via EventBus
+	EventBus.combat_input_blocked.connect(_on_combat_input_blocked)
+
 
 func _process(_delta: float) -> void:
 	# Update facing from cursor hover, but only when not mid-travel
@@ -65,11 +69,20 @@ func _process(_delta: float) -> void:
 	_play_facing_anim()
 	_apply_facing_flip()
 	
-	if InputManager.is_end_turn_pressed(player_id):
-		if not movement._is_moving:
-			if TurnManager != null:
-				TurnManager.request_end_turn(player_id)
+	# ── END TURN / CANCEL ──────────────────────────────────────────────────────
+	var end_turn_action := "p%d_end_turn" % player_id
+	if Input.is_action_just_pressed(end_turn_action):
+		if TurnManager != null and TurnManager.is_player_ended(player_id):
+			# Player sudah end turn → tekan lagi = CANCEL
+			if TurnManager.phase == TurnManager.Phase.PLAYERS:
+				TurnManager.cancel_end_turn(player_id)
+		elif not movement._is_moving:
+			# Player belum end turn → end turn normal
+			if InputManager.is_end_turn_pressed(player_id):
+				if TurnManager != null:
+					TurnManager.request_end_turn(player_id)
 		return
+
 
 	if InputManager.is_confirm_pressed(player_id):
 		_on_confirm()
@@ -81,6 +94,7 @@ func _process(_delta: float) -> void:
 func _on_confirm() -> void:
 	if movement._is_moving:
 		return  # don't queue new move while animating
+	# Blok dicek via InputManager (is_confirm_pressed sudah cek _player_blocked di sana)
 
 	var target: Vector2i = Vector2i(-1, -1)
 	if _cursor != null and _cursor.has_method("get_hovered_tile"):
@@ -144,6 +158,12 @@ func _on_move_finished(from: Vector2i, to: Vector2i) -> void:
 
 func _on_step_started(from: Vector2i, to: Vector2i) -> void:
 	_update_facing_from_to(from, to)
+
+
+## Dipanggil saat combat_input_blocked signal diterima dari EventBus.
+## Player hanya peduli jika player_id-nya yang diblok.
+func _on_combat_input_blocked(blocked_player_id: int, _blocked: bool) -> void:
+	pass  # InputManager.set_player_blocked() sudah dipanggil oleh CombatTestBridge
 
 
 # ── Public API ────────────────────────────────────────────────────────────────

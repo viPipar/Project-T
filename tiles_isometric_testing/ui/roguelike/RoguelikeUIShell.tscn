@@ -1,0 +1,61 @@
+[gd_scene load_steps=2 format=3 uid="uid://roguelike_shell_id"]
+
+[ext_resource type="Script" path="res://ui/roguelike/RoguelikeUIShell.gd" id="1_script"]
+
+[node name="RoguelikeUIShell" type="CanvasLayer"]
+layer = 100
+script = ExtResource("1_script")
+
+[node name="Container" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Background" type="ColorRect" parent="Container"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.85)
+
+[node name="Header" type="HBoxContainer" parent="Container"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 50.0
+grow_horizontal = 2
+alignment = 1
+
+[node name="P1Wallet" type="Label" parent="Container/Header"]
+layout_mode = 2
+text = "P1: 0 Coins"
+
+[node name="Spacer" type="Control" parent="Container/Header"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Container/Header"]
+layout_mode = 2
+text = "ROGUELIKE MENU"
+
+[node name="Spacer2" type="Control" parent="Container/Header"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+
+[node name="P2Wallet" type="Label" parent="Container/Header"]
+layout_mode = 2
+text = "P2: 0 Coins"
+
+[node name="ScreenContainer" type="Control" parent="Container"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 60.0
+grow_horizontal = 2
+grow_vertical = 2

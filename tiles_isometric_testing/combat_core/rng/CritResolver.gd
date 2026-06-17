@@ -9,9 +9,12 @@ signal crit_occurred(attacker: Node, raw_roll: int, threshold: int)
 
 # DuckTyped stat provider
 var _stat_provider  # MockStatProvider atau sistem nyata
+var _dice: DiceRoller
 
 func _ready() -> void:
-	pass
+	# Pakai DiceRoller agar konsisten dengan sistem RNG lainnya
+	_dice = DiceRoller.new()
+	add_child(_dice)
 
 
 ## Setup dependency
@@ -58,7 +61,7 @@ func resolve_with_crit(attacker: Node, target: Node, is_magical: bool = false) -
 	else:
 		hit_threshold = _stat_provider.get_armor(target)
 
-	var raw_roll   := randi_range(1, 20)
+	var raw_roll   := _dice.d20()  # FIX: pakai DiceRoller, bukan randi_range langsung
 	var total_roll := raw_roll + modifier
 	var crit       := raw_roll >= crit_threshold
 	var hit        := total_roll >= hit_threshold or crit  # crit selalu hit

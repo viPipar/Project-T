@@ -19,22 +19,45 @@ extends Node2D
 @onready var debug_tooltip: Label = $DebugUI/Root/DebugTooltip
 @onready var ui_root: Control = $DebugUI/Root
 
-var _show_debug_panel: bool = false
+var _show_debug_panel:  bool = false
 var _show_dice_sandbox: bool = false
-var _show_debug_grid: bool = false
+var _show_debug_grid:   bool = false
+var _split_screen: SplitScreenManager = null
+var _stat_debug_panel: StatDebugPanel = null  # Debug stat manipulator (F1)
+var roguelike_ui_shell: CanvasLayer = null
 
 func _ready() -> void:
 	var cursor_scene := preload("res://world/SelectionCursor.tscn")
 	
+	# Instantiate Roguelike UI early
+	var shell_scene = load("res://ui/roguelike/RoguelikeUIShell.tscn")
+	if shell_scene:
+		roguelike_ui_shell = shell_scene.instantiate()
+		add_child(roguelike_ui_shell)
 
-	GridManager.load_walls_for_map(1) #manggil mapping
-	
+	GridManager.load_walls_for_map(1) # manggil mapping
+
+	# ── Setup Split-Screen ────────────────────────────────────────────────────
+	_setup_split_screen()
+
+	# ── Spawn Player 1 ────────────────────────────────────────────────────────
 	var p1: Node = _spawn_player_from_json("aria", "Aria", 1, Vector2i(5, 7))
+
+	# ── Spawn Player 2 ────────────────────────────────────────────────────────
 	var p2: Node = _spawn_player_from_json("kael", "Kael", 2, Vector2i(7, 7))
+
+	var p1_class := p1.get_node_or_null("ClassComponent") as ClassComponent
+	if p1_class != null:
+		p1_class.set_primary_class("slayer")
+
+	var p2_class := p2.get_node_or_null("ClassComponent") as ClassComponent
+	if p2_class != null:
+		p2_class.set_primary_class("scholar")
 
 	TurnManager.register_player(p1)
 	TurnManager.register_player(p2)
 
+	# ── Spawn Selection Cursor ────────────────────────────────────────────────
 	var c1 = cursor_scene.instantiate()
 	var c2 = cursor_scene.instantiate()
 	world.entities.add_child(c1)
@@ -42,6 +65,7 @@ func _ready() -> void:
 	c1.bind(p1)
 	c2.bind(p2)
 
+	# ── Spawn Keyboard Cursors ────────────────────────────────────────────────
 	var kb_cursor_p1 := Node2D.new()
 	kb_cursor_p1.name = "KeyboardTileCursor_P1"
 	kb_cursor_p1.set_script(load("res://world/KeyboardTileCursor.gd"))
@@ -58,17 +82,28 @@ func _ready() -> void:
 	kb_cursor_p2.global_position = p2.position
 	p2.bind_cursor(kb_cursor_p2)
 
+	# ── Fokus kamera ke posisi spawn + bind camera_ref ke cursor ────────────
+	if _split_screen != null:
+		_split_screen.focus_camera(1, p1.position)
+		_split_screen.focus_camera(2, p2.position)
+		# Bind camera ke cursor agar cursor selalu terkunci di tengah viewport
+		kb_cursor_p1.set("camera_ref", _split_screen.cam_p1)
+		kb_cursor_p2.set("camera_ref", _split_screen.cam_p2)
+
 	# ── Spawn enemy placeholder untuk testing combat_core ─────────────────────
 	_spawn_enemy_from_json("goblin", "Goblin", Vector2i(5, 5), Color(0.3, 0.9, 0.3, 1.0))
 	_spawn_enemy_from_json("orc", "Orc", Vector2i(8, 5), Color(0.9, 0.4, 0.1, 1.0))
 
-	# ── CombatTestBridge: hubungkan combat_core ke scene ini ──────────────────
+	# ── CombatTestBridge ──────────────────────────────────────────────────────
 	var bridge := Node.new()
 	bridge.name = "CombatTestBridge"
 	bridge.set_script(load("res://combat_core/tests/CombatTestBridge.gd"))
 	add_child(bridge)
 
 	TurnManager.start_battle()
+
+	# ── Stat Debug Panel ─────────────────────────────────────────────────────
+	_spawn_stat_debug_panel()
 
 	_apply_debug_visibility()
 
@@ -109,15 +144,59 @@ func _spawn_enemy_from_json(
 	return enemy
 
 
+func _spawn_stat_debug_panel() -> void:
+	var panel_scene := load("res://combat_core/debug/StatDebugPanel.tscn")
+	if panel_scene == null:
+		push_warning("[Main] StatDebugPanel.tscn tidak ditemukan!")
+		return
+	_stat_debug_panel = panel_scene.instantiate() as StatDebugPanel
+	_stat_debug_panel.name = "StatDebugPanel"
+	# Tambah ke DebugUI/Root agar ikut layer yang benar
+	if ui_root != null:
+		ui_root.add_child(_stat_debug_panel)
+	else:
+		add_child(_stat_debug_panel)
+	_stat_debug_panel.visible = false
+	print("[Main] StatDebugPanel siap — tekan F1 untuk toggle ✅")
+
+
+# ── SPLIT-SCREEN SETUP ───────────────────────────────────────────────────────
+
+func _setup_split_screen() -> void:
+	# Nonaktifkan Camera2D lama di World
+	var old_cam := world.get_node_or_null("Camera2D")
+	if old_cam != null:
+		(old_cam as Camera2D).enabled = false
+		print("[Main] Camera2D lama dinonaktifkan — split-screen akan handle rendering")
+
+	# Buat SplitScreenManager (extends CanvasLayer)
+	_split_screen = SplitScreenManager.new()
+	_split_screen.name = "SplitScreenManager"
+
+	# Simpan world ref SEBELUM add_child — _ready() SplitScreenManager
+	# akan build layout saat is_inside_tree() = true
+	_split_screen.setup(world)   # simpan ref
+	add_child(_split_screen)     # trigger _ready() → _build_layout() + _attach_cameras()
+
+	# Hapus Camera2D lama setelah split-screen siap
+	if old_cam != null and is_instance_valid(old_cam):
+		old_cam.queue_free()
+		print("[Main] Camera2D lama dihapus ✅")
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		match event.keycode:
 			KEY_F1:
 				_show_debug_panel = not _show_debug_panel
+				debug_panel.visible = _show_debug_panel
 			KEY_F2:
 				_show_dice_sandbox = not _show_dice_sandbox
 			KEY_F3:
 				_show_debug_grid = not _show_debug_grid
+			KEY_F4:
+				if roguelike_ui_shell:
+					roguelike_ui_shell.toggle()
 			_:
 				return
 		_apply_debug_visibility()
@@ -130,6 +209,10 @@ func _apply_debug_visibility() -> void:
 		dice_sandbox.visible = _show_dice_sandbox
 	if debug_tooltip != null:
 		debug_tooltip.visible = true
+	if _stat_debug_panel != null:
+		_stat_debug_panel.visible = _show_debug_panel  # ikut F1
+		if _show_debug_panel:
+			_stat_debug_panel._refresh_all()  # paksa refresh saat panel dibuka
 	if world != null and world.has_method("set_debug_grid_visible"):
 		world.set_debug_grid_visible(_show_debug_grid)
 	var autoload_debug := get_node_or_null("/root/DebugGrid")

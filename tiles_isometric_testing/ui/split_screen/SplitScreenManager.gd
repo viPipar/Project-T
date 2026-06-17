@@ -1,0 +1,254 @@
+# ui/split_screen/SplitScreenManager.gd
+# ─────────────────────────────────────────────────────────────────────────────
+# SplitScreenManager (CanvasLayer-based)
+#
+# Mengelola layout split-screen BG3-style:
+#   - Layer CanvasLayer menutup root viewport (yang render world tanpa kamera)
+#   - Dua SubViewportContainer side-by-side mengisi layar penuh
+#   - Tiap SubViewport berbagi World2D yang sama dari root
+#   - Tiap SubViewport punya Camera2D sendiri (P1 kiri, P2 kanan)
+# ─────────────────────────────────────────────────────────────────────────────
+class_name SplitScreenManager
+extends CanvasLayer   # ← PENTING: CanvasLayer, bukan Control
+
+# ── Node refs ────────────────────────────────────────────────────────────────
+var _p1_viewport_container : SubViewportContainer
+var _p2_viewport_container : SubViewportContainer
+var _p1_viewport           : SubViewport
+var _p2_viewport           : SubViewport
+var _cam_p1                : PlayerCamera2D
+var _cam_p2                : PlayerCamera2D
+var _world_node            : Node2D
+
+# ── End-turn overlay per player ───────────────────────────────────────────────
+var _p1_end_overlay : ColorRect = null
+var _p2_end_overlay : ColorRect = null
+var _p1_end_label   : Label    = null
+var _p2_end_label   : Label    = null
+
+# ── Public API ────────────────────────────────────────────────────────────────
+var cam_p1: PlayerCamera2D:
+	get:
+		return _cam_p1
+var cam_p2: PlayerCamera2D:
+	get:
+		return _cam_p2
+
+
+func _ready() -> void:
+	layer = 0
+	if _world_node != null:
+		_build_layout()
+		_attach_cameras(_world_node)
+		_connect_turn_signals()
+		print("[SplitScreenManager] Split-screen ready")
+
+
+## Entry point — boleh dipanggil sebelum atau sesudah add_child
+func setup(world_node: Node2D) -> void:
+	_world_node = world_node
+	if is_inside_tree():
+		_build_layout()
+		_attach_cameras(world_node)
+		_connect_turn_signals()
+		print("[SplitScreenManager] Split-screen ready")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# INTERNAL
+# ─────────────────────────────────────────────────────────────────────────────
+
+func _build_layout() -> void:
+	# ── Background hitam: menutupi root viewport yang render world tanpa kamera ──
+	var bg := ColorRect.new()
+	bg.name  = "Background"
+	bg.color = Color(0.05, 0.05, 0.05, 1.0)
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(bg)
+
+	# ── HBoxContainer: dua viewport berdampingan mengisi layar penuh ────────────
+	var hbox := HBoxContainer.new()
+	hbox.name = "HBoxLayout"
+	hbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	hbox.add_theme_constant_override("separation", 0)
+	add_child(hbox)
+
+	# ── Viewport Kiri (P1) ──────────────────────────────────────────────────────
+	_p1_viewport_container = SubViewportContainer.new()
+	_p1_viewport_container.name                   = "P1ViewportContainer"
+	_p1_viewport_container.size_flags_horizontal  = Control.SIZE_EXPAND_FILL
+	_p1_viewport_container.size_flags_vertical    = Control.SIZE_EXPAND_FILL
+	_p1_viewport_container.stretch                = true
+	hbox.add_child(_p1_viewport_container)
+
+	_p1_viewport = SubViewport.new()
+	_p1_viewport.name               = "P1Viewport"
+	_p1_viewport.transparent_bg     = false
+	_p1_viewport.handle_input_locally = false
+	_p1_viewport_container.add_child(_p1_viewport)
+
+	# ── Viewport Kanan (P2) ─────────────────────────────────────────────────────
+	_p2_viewport_container = SubViewportContainer.new()
+	_p2_viewport_container.name                   = "P2ViewportContainer"
+	_p2_viewport_container.size_flags_horizontal  = Control.SIZE_EXPAND_FILL
+	_p2_viewport_container.size_flags_vertical    = Control.SIZE_EXPAND_FILL
+	_p2_viewport_container.stretch                = true
+	hbox.add_child(_p2_viewport_container)
+
+	_p2_viewport = SubViewport.new()
+	_p2_viewport.name               = "P2Viewport"
+	_p2_viewport.transparent_bg     = false
+	_p2_viewport.handle_input_locally = false
+	_p2_viewport_container.add_child(_p2_viewport)
+
+	# ── Garis pembatas 2px di tengah ────────────────────────────────────────────
+	var divider := ColorRect.new()
+	divider.name         = "CenterDivider"
+	divider.color        = Color(0.0, 0.0, 0.0, 1.0)
+	divider.anchor_left  = 0.5
+	divider.anchor_right = 0.5
+	divider.anchor_top   = 0.0
+	divider.anchor_bottom = 1.0
+	divider.offset_left  = -1
+	divider.offset_right = 1
+	divider.offset_top   = 0
+	divider.offset_bottom = 0
+	add_child(divider)
+
+	# ── Label player tipis di pojok masing-masing viewport ──────────────────────
+	_add_player_label("P1  Fighter", 0.01, 0.01)
+	_add_player_label("P2  Wizard",  0.51, 0.01)
+
+	# ── End-turn overlay (awalnya tersembunyi) ────────────────────────────────
+	_p1_end_overlay = _make_end_overlay(0.0, 0.5, 1)  # kiri
+	_p2_end_overlay = _make_end_overlay(0.5, 1.0, 2)  # kanan
+	_p1_end_label   = _make_end_label(0.0, 0.5)
+	_p2_end_label   = _make_end_label(0.5, 1.0)
+	add_child(_p1_end_overlay)
+	add_child(_p2_end_overlay)
+	add_child(_p1_end_label)
+	add_child(_p2_end_label)
+
+
+func _add_player_label(text: String, anchor_left: float, anchor_top: float) -> void:
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.add_theme_font_size_override("font_size", 13)
+	lbl.add_theme_color_override("font_color", Color(1, 1, 1, 0.5))
+	lbl.anchor_left   = anchor_left
+	lbl.anchor_top    = anchor_top
+	lbl.anchor_right  = anchor_left
+	lbl.anchor_bottom = anchor_top
+	lbl.offset_left   = 10
+	lbl.offset_top    = 10
+	lbl.offset_right  = 200
+	lbl.offset_bottom = 30
+	add_child(lbl)
+
+
+func _make_end_overlay(al: float, ar: float, _pid: int) -> ColorRect:
+	var r := ColorRect.new()
+	r.color       = Color(0, 0, 0, 0)  # mulai transparan
+	r.anchor_left  = al
+	r.anchor_right = ar
+	r.anchor_top   = 0.0
+	r.anchor_bottom = 1.0
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return r
+
+
+func _make_end_label(al: float, ar: float) -> Label:
+	var lbl := Label.new()
+	lbl.text = "WAITING..."
+	lbl.add_theme_font_size_override("font_size", 18)
+	lbl.add_theme_color_override("font_color", Color(1, 1, 1, 0.9))
+	lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+	lbl.add_theme_constant_override("outline_size", 6)
+	lbl.anchor_left   = al
+	lbl.anchor_right  = ar
+	lbl.anchor_top    = 0.5
+	lbl.anchor_bottom = 0.5
+	lbl.offset_left   = 0
+	lbl.offset_right  = 0
+	lbl.offset_top    = -20
+	lbl.offset_bottom = 20
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+	lbl.modulate.a = 0.0
+	return lbl
+
+
+func _attach_cameras(world_node: Node2D) -> void:
+	# Bagikan World2D dari root agar kedua SubViewport merender objek yang sama
+	var shared_world := world_node.get_world_2d()
+	_p1_viewport.world_2d = shared_world
+	_p2_viewport.world_2d = shared_world
+
+	# Buat Camera P1 — ada di P1 SubViewport
+	_cam_p1 = PlayerCamera2D.new()
+	_cam_p1.name      = "Camera_P1"
+	_cam_p1.player_id = 1
+	_cam_p1.pan_speed = 600.0
+	_cam_p1.zoom      = Vector2(0.5, 0.5)
+	_p1_viewport.add_child(_cam_p1)
+
+	# Buat Camera P2 — ada di P2 SubViewport
+	_cam_p2 = PlayerCamera2D.new()
+	_cam_p2.name      = "Camera_P2"
+	_cam_p2.player_id = 2
+	_cam_p2.pan_speed = 600.0
+	_cam_p2.zoom      = Vector2(0.5, 0.5)
+	_p2_viewport.add_child(_cam_p2)
+
+	# Aktifkan kamera — posisi awal di tengah map (sama dengan Camera2D lama)
+	var start_pos := Vector2(0, 488)
+	_cam_p1.set_target(start_pos)
+	_cam_p1.position = start_pos
+	_cam_p1.enabled  = true
+	_cam_p1.make_current()
+
+	_cam_p2.set_target(start_pos)
+	_cam_p2.position = start_pos
+	_cam_p2.enabled  = true
+	_cam_p2.make_current()
+
+	print("[SplitScreenManager] Cameras aktif — shared World2D: ", shared_world)
+
+
+## Fokuskan kamera ke posisi world tertentu (dipanggil setelah spawn player)
+func focus_camera(player_id: int, world_position: Vector2) -> void:
+	if player_id == 1 and _cam_p1 != null:
+		_cam_p1.set_target(world_position)
+		_cam_p1.position = world_position
+	elif player_id == 2 and _cam_p2 != null:
+		_cam_p2.set_target(world_position)
+		_cam_p2.position = world_position
+
+
+# ── END-TURN OVERLAY ──────────────────────────────────────────────────────────
+
+func _connect_turn_signals() -> void:
+	if TurnManager == null:
+		return
+	if not TurnManager.player_end_state_changed.is_connected(_on_player_end_state):
+		TurnManager.player_end_state_changed.connect(_on_player_end_state)
+
+
+func _on_player_end_state(player_id: int, ended: bool) -> void:
+	var overlay : ColorRect = _p1_end_overlay if player_id == 1 else _p2_end_overlay
+	var lbl     : Label    = _p1_end_label   if player_id == 1 else _p2_end_label
+	if overlay == null or lbl == null:
+		return
+
+	if ended:
+		# Darken layar player yang sudah end turn
+		var cancel_key := "Q" if player_id == 1 else "U"
+		lbl.text = "End Turn\n[%s] Cancel" % cancel_key
+		var tw := create_tween().set_ease(Tween.EASE_OUT)
+		tw.tween_property(overlay, "color",     Color(0, 0, 0, 0.55), 0.35)
+		tw.parallel().tween_property(lbl, "modulate:a", 1.0,           0.35)
+	else:
+		# Cancel end turn — kembalikan layar normal
+		var tw := create_tween().set_ease(Tween.EASE_IN)
+		tw.tween_property(overlay, "color",     Color(0, 0, 0, 0),    0.25)
+		tw.parallel().tween_property(lbl, "modulate:a", 0.0,           0.25)

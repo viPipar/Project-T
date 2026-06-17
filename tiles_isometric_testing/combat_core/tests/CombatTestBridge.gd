@@ -42,6 +42,14 @@ var _p1_ec  : EnergyChargeManager
 var _p2_ss  : SpellSlotManager
 var _mana   : ManaConverter
 
+# ── Dice Overlay (satu per player) ──────────────────────────────────────────
+var _overlay_p1: CombatDiceOverlay
+var _overlay_p2: CombatDiceOverlay
+
+# Per-player block flag (terpisah dari InputManager untuk tracking internal)
+var _p1_busy: bool = false
+var _p2_busy: bool = false
+
 
 func _ready() -> void:
 	await get_tree().process_frame
@@ -85,6 +93,20 @@ func _setup_combat_core() -> void:
 	_mana = ManaConverter.new(); add_child(_mana)
 	_mana.setup(_p1_ec, _p2_ss)
 
+	# ── Dice Overlay — instansiate 2 (satu untuk kiri/P1, satu untuk kanan/P2) ──
+	var overlay_scene := preload("res://combat_core/ui/CombatDiceOverlay.tscn")
+
+	_overlay_p1 = overlay_scene.instantiate() as CombatDiceOverlay
+	_overlay_p1.player_id = 1
+	get_tree().root.add_child.call_deferred(_overlay_p1)
+
+	_overlay_p2 = overlay_scene.instantiate() as CombatDiceOverlay
+	_overlay_p2.player_id = 2
+	get_tree().root.add_child.call_deferred(_overlay_p2)
+
+	# Subscribe ke EventBus untuk sync InputManager
+	EventBus.combat_input_blocked.connect(_on_combat_input_blocked)
+
 	print("[CombatTestBridge] Combat core systems ready ✅")
 
 
@@ -110,13 +132,30 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 	if attacker == null or target == null:
 		return
 
-	print("\n[COMBAT] ────────────────────────────")
-	print("[COMBAT] %s → menyerang → %s" % [
-		attacker.get("char_name") if attacker.get("char_name") else attacker.name,
-		target.get("enemy_name")  if target.get("enemy_name")  else target.name
-	])
+	# Tentukan player_id penyerang
+	var _pid_raw: Variant = attacker.get("player_id")
+	var pid: int = int(_pid_raw) if _pid_raw != null else 1
 
-	# Resolve Hit/Crit
+	# Blok jika animasi player ini sedang berjalan (cegah spam serangan)
+	var is_busy := _p1_busy if pid == 1 else _p2_busy
+	if is_busy:
+		print("[COMBAT] ⚠️ P%d — Animasi sedang berjalan, input diblok" % pid)
+		return
+
+	# Set busy & blok input hanya untuk player ini
+	if pid == 1: _p1_busy = true
+	else:         _p2_busy = true
+	EventBus.combat_input_blocked.emit(pid, true)
+
+	var _aname_raw: Variant = attacker.get("char_name")
+	var _tname_raw: Variant = target.get("enemy_name")
+	var attacker_name: String = str(_aname_raw) if _aname_raw != null else attacker.name
+	var target_name:   String = str(_tname_raw) if _tname_raw != null else target.name
+
+	print("\n[COMBAT] ────────────────────────────")
+	print("[COMBAT] %s → menyerang → %s" % [attacker_name, target_name])
+
+	# ── Resolve Hit/Crit (logika tidak berubah) ───────────────────────────────
 	var result        := _crit_resolver.resolve_with_crit(attacker, target, false)
 	var raw    : int   = result["raw_roll"]
 	var total  : int   = result["roll"]
@@ -126,28 +165,63 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 
 	print("[COMBAT] D20: %d (raw) + modifier → %d  vs  Armor: %d" % [raw, total, thresh])
 
-	if not hit:
+	# ── Siapkan data damage (diroll di sini, tapi diapply SETELAH animasi) ────
+	var dmg_formula := "1D8"
+	var dmg_rolls   : Array[int] = []
+	var dmg_total   : int = 0
+
+	if hit:
+		# Roll detail: ambil Array tiap dadu agar bisa divisualisasikan satu per satu
+		var base_detail := _dice_roller.roll_detailed(dmg_formula)
+		dmg_rolls = base_detail["rolls"]
+		dmg_total = base_detail["total"]
+
+		if crit:
+			# Crit = dadu ganda: tambah satu set lagi
+			var extra_detail := _dice_roller.roll_detailed(dmg_formula)
+			for r: int in extra_detail["rolls"]:
+				dmg_rolls.append(r)
+				dmg_total += r
+			print("[COMBAT] 💥 CRITICAL HIT! Damage (%s × 2) = %d" % [dmg_formula, dmg_total])
+		else:
+			print("[COMBAT] ⚔️  HIT! Damage (%s) = %d" % [dmg_formula, dmg_total])
+	else:
 		print("[COMBAT] 💨 MISS!")
 		EventBus.miss_occurred.emit(attacker, target)
-		print("[COMBAT] ────────────────────────────")
-		return
-
-	# Roll damage
-	var dmg_formula := "1D8"
-	var dmg         : int
-	if crit:
-		dmg = _dice_roller.roll_crit(dmg_formula)
-		print("[COMBAT] 💥 CRITICAL HIT! Damage (%s × 2) = %d" % [dmg_formula, dmg])
-	else:
-		dmg = _dice_roller.roll_from_string(dmg_formula)
-		print("[COMBAT] ⚔️  HIT! Damage (%s) = %d" % [dmg_formula, dmg])
-
-	# Apply damage ke target
-	var applied := _apply_damage_to_target(target, dmg, attacker)
-
-	# Emit ke EventBus untuk HUD/sistem lain
-	EventBus.damage_dealt.emit(target, applied, "physical", crit)
 	print("[COMBAT] ────────────────────────────")
+
+	# ── Jalankan animasi overlay (AWAIT — blok sampai selesai) ────────────────
+	var overlay := _overlay_p1 if pid == 1 else _overlay_p2
+	if overlay != null:
+		await overlay.play_attack_sequence(
+			attacker, target,
+			result,
+			dmg_rolls,
+			dmg_total,
+			dmg_formula
+		)
+	else:
+		push_warning("[CombatTestBridge] Overlay P%d null! Langsung apply damage." % pid)
+		await get_tree().process_frame
+
+	# ── Apply damage ke target SETELAH animasi selesai ───────────────────────
+	if hit:
+		if is_instance_valid(target):
+			var applied := _apply_damage_to_target(target, dmg_total, attacker)
+			EventBus.damage_dealt.emit(target, applied, "physical", crit)
+		else:
+			print("[COMBAT] ⚠️  Target sudah dikalahkan sebelum serangan mendarat!")
+
+	# Buka blok input player ini
+	if pid == 1: _p1_busy = false
+	else:         _p2_busy = false
+	EventBus.combat_input_blocked.emit(pid, false)
+
+
+# ── CALLBACK — sync InputManager saat signal diterima ────────────────────────
+
+func _on_combat_input_blocked(player_id: int, blocked: bool) -> void:
+	InputManager.set_player_blocked(player_id, blocked)
 
 
 func _apply_damage_to_target(target: Node, amount: int, attacker: Node) -> int:
@@ -196,7 +270,8 @@ func _on_enemy_turn_started(enemy: Node) -> void:
 	if enemy == null:
 		return
 
-	var name_str : String = enemy.get("enemy_name") if enemy.get("enemy_name") else enemy.name
+	var _ename_raw: Variant = enemy.get("enemy_name")
+	var name_str: String = str(_ename_raw) if _ename_raw != null else enemy.name
 	print("\n[ENEMY AI] ─── Giliran %s ───" % name_str)
 
 	# Panggil AI method jika ada (EnemyPlaceholder.do_ai_turn())
@@ -215,6 +290,9 @@ func _on_enemy_turn_started(enemy: Node) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not (event is InputEventKey and event.pressed and not event.echo):
+		return
+	# Blok semua debug input juga saat kedua player animasi berjalan
+	if _p1_busy and _p2_busy:
 		return
 	match event.keycode:
 		KEY_F5:
@@ -243,13 +321,13 @@ func _print_banner() -> void:
 	print("\n╔══════════════════════════════════════════════╗")
 	print("║         COMBAT CORE — TEST MODE AKTIF        ║")
 	print("╠══════════════════════════════════════════════╣")
-	print("║  P1 Aria  (Fighter)                          ║")
+	print("║  P1 Fighter                                  ║")
 	print("║    AP: %d/%d  BAP: %d/%d  Mov: %d tiles         " % [
 		_p1_ap.current_ap, _p1_ap.max_ap,
 		_p1_ap.current_bap, _p1_ap.max_bap,
 		_p1_mov.max_tiles])
 	print("║    Energy Charge: %d/%d                        " % [_p1_ec.current_charges, _p1_ec.max_charges])
-	print("║  P2 Kael  (Wizard)                           ║")
+	print("║  P2 Wizard                                   ║")
 	print("║    AP: %d/%d  BAP: %d/%d  Mov: %d tiles         " % [
 		_p2_ap.current_ap, _p2_ap.max_ap,
 		_p2_ap.current_bap, _p2_ap.max_bap,

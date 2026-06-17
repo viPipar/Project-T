@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://combat_dice_overlay"]
+
+[ext_resource type="Script" path="res://combat_core/ui/CombatDiceOverlay.gd" id="2_script"]
+
+[node name="CombatDiceOverlay" type="CanvasLayer"]
+layer = 10
+script = ExtResource("2_script")
