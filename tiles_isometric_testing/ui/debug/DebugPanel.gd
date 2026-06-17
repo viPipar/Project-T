@@ -30,7 +30,60 @@ func _ready() -> void:
 		_stats_label.custom_minimum_size = Vector2(600, 80)
 	_set_stats_visible(show_stats_default)
 	_connect_bus()
+	
+	if _stats_label != null:
+		var parent = _stats_label.get_parent()
+		var scroll = ScrollContainer.new()
+		scroll.custom_minimum_size = Vector2(800, 300)
+		scroll.position = _stats_label.position
+		scroll.name = "StatsScroll"
+		parent.add_child(scroll)
+		parent.remove_child(_stats_label)
+		scroll.add_child(_stats_label)
+		_stats_label.position = Vector2.ZERO
+		
 	_refresh_stats()
+	_create_item_debug_buttons()
+
+func _create_item_debug_buttons() -> void:
+	var container = HBoxContainer.new()
+	container.name = "ItemDebugContainer"
+	container.position = Vector2(400, 35) # Move to the right of "Controls"
+	add_child(container)
+	
+	var item_picker = OptionButton.new()
+	item_picker.name = "ItemPicker"
+	container.add_child(item_picker)
+	
+	var items = []
+	if ItemRegistry != null and ItemRegistry.get("items") != null:
+		for key in ItemRegistry.items.keys():
+			item_picker.add_item(key)
+			items.append(key)
+	else:
+		items = ["iron_sword", "potion_small", "magic_ring", "berserker_axe", "cursed_amulet"]
+		for item in items:
+			item_picker.add_item(item)
+			
+	var p1_add = Button.new()
+	p1_add.text = "P1 +Item"
+	p1_add.pressed.connect(func(): if InventoryManager != null: InventoryManager.add_item(1, items[item_picker.selected]))
+	container.add_child(p1_add)
+	
+	var p1_rem = Button.new()
+	p1_rem.text = "P1 -Item"
+	p1_rem.pressed.connect(func(): if InventoryManager != null: InventoryManager.remove_item(1, items[item_picker.selected]))
+	container.add_child(p1_rem)
+
+	var p2_add = Button.new()
+	p2_add.text = "P2 +Item"
+	p2_add.pressed.connect(func(): if InventoryManager != null: InventoryManager.add_item(2, items[item_picker.selected]))
+	container.add_child(p2_add)
+	
+	var p2_rem = Button.new()
+	p2_rem.text = "P2 -Item"
+	p2_rem.pressed.connect(func(): if InventoryManager != null: InventoryManager.remove_item(2, items[item_picker.selected]))
+	container.add_child(p2_rem)
 
 
 func _process(delta: float) -> void:
@@ -44,7 +97,12 @@ func _process(delta: float) -> void:
 
 func _set_stats_visible(is_visible: bool) -> void:
 	if _stats_label != null:
-		_stats_label.visible = is_visible
+		var p = _stats_label.get_parent()
+		if p is ScrollContainer:
+			p.visible = is_visible
+			_stats_label.visible = true
+		else:
+			_stats_label.visible = is_visible
 	if _stats_toggle != null:
 		_stats_toggle.button_pressed = is_visible
 
@@ -142,8 +200,8 @@ func _format_entity_stats(entity: Node, prefix: String) -> String:
 		]
 		if hp_text == "":
 			hp_text = "MaxHP %d" % stats.get_max_hp()
-		derived_line = "%s ARM %d RES %d AP+%d Mv+%d Hit+%d Crit-%d Slots %d/%d/%d" % [
-			hp_text, stats.get_armor(), stats.get_resist(),
+		derived_line = "%s Dmg(P/M) %d/%d ARM %d RES %d AP+%d Mv+%d Hit+%d Crit-%d Slots %d/%d/%d" % [
+			hp_text, stats.get_stat("physical_damage"), stats.get_stat("magical_damage"), stats.get_armor(), stats.get_resist(),
 			stats.bonus_action_points(), stats.bonus_movement_tiles(),
 			stats.hit_roll_bonus(), stats.crit_roll_reduction(),
 			stats.get_spell_slots_l1(), stats.get_spell_slots_l2(), stats.get_spell_slots_l3()
@@ -153,11 +211,19 @@ func _format_entity_stats(entity: Node, prefix: String) -> String:
 	if prefix == "P" and pid >= 0:
 		header = "%s%d %s | Class: %s" % [prefix, pid, name, class_title]
 	var buffs_line := "Buffs: %s" % buffs_text
+	
+	var items_text := "(none)"
+	if pid >= 1 and InventoryManager != null:
+		var inv = InventoryManager.get_player_items(pid)
+		if not inv.is_empty():
+			items_text = ", ".join(inv)
+	var items_line := "Items: %s" % items_text
+	
 	if stat_line == "":
 		if hp_text != "":
-			return "%s\n%s\n%s" % [header, buffs_line, hp_text]
-		return "%s\n%s" % [header, buffs_line]
-	return "%s\n%s\n%s\n%s" % [header, buffs_line, stat_line, derived_line]
+			return "%s\n%s\n%s\n%s" % [header, items_line, buffs_line, hp_text]
+		return "%s\n%s\n%s" % [header, items_line, buffs_line]
+	return "%s\n%s\n%s\n%s\n%s" % [header, items_line, buffs_line, stat_line, derived_line]
 
 
 func _safe_get(entity: Node, prop: String, fallback) -> Variant:

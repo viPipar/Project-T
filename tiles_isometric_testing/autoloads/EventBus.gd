@@ -5,6 +5,7 @@ signal player_moved(entity: Node, from: Vector2i, to: Vector2i)
 
 # Phase 1+ — didefinisikan sekarang, dipakai nanti
 signal combat_started(combatants: Array)
+signal start_combat(node_type: int)
 signal combat_ended(result: String)
 signal turn_started(entity: Node, player_id: int)
 signal turn_ended(entity: Node)

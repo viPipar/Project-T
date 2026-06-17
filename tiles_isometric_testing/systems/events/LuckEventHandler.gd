@@ -50,7 +50,24 @@ func _resolve_event(choice_index: int) -> void:
 		var roll = randi_range(1, 20)
 		var success = (roll >= dc)
 		print("[LuckEventHandler] Rolled %d vs DC %d. Success: %s" % [roll, dc, success])
+		_apply_reward_or_penalty(choice if success else {"reward": "damage", "amount": 5}) # Default penalty
 		event_resolved.emit(success, choice if success else {})
 	else:
 		# Auto success
+		_apply_reward_or_penalty(choice)
 		event_resolved.emit(true, choice)
+
+func _apply_reward_or_penalty(outcome: Dictionary) -> void:
+	var reward_type = outcome.get("reward", "")
+	var amount = outcome.get("amount", 0)
+	
+	if reward_type == "damage" or reward_type == "heal":
+		if TurnManager != null and TurnManager.has_method("_get_player_by_id"):
+			for pid in [1, 2]:
+				var player = TurnManager._get_player_by_id(pid)
+				if player != null and player.has_node("HealthComponent"):
+					var hc = player.get_node("HealthComponent")
+					if reward_type == "damage" and hc.has_method("take_damage"):
+						hc.take_damage(amount, null, "true_damage")
+					elif reward_type == "heal" and hc.has_method("heal"):
+						hc.heal(amount)

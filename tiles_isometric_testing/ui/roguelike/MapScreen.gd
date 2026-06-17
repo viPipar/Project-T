@@ -8,10 +8,14 @@ extends Control
 
 var node_buttons_p1: Dictionary = {}
 var node_buttons_p2: Dictionary = {}
+var path_handler: PathHandler
 
 func _ready() -> void:
 	var graph = NodeGraph.new()
 	graph.generate()
+	
+	path_handler = PathHandler.new()
+	path_handler.init(graph)
 	
 	# Precalculate positions so both maps look identical
 	var node_positions: Dictionary = {}
@@ -31,6 +35,23 @@ func _ready() -> void:
 		
 	_generate_map_ui(map_content_p1, graph, node_positions, node_buttons_p1)
 	_generate_map_ui(map_content_p2, graph, node_positions, node_buttons_p2)
+	
+	_update_node_visuals()
+
+func _update_node_visuals() -> void:
+	var unlocked = path_handler.get_unlocked_nodes()
+	for dict in [node_buttons_p1, node_buttons_p2]:
+		for node_id in dict:
+			var btn = dict[node_id]
+			if node_id in unlocked:
+				btn.modulate.a = 1.0
+				btn.disabled = false
+			elif node_id == path_handler.current_node_id:
+				btn.modulate.a = 0.8
+				btn.disabled = true
+			else:
+				btn.modulate.a = 0.3
+				btn.disabled = true
 
 func _get_icon_for_type(type: NodeGraph.NodeType) -> String:
 	match type:
@@ -75,8 +96,7 @@ func _generate_map_ui(parent_content: Control, graph: NodeGraph, positions: Dict
 			
 			parent_content.add_child(btn)
 			dict[map_node.id] = btn
-			
-			btn.pressed.connect(_on_node_clicked.bind(map_node.id))
+			btn.pressed.connect(_on_node_clicked.bind(map_node.id, map_node.type))
 			
 	# Draw lines
 	path_renderer.clear_connections()
@@ -95,5 +115,28 @@ func _generate_map_ui(parent_content: Control, graph: NodeGraph, positions: Dict
 	path_renderer.queue_redraw()
 	parent_content.move_child(path_renderer, 0)
 
-func _on_node_clicked(node_id: int) -> void:
-	print("Clicked Node ID: ", node_id)
+func _on_node_clicked(node_id: int, node_type: NodeGraph.NodeType) -> void:
+	if not path_handler.travel_to(node_id):
+		print("[MapScreen] Cannot travel to locked node %d" % node_id)
+		return
+		
+	print("[MapScreen] Traveled to Node ID: ", node_id)
+	_update_node_visuals()
+	
+	if node_type in [NodeGraph.NodeType.BATTLE, NodeGraph.NodeType.ELITE, NodeGraph.NodeType.BOSS]:
+		print("[MapScreen] Initiating combat for node type: ", node_type)
+		# Freeze map screen
+		set_process_input(false)
+		set_process_unhandled_input(false)
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		# Disable all buttons
+		for dict in [node_buttons_p1, node_buttons_p2]:
+			for key in dict:
+				dict[key].disabled = true
+				
+		if EventBus != null:
+			EventBus.start_combat.emit(node_type)
+	else:
+		print("[MapScreen] Node clicked: %s. (UI Switch Logic needed here)" % NodeGraph.NodeType.keys()[node_type])
+		# TODO: Notify RoguelikeUIShell to switch screen based on node_type
+

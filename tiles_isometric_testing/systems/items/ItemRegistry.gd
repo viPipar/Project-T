@@ -1,5 +1,4 @@
 extends Node
-class_name ItemRegistry
 
 enum Rarity {
 	COMMON,

@@ -166,23 +166,34 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 	print("[COMBAT] D20: %d (raw) + modifier → %d  vs  Armor: %d" % [raw, total, thresh])
 
 	# ── Siapkan data damage (diroll di sini, tapi diapply SETELAH animasi) ────
-	var dmg_formula := "1D8"
+	var base_dice := "1D8"
+	var dmg_formula := base_dice
 	var dmg_rolls   : Array[int] = []
 	var dmg_total   : int = 0
+	
+	var stat_comp = attacker.get_node_or_null("StatsComponent") as StatsComponent
+	var dmg_mod := 0
+	if stat_comp != null:
+		dmg_mod = stat_comp.get_stat("physical_damage")
+		if dmg_mod > 0:
+			dmg_formula += "+%d" % dmg_mod
+		elif dmg_mod < 0:
+			dmg_formula += "%d" % dmg_mod
 
 	if hit:
 		# Roll detail: ambil Array tiap dadu agar bisa divisualisasikan satu per satu
-		var base_detail := _dice_roller.roll_detailed(dmg_formula)
+		var base_detail := _dice_roller.roll_detailed(base_dice)
 		dmg_rolls = base_detail["rolls"]
-		dmg_total = base_detail["total"]
+		dmg_total = base_detail["total"] + dmg_mod
 
 		if crit:
 			# Crit = dadu ganda: tambah satu set lagi
-			var extra_detail := _dice_roller.roll_detailed(dmg_formula)
+			var extra_detail := _dice_roller.roll_detailed(base_dice)
 			for r: int in extra_detail["rolls"]:
 				dmg_rolls.append(r)
 				dmg_total += r
-			print("[COMBAT] 💥 CRITICAL HIT! Damage (%s × 2) = %d" % [dmg_formula, dmg_total])
+			var mod_str = ("+%d"%dmg_mod) if dmg_mod >= 0 else ("%d"%dmg_mod)
+			print("[COMBAT] 💥 CRITICAL HIT! Damage (%s × 2 %s) = %d" % [base_dice, mod_str, dmg_total])
 		else:
 			print("[COMBAT] ⚔️  HIT! Damage (%s) = %d" % [dmg_formula, dmg_total])
 	else:

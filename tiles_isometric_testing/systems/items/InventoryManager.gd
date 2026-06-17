@@ -1,5 +1,4 @@
 extends Node
-class_name InventoryManager
 
 signal item_added(player_id: int, item_id: String)
 signal item_removed(player_id: int, item_id: String)
