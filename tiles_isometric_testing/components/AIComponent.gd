@@ -50,7 +50,7 @@ func _on_turn_started(entity: Node, _pid: int) -> void:
 
 func take_turn() -> void:
 	# Kondisi yang mencegah aksi
-	var cond := owner.get_node_or_null("ConditionComponent") as ConditionComponent
+	var cond := owner.get_node_or_null("ConditionComponent")
 	if cond:
 		if cond.is_stunned() or cond.is_frozen():
 			_end_my_turn()
@@ -135,7 +135,7 @@ func _do_chase() -> void:
 func _do_attack() -> void:
 	if _target == null:
 		return
-	var combat := owner.get_node_or_null("CombatComponent") as CombatComponent
+	var combat := owner.get_node_or_null("CombatComponent")
 	if combat and combat.can_attack(_target):
 		combat.attack(_target)
 
@@ -200,7 +200,7 @@ func _find_best_target() -> Node:
 	var best_dist    := detection_range + 1
 
 	for player in all_players:
-		var health := player.get_node_or_null("HealthComponent") as HealthComponent
+		var health := player.get_node_or_null("HealthComponent")
 		if health and health.is_dead():
 			continue
 		var p_pos: Vector2i = player.get("grid_pos")
@@ -219,7 +219,7 @@ func _is_within_tiles(target: Node, range_tiles: int) -> bool:
 
 
 func _can_attack_now(target: Node) -> bool:
-	var combat := owner.get_node_or_null("CombatComponent") as CombatComponent
+	var combat := owner.get_node_or_null("CombatComponent")
 	if combat == null:
 		return false
 	return combat.can_attack(target)

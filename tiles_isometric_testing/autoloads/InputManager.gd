@@ -2,9 +2,19 @@ extends Node
 
 var killcam_active: bool = false
 var is_in_menu: bool = false
+
+# Blok input per-player saat animasi dice combat berjalan
+var _player_blocked: Dictionary = {1: false, 2: false}
+
+## Set blok input untuk player tertentu (1 atau 2)
+func set_player_blocked(player_id: int, blocked: bool) -> void:
+	_player_blocked[player_id] = blocked
+
 # action = "move_up" | "move_down" | "move_left" | "move_right" | "end_turn"
 func _can_accept_input(player_id: int) -> bool:
 	if killcam_active or is_in_menu:
+		return false
+	if _player_blocked.get(player_id, false):
 		return false
 	if TurnManager != null and not TurnManager.can_player_act(player_id):
 		return false
@@ -12,12 +22,12 @@ func _can_accept_input(player_id: int) -> bool:
 
 # action = "move_up" | "move_down" | "move_left" | "move_right" | "end_turn"
 func is_just_pressed(player_id: int, action: String) -> bool:
-	if killcam_active or is_in_menu:
+	if not _can_accept_input(player_id):
 		return false
 	return Input.is_action_just_pressed("p%d_%s" % [player_id, action])
 
 func is_pressed(player_id: int, action: String) -> bool:
-	if killcam_active or is_in_menu:
+	if not _can_accept_input(player_id):
 		return false
 	return Input.is_action_pressed("p%d_%s" % [player_id, action])
 

@@ -24,11 +24,11 @@ var char_name: String   = "Enemy"
 
 # Komponen — gunakan get_node_or_null di _ready agar tidak crash
 # kalau scene belum punya semua child
-@onready var health:    HealthComponent    = $HealthComponent
+@onready var health                        = get_node_or_null("HealthComponent")
 @onready var stats:     StatsComponent     = $StatsComponent
 @onready var movement:  MovementComponent  = $MovementComponent
-@onready var combat:    CombatComponent    = $CombatComponent
-@onready var cond:      ConditionComponent = $ConditionComponent
+@onready var combat                        = get_node_or_null("CombatComponent")
+@onready var cond                          = get_node_or_null("ConditionComponent")
 @onready var ai:        AIComponent        = $AIComponent
 
 

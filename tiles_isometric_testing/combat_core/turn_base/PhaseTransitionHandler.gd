@@ -33,11 +33,14 @@ func setup(p_mgr: PlayerPhaseManager, e_mgr: EnemyPhaseManager) -> void:
 
 func _ready() -> void:
 	# Jika sudah di-assign via @export di editor, connect otomatis
+	# Guard: hanya connect jika KEDUA manager valid
 	if player_phase_mgr != null and enemy_phase_mgr != null:
 		_connect_signals()
+	# Jika tidak (pakai setup() nanti), signals akan diconnect via setup()
 
 
 func _connect_signals() -> void:
+	# Guard double-connect (aman dipanggil berulang)
 	if not player_phase_mgr.both_players_confirmed.is_connected(_on_players_end_turn):
 		player_phase_mgr.both_players_confirmed.connect(_on_players_end_turn)
 
@@ -103,13 +106,16 @@ func _get_living_enemies() -> Array[Node]:
 		if node == null:
 			continue
 		# Cek is_alive via property atau method
-		var alive = node.get("is_alive")
+		var alive: Variant = node.get("is_alive")  # Variant by design
+		var alive_bool: bool
 		if alive == null:
 			if node.has_method("is_dead"):
-				alive = not node.is_dead()
+				alive_bool = not node.is_dead()
 			else:
-				alive = true
-		if alive:
+				alive_bool = true
+		else:
+			alive_bool = bool(alive)
+		if alive_bool:
 			living.append(node)
 	return living
 

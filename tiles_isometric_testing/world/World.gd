@@ -2,20 +2,26 @@ extends Node2D
 
 @onready var tile_map: TileMapLayer = $TileMapLayer
 @onready var entities: Node2D       = $Entities
-@onready var camera: Camera2D       = $Camera2D
+# Camera2D bisa dihapus oleh SplitScreenManager — gunakan get_node_or_null di _ready()
+var camera: Camera2D = null
 
 # Referensi ke semua player hidup — diisi oleh Main.gd saat spawn
 var players: Array[Node] = []
 var _debug_grid: Node2D = null
 
 func _ready() -> void:
+	# Ambil Camera2D jika ada (single-camera mode). Null = split-screen mode aktif.
+	camera = get_node_or_null("Camera2D")
 	GridManager.setup_grid(16, 16)
 	_draw_debug_grid()
 
-func _process(delta: float) -> void:
-	var target_pos = get_party_centroid()
-	camera.position = camera.position.lerp(target_pos, 0.04) # 0.08 adalah nilai lerp kamu
-			
+func _process(_delta: float) -> void:
+	# Kamera lama (single-camera mode) tidak dipakai saat split-screen aktif.
+	# SplitScreenManager menghapus Camera2D dari scene — cek dulu sebelum pakai.
+	if camera != null and is_instance_valid(camera) and camera.enabled:
+		var target_pos = get_party_centroid()
+		camera.position = camera.position.lerp(target_pos, 0.04)
+
 func get_party_centroid() -> Vector2:
 	if players.is_empty():
 		return Vector2.ZERO
@@ -34,7 +40,7 @@ func spawn_entity(scene: PackedScene, grid_pos: Vector2i, data := {}) -> Node:
 	entity.position = IsoUtils.world_to_iso(grid_pos)
 	entity.z_index  = IsoUtils.get_depth(grid_pos)
 	GridManager.register_entity(grid_pos, entity)
-	
+
 	if entity.is_in_group("players"):
 		players.append(entity)
 	return entity

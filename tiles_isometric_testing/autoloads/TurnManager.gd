@@ -76,6 +76,20 @@ func request_end_turn(player_id: int = -1) -> void:
 		_end_enemy_turn()
 
 
+## Batalkan end turn player — hanya bisa jika enemy phase BELUM mulai
+func cancel_end_turn(player_id: int) -> void:
+	if phase != Phase.PLAYERS:
+		return  # Terlambat, enemy phase sudah jalan
+	if not _ended_players.has(player_id):
+		return  # Tidak ada yang perlu di-cancel
+	_ended_players.erase(player_id)
+	player_end_state_changed.emit(player_id, false)
+	var player := _get_player_by_id(player_id)
+	if player != null:
+		EventBus.turn_started.emit(player, player_id)  # aktifkan kembali giliran
+	print("[TurnManager] P%d membatalkan End Turn." % player_id)
+
+
 func get_turn_display_text() -> String:
 	var phase_text := "Players" if phase == Phase.PLAYERS else "Enemies"
 	return "Turn %d — %s" % [turn_number, phase_text]
