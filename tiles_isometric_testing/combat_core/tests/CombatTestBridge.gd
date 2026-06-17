@@ -117,7 +117,8 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 		return
 
 	# Tentukan player_id penyerang
-	var pid: int = attacker.get("player_id") if attacker.get("player_id") else 1
+	var _pid_raw: Variant = attacker.get("player_id")
+	var pid: int = int(_pid_raw) if _pid_raw != null else 1
 
 	# Blok jika animasi player ini sedang berjalan (cegah spam serangan)
 	var is_busy := _p1_busy if pid == 1 else _p2_busy
@@ -130,8 +131,10 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 	else:         _p2_busy = true
 	EventBus.combat_input_blocked.emit(pid, true)
 
-	var attacker_name: String = attacker.get("char_name") if attacker.get("char_name") else attacker.name
-	var target_name:   String = target.get("enemy_name")  if target.get("enemy_name")  else target.name
+	var _aname_raw: Variant = attacker.get("char_name")
+	var _tname_raw: Variant = target.get("enemy_name")
+	var attacker_name: String = str(_aname_raw) if _aname_raw != null else attacker.name
+	var target_name:   String = str(_tname_raw) if _tname_raw != null else target.name
 
 	print("\n[COMBAT] ────────────────────────────")
 	print("[COMBAT] %s → menyerang → %s" % [attacker_name, target_name])
@@ -237,7 +240,8 @@ func _on_enemy_turn_started(enemy: Node) -> void:
 	if enemy == null:
 		return
 
-	var name_str : String = enemy.get("enemy_name") if enemy.get("enemy_name") else enemy.name
+	var _ename_raw: Variant = enemy.get("enemy_name")
+	var name_str: String = str(_ename_raw) if _ename_raw != null else enemy.name
 	print("\n[ENEMY AI] ─── Giliran %s ───" % name_str)
 
 	# Panggil AI method jika ada (EnemyPlaceholder.do_ai_turn())
@@ -287,13 +291,13 @@ func _print_banner() -> void:
 	print("\n╔══════════════════════════════════════════════╗")
 	print("║         COMBAT CORE — TEST MODE AKTIF        ║")
 	print("╠══════════════════════════════════════════════╣")
-	print("║  P1 Aria  (Fighter)                          ║")
+	print("║  P1 Fighter                                  ║")
 	print("║    AP: %d/%d  BAP: %d/%d  Mov: %d tiles         " % [
 		_p1_ap.current_ap, _p1_ap.max_ap,
 		_p1_ap.current_bap, _p1_ap.max_bap,
 		_p1_mov.max_tiles])
 	print("║    Energy Charge: %d/%d                        " % [_p1_ec.current_charges, _p1_ec.max_charges])
-	print("║  P2 Kael  (Wizard)                           ║")
+	print("║  P2 Wizard                                   ║")
 	print("║    AP: %d/%d  BAP: %d/%d  Mov: %d tiles         " % [
 		_p2_ap.current_ap, _p2_ap.max_ap,
 		_p2_ap.current_bap, _p2_ap.max_bap,

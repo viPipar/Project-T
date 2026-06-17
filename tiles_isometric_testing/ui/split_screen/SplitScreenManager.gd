@@ -18,7 +18,13 @@ var _p1_viewport           : SubViewport
 var _p2_viewport           : SubViewport
 var _cam_p1                : PlayerCamera2D
 var _cam_p2                : PlayerCamera2D
-var _world_node            : Node2D  # disimpan saat setup() dipanggil
+var _world_node            : Node2D
+
+# ── End-turn overlay per player ───────────────────────────────────────────────
+var _p1_end_overlay : ColorRect = null
+var _p2_end_overlay : ColorRect = null
+var _p1_end_label   : Label    = null
+var _p2_end_label   : Label    = null
 
 # ── Public API ────────────────────────────────────────────────────────────────
 var cam_p1: PlayerCamera2D:
@@ -30,22 +36,22 @@ var cam_p2: PlayerCamera2D:
 
 
 func _ready() -> void:
-	layer = 0  # Di bawah DebugUI (layer 20) tapi di atas 2D world
-	# Jika world_node sudah disimpan sebelum _ready() (dari setup() dini), init sekarang
+	layer = 0
 	if _world_node != null:
 		_build_layout()
 		_attach_cameras(_world_node)
-		print("[SplitScreenManager] Split-screen ready ✅")
+		_connect_turn_signals()
+		print("[SplitScreenManager] Split-screen ready")
 
 
 ## Entry point — boleh dipanggil sebelum atau sesudah add_child
 func setup(world_node: Node2D) -> void:
 	_world_node = world_node
-	# Jika sudah di dalam tree, langsung build. Jika belum, _ready() yang akan build.
 	if is_inside_tree():
 		_build_layout()
 		_attach_cameras(world_node)
-		print("[SplitScreenManager] Split-screen ready ✅")
+		_connect_turn_signals()
+		print("[SplitScreenManager] Split-screen ready")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -110,24 +116,66 @@ func _build_layout() -> void:
 	add_child(divider)
 
 	# ── Label player tipis di pojok masing-masing viewport ──────────────────────
-	_add_player_label("P1 ◀", 0.01, 0.01)
-	_add_player_label("▶ P2", 0.51, 0.01)
+	_add_player_label("P1  Fighter", 0.01, 0.01)
+	_add_player_label("P2  Wizard",  0.51, 0.01)
+
+	# ── End-turn overlay (awalnya tersembunyi) ────────────────────────────────
+	_p1_end_overlay = _make_end_overlay(0.0, 0.5, 1)  # kiri
+	_p2_end_overlay = _make_end_overlay(0.5, 1.0, 2)  # kanan
+	_p1_end_label   = _make_end_label(0.0, 0.5)
+	_p2_end_label   = _make_end_label(0.5, 1.0)
+	add_child(_p1_end_overlay)
+	add_child(_p2_end_overlay)
+	add_child(_p1_end_label)
+	add_child(_p2_end_label)
 
 
 func _add_player_label(text: String, anchor_left: float, anchor_top: float) -> void:
 	var lbl := Label.new()
 	lbl.text = text
-	lbl.add_theme_font_size_override("font_size", 14)
-	lbl.add_theme_color_override("font_color", Color(1, 1, 1, 0.6))
-	lbl.anchor_left    = anchor_left
-	lbl.anchor_top     = anchor_top
-	lbl.anchor_right   = anchor_left
-	lbl.anchor_bottom  = anchor_top
-	lbl.offset_left    = 8
-	lbl.offset_top     = 8
-	lbl.offset_right   = 200
-	lbl.offset_bottom  = 30
+	lbl.add_theme_font_size_override("font_size", 13)
+	lbl.add_theme_color_override("font_color", Color(1, 1, 1, 0.5))
+	lbl.anchor_left   = anchor_left
+	lbl.anchor_top    = anchor_top
+	lbl.anchor_right  = anchor_left
+	lbl.anchor_bottom = anchor_top
+	lbl.offset_left   = 10
+	lbl.offset_top    = 10
+	lbl.offset_right  = 200
+	lbl.offset_bottom = 30
 	add_child(lbl)
+
+
+func _make_end_overlay(al: float, ar: float, _pid: int) -> ColorRect:
+	var r := ColorRect.new()
+	r.color       = Color(0, 0, 0, 0)  # mulai transparan
+	r.anchor_left  = al
+	r.anchor_right = ar
+	r.anchor_top   = 0.0
+	r.anchor_bottom = 1.0
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return r
+
+
+func _make_end_label(al: float, ar: float) -> Label:
+	var lbl := Label.new()
+	lbl.text = "WAITING..."
+	lbl.add_theme_font_size_override("font_size", 18)
+	lbl.add_theme_color_override("font_color", Color(1, 1, 1, 0.9))
+	lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+	lbl.add_theme_constant_override("outline_size", 6)
+	lbl.anchor_left   = al
+	lbl.anchor_right  = ar
+	lbl.anchor_top    = 0.5
+	lbl.anchor_bottom = 0.5
+	lbl.offset_left   = 0
+	lbl.offset_right  = 0
+	lbl.offset_top    = -20
+	lbl.offset_bottom = 20
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+	lbl.modulate.a = 0.0
+	return lbl
 
 
 func _attach_cameras(world_node: Node2D) -> void:
@@ -175,3 +223,32 @@ func focus_camera(player_id: int, world_position: Vector2) -> void:
 	elif player_id == 2 and _cam_p2 != null:
 		_cam_p2.set_target(world_position)
 		_cam_p2.position = world_position
+
+
+# ── END-TURN OVERLAY ──────────────────────────────────────────────────────────
+
+func _connect_turn_signals() -> void:
+	if TurnManager == null:
+		return
+	if not TurnManager.player_end_state_changed.is_connected(_on_player_end_state):
+		TurnManager.player_end_state_changed.connect(_on_player_end_state)
+
+
+func _on_player_end_state(player_id: int, ended: bool) -> void:
+	var overlay : ColorRect = _p1_end_overlay if player_id == 1 else _p2_end_overlay
+	var lbl     : Label    = _p1_end_label   if player_id == 1 else _p2_end_label
+	if overlay == null or lbl == null:
+		return
+
+	if ended:
+		# Darken layar player yang sudah end turn
+		var cancel_key := "Q" if player_id == 1 else "U"
+		lbl.text = "End Turn\n[%s] Cancel" % cancel_key
+		var tw := create_tween().set_ease(Tween.EASE_OUT)
+		tw.tween_property(overlay, "color",     Color(0, 0, 0, 0.55), 0.35)
+		tw.parallel().tween_property(lbl, "modulate:a", 1.0,           0.35)
+	else:
+		# Cancel end turn — kembalikan layar normal
+		var tw := create_tween().set_ease(Tween.EASE_IN)
+		tw.tween_property(overlay, "color",     Color(0, 0, 0, 0),    0.25)
+		tw.parallel().tween_property(lbl, "modulate:a", 0.0,           0.25)

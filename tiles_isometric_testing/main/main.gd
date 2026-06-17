@@ -10,6 +10,7 @@ var _show_debug_panel:  bool = false
 var _show_dice_sandbox: bool = false
 var _show_debug_grid:   bool = false
 var _split_screen: SplitScreenManager = null
+var _stat_debug_panel: StatDebugPanel = null  # Debug stat manipulator (F1)
 
 func _ready() -> void:
 	var player_scene := preload("res://entities/player/Player.tscn")
@@ -22,13 +23,13 @@ func _ready() -> void:
 
 	# ── Spawn Player 1 ────────────────────────────────────────────────────────
 	var p1 = world.spawn_entity(player_scene, Vector2i(0, 0), {
-		"player_id": 1, "char_name": "Aria"
+		"player_id": 1, "char_name": "Fighter"
 	})
 	p1.place_at(Vector2i(5, 7))
 
 	# ── Spawn Player 2 ────────────────────────────────────────────────────────
 	var p2 = world.spawn_entity(player_scene, Vector2i(0, 0), {
-		"player_id": 2, "char_name": "Kael"
+		"player_id": 2, "char_name": "Wizard"
 	})
 	p2.place_at(Vector2i(7, 7))
 
@@ -98,7 +99,27 @@ func _ready() -> void:
 	add_child(bridge)
 
 	TurnManager.start_battle()
+
+	# ── Stat Debug Panel ─────────────────────────────────────────────────────
+	_spawn_stat_debug_panel()
+
 	_apply_debug_visibility()
+
+
+func _spawn_stat_debug_panel() -> void:
+	var panel_scene := load("res://combat_core/debug/StatDebugPanel.tscn")
+	if panel_scene == null:
+		push_warning("[Main] StatDebugPanel.tscn tidak ditemukan!")
+		return
+	_stat_debug_panel = panel_scene.instantiate() as StatDebugPanel
+	_stat_debug_panel.name = "StatDebugPanel"
+	# Tambah ke DebugUI/Root agar ikut layer yang benar
+	if ui_root != null:
+		ui_root.add_child(_stat_debug_panel)
+	else:
+		add_child(_stat_debug_panel)
+	_stat_debug_panel.visible = false
+	print("[Main] StatDebugPanel siap — tekan F1 untuk toggle ✅")
 
 
 # ── SPLIT-SCREEN SETUP ───────────────────────────────────────────────────────
@@ -146,6 +167,10 @@ func _apply_debug_visibility() -> void:
 		dice_sandbox.visible = _show_dice_sandbox
 	if debug_tooltip != null:
 		debug_tooltip.visible = true
+	if _stat_debug_panel != null:
+		_stat_debug_panel.visible = _show_debug_panel  # ikut F1
+		if _show_debug_panel:
+			_stat_debug_panel._refresh_all()  # paksa refresh saat panel dibuka
 	if world != null and world.has_method("set_debug_grid_visible"):
 		world.set_debug_grid_visible(_show_debug_grid)
 	var autoload_debug := get_node_or_null("/root/DebugGrid")

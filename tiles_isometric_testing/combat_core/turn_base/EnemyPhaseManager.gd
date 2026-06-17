@@ -50,13 +50,20 @@ func start_phase(enemies: Array[Node]) -> void:
 
 
 func _sort_by_initiative(a: Node, b: Node) -> bool:
-	# Gunakan stat_provider jika tersedia, fallback ke mock_dex property
+	# FIX: Fallback chain yang lebih jelas
+	# 1. Coba stat_provider (sistem Candra) — jalur utama
 	if _stat_provider != null:
-		return _stat_provider.get_dex(a) > _stat_provider.get_dex(b)
-	# Fallback: coba baca mock_dex dari MockEntity
-	var dex_a: int = a.get("mock_dex") if a.get("mock_dex") != null else 0
-	var dex_b: int = b.get("mock_dex") if b.get("mock_dex") != null else 0
-	return dex_a > dex_b
+		var dex_a: int = _stat_provider.get_dex(a)
+		var dex_b: int = _stat_provider.get_dex(b)
+		return dex_a > dex_b
+	# 2. Fallback: baca mock_dex langsung dari property node (MockEntity)
+	var raw_a: Variant = a.get("mock_dex")
+	var raw_b: Variant = b.get("mock_dex")
+	var fallback_a: int = int(raw_a) if raw_a != null else 0
+	var fallback_b: int = int(raw_b) if raw_b != null else 0
+	if fallback_a == 0 and fallback_b == 0:
+		push_warning("[EnemyPhaseManager] Tidak ada stat_provider dan entity tidak punya mock_dex — inisiatif semua 0!")
+	return fallback_a > fallback_b
 
 
 func _process_next_enemy() -> void:
@@ -104,12 +111,12 @@ func _is_alive(entity: Node) -> bool:
 	# Cek via property is_alive (MockEntity) atau method is_dead
 	if entity.has_method("is_dead"):
 		return not entity.is_dead()
-	var alive = entity.get("is_alive")
+	var alive: Variant = entity.get("is_alive")  # Variant by design
 	return alive if alive != null else true
 
 
 func _get_name(entity: Node) -> String:
-	var n = entity.get("entity_name")
+	var n: Variant = entity.get("entity_name")  # Variant by design
 	if n != null:
 		return str(n)
 	return entity.name

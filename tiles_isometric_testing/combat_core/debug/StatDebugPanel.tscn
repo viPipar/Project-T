@@ -1,0 +1,19 @@
+[gd_scene load_steps=2 format=3 uid="uid://stat_debug_panel"]
+
+[ext_resource type="Script" path="res://combat_core/debug/StatDebugPanel.gd" id="1_stat_debug"]
+
+[node name="StatDebugPanel" type="Control"]
+layout_mode = 3
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -430.0
+offset_top = 0.0
+offset_right = 0.0
+offset_bottom = 0.0
+grow_horizontal = 0
+grow_vertical = 1
+mouse_filter = 0
+script = ExtResource("1_stat_debug")
