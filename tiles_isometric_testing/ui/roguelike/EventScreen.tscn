@@ -1,0 +1,82 @@
+[gd_scene load_steps=2 format=3 uid="uid://roguelike_event_id"]
+
+[ext_resource type="Script" path="res://ui/roguelike/EventScreen.gd" id="1_script"]
+
+[node name="EventScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -400.0
+offset_top = -250.0
+offset_right = 400.0
+offset_bottom = 250.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 40.0
+offset_top = 40.0
+offset_right = -40.0
+offset_bottom = -40.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 40
+
+[node name="NarrativeText" type="RichTextLabel" parent="Panel/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/normal_font_size = 32
+text = "Event Text Goes Here..."
+fit_content = true
+
+[node name="HBoxP1" type="HBoxContainer" parent="Panel/VBox"]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="BtnChoice1" type="Button" parent="Panel/VBox/HBoxP1"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "P1: Choice 1"
+
+[node name="BtnChoice2" type="Button" parent="Panel/VBox/HBoxP1"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "P1: Choice 2"
+
+[node name="HBoxP2" type="HBoxContainer" parent="Panel/VBox"]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="BtnChoice1" type="Button" parent="Panel/VBox/HBoxP2"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "P2: Choice 1"
+
+[node name="BtnChoice2" type="Button" parent="Panel/VBox/HBoxP2"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "P2: Choice 2"
+
+[connection signal="pressed" from="Panel/VBox/HBoxP1/BtnChoice1" to="." method="_on_p1_btn_1_pressed"]
+[connection signal="pressed" from="Panel/VBox/HBoxP1/BtnChoice2" to="." method="_on_p1_btn_2_pressed"]
+[connection signal="pressed" from="Panel/VBox/HBoxP2/BtnChoice1" to="." method="_on_p2_btn_1_pressed"]
+[connection signal="pressed" from="Panel/VBox/HBoxP2/BtnChoice2" to="." method="_on_p2_btn_2_pressed"]

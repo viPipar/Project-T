@@ -76,27 +76,48 @@ func _get_random_node_type() -> NodeType:
 	else: return NodeType.LOOT
 
 func _generate_paths() -> void:
-	# Connect each node to at least one node in the next layer
-	for i in range(layers.size() - 1):
-		var current_layer = layers[i]
-		var next_layer = layers[i + 1]
+	# Clear previous connections to be safe
+	for layer in layers:
+		for node in layer:
+			node.next_nodes.clear()
+
+	for layer_idx in range(layers.size() - 1):
+		var current_layer = layers[layer_idx]
+		var next_layer = layers[layer_idx + 1]
 		
-		# Ensure every node in current layer connects to something
-		for node in current_layer:
-			var target = next_layer[randi() % next_layer.size()]
-			node.next_nodes.append(target.id)
+		var n = current_layer.size()
+		var m = next_layer.size()
+		
+		var i = 0
+		var j = 0
+		
+		# Slay the Spire non-crossing algorithm
+		while i < n and j < m:
+			var node = current_layer[i]
+			var target = next_layer[j]
 			
-		# Ensure every node in the next layer is reachable
-		for next_node in next_layer:
-			var is_reachable = false
-			for node in current_layer:
-				if next_node.id in node.next_nodes:
-					is_reachable = true
-					break
-			if not is_reachable:
-				var source = current_layer[randi() % current_layer.size()]
-				if not next_node.id in source.next_nodes:
-					source.next_nodes.append(next_node.id)
+			if not target.id in node.next_nodes:
+				node.next_nodes.append(target.id)
+			
+			var advance_i = false
+			var advance_j = false
+			
+			if i == n - 1:
+				advance_j = true
+			elif j == m - 1:
+				advance_i = true
+			else:
+				var roll = randf()
+				if roll < 0.33:
+					advance_i = true
+				elif roll < 0.66:
+					advance_j = true
+				else:
+					advance_i = true
+					advance_j = true
+					
+			if advance_i: i += 1
+			if advance_j: j += 1
 
 func get_node_by_id(id: int) -> MapNode:
 	return nodes_by_id.get(id, null)
