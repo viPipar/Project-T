@@ -1,3 +1,16 @@
+# entities/enemies/EnemyPlaceholder.gd
+# Tanggung jawab:
+#   Enemy test sederhana untuk Main.tscn: posisi grid, sprite placeholder, HP, dan AI ringan.
+#
+# Cara pakai:
+#   var enemy := preload("res://entities/enemies/EnemyPlaceholder.tscn").instantiate()
+#   enemy.place_at(Vector2i(5, 5))
+#   enemy.take_damage(6, player)
+#
+# Cara evaluasi:
+#   1. Jalankan Main.tscn.
+#   2. Serang enemy dari player.
+#   3. Pastikan HealthComponent.current_hp berkurang dan enemy hilang saat HP 0.
 extends CharacterBody2D
 
 @export var enemy_name: String = "Enemy"
@@ -6,16 +19,23 @@ extends CharacterBody2D
 @export var max_hp: int = 30
 
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
+@onready var stats: StatsComponent = $StatsComponent
+@onready var class_comp: ClassComponent = $ClassComponent
+@onready var health: HealthComponent = $HealthComponent
+@onready var cond: ConditionComponent = $ConditionComponent
 
-var grid_pos:   Vector2i = Vector2i.ZERO
-var current_hp: int      = 30
-var is_alive:   bool     = true
+var grid_pos: Vector2i = Vector2i.ZERO
+var current_hp: int = 30
+var is_alive: bool = true
+var _death_started: bool = false
 
 const INSECT_DIR := "res://assets/characters/insect1_placeholder"
 
 
 func _ready() -> void:
 	add_to_group("enemies")
+	current_hp = max_hp
+	_setup_health()
 	_setup_sprite()
 	_apply_idle_frames()
 	if sprite != null:
@@ -29,7 +49,7 @@ func get_grid_pos() -> Vector2i:
 
 
 func place_at(pos: Vector2i) -> void:
-	if grid_pos != Vector2i.ZERO:
+	if GridManager.get_entity_at(grid_pos) == self:
 		GridManager.unregister_entity(grid_pos)
 	grid_pos = pos
 	GridManager.register_entity(pos, self, GridManager.EntityType.ENEMY)
@@ -38,65 +58,135 @@ func place_at(pos: Vector2i) -> void:
 
 
 func _deferred_place() -> void:
-	current_hp = max_hp
+	if health != null:
+		health.setup_fixed_max(max_hp, true)
+	else:
+		current_hp = max_hp
 	place_at(start_grid_pos)
 
 
-# ── HP & Damage ──────────────────────────────────────────────────────────────
+# -----------------------------------------------------------------------------
+# HP & Damage
+# -----------------------------------------------------------------------------
 
-func take_damage(amount: int) -> void:
+func take_damage(amount: int, attacker: Node = null) -> int:
 	if not is_alive:
-		return
-	current_hp -= amount
-	current_hp  = max(0, current_hp)
-	print("[%s] 💢 Menerima %d damage! HP: %d/%d" % [enemy_name, amount, current_hp, max_hp])
+		return 0
+	if health != null:
+		return health.take_damage(amount, attacker, "physical")
+
+	var applied: int = maxi(0, amount)
+	current_hp = maxi(0, current_hp - applied)
+	print("[%s] Menerima %d damage. HP: %d/%d" % [enemy_name, applied, current_hp, max_hp])
 	if current_hp <= 0:
-		_die()
+		_die(attacker, true)
+	return applied
 
 
-func _die() -> void:
+func heal(amount: int) -> int:
+	if not is_alive:
+		return 0
+	if health != null:
+		return health.heal(amount, self)
+
+	var applied: int = mini(maxi(0, amount), max_hp - current_hp)
+	current_hp += applied
+	return applied
+
+
+func is_dead() -> bool:
+	if health != null:
+		return health.is_dead()
+	return not is_alive
+
+
+func _setup_health() -> void:
+	if health == null:
+		return
+	health.setup_fixed_max(max_hp, true)
+	if not health.hp_changed.is_connected(_on_hp_changed):
+		health.hp_changed.connect(_on_hp_changed)
+	if not health.damaged.is_connected(_on_health_damaged):
+		health.damaged.connect(_on_health_damaged)
+	if not health.died.is_connected(_on_health_died):
+		health.died.connect(_on_health_died)
+
+
+func _on_hp_changed(new_hp: int, new_max_hp: int) -> void:
+	current_hp = new_hp
+	max_hp = new_max_hp
+	is_alive = current_hp > 0
+
+
+func _on_health_damaged(amount: int) -> void:
+	print("[%s] Menerima %d damage. HP: %d/%d" % [enemy_name, amount, current_hp, max_hp])
+
+
+func _on_health_died(killer: Node) -> void:
+	_die(killer, false)
+
+
+func _die(killer: Node = null, emit_bus: bool = true) -> void:
+	if _death_started:
+		return
+	_death_started = true
 	is_alive = false
-	print("[%s] 💀 Kalah!" % enemy_name)
+	current_hp = 0
+	print("[%s] Kalah." % enemy_name)
+	if emit_bus and EventBus != null:
+		EventBus.entity_died.emit(self, killer)
 	if sprite != null:
-		sprite.modulate = Color(0.3, 0.3, 0.3, 0.5)  # greyed out
-	GridManager.unregister_entity(grid_pos)
+		sprite.modulate = Color(0.3, 0.3, 0.3, 0.5)
+	if GridManager.get_entity_at(grid_pos) == self:
+		GridManager.unregister_entity(grid_pos)
 	remove_from_group("enemies")
 	await get_tree().create_timer(0.8).timeout
 	queue_free()
 
 
-# ── Simple AI (dipanggil oleh CombatTestBridge saat enemy phase) ─────────────
+# -----------------------------------------------------------------------------
+# Simple AI (dipanggil oleh CombatTestBridge saat enemy phase)
+# -----------------------------------------------------------------------------
 
 func do_ai_turn() -> void:
-	if not is_alive:
+	if is_dead():
+		return
+	if cond != null and (cond.is_stunned() or cond.is_frozen()):
 		return
 
-	# Cari player terdekat
-	var players  := get_tree().get_nodes_in_group("players")
-	var nearest  : Node    = null
-	var near_pos : Vector2i
-	var near_dist: int     = 999
-
-	for p in players:
-		var p_pos : Vector2i = p.get("grid_pos")
-		var dist  : int      = abs(grid_pos.x - p_pos.x) + abs(grid_pos.y - p_pos.y)
-		if dist < near_dist:
-			near_dist = dist
-			near_pos  = p_pos
-			nearest   = p
-
+	var nearest: Node = _find_nearest_player()
 	if nearest == null:
 		print("[%s] Tidak ada target." % enemy_name)
 		return
 
-	var p_name : String = nearest.get("char_name") if nearest.get("char_name") != null else nearest.name
+	var p_name: String = str(nearest.get("char_name")) if nearest.get("char_name") != null else str(nearest.name)
+	var near_dist: int = GridManager.get_distance(grid_pos, nearest.get("grid_pos") as Vector2i)
 
 	if near_dist <= 1:
-		# Adjacent → serang!
-		print("[%s] ⚔️  Menyerang %s! (jarak 1)" % [enemy_name, p_name])
-		print("[%s]    (Sistem HP player belum ada — damage tidak di-apply)" % enemy_name)
+		print("[%s] Menyerang %s. (jarak 1)" % [enemy_name, p_name])
+		var applied: int = StatSystem.apply_damage(nearest, 2, self, "physical")
+		if applied > 0:
+			EventBus.damage_dealt.emit(nearest, applied, "physical", false)
 	else:
-		print("[%s] 🚶 Bergerak menuju %s (jarak %d)..." % [enemy_name, p_name, near_dist])
+		print("[%s] Bergerak menuju %s (jarak %d)." % [enemy_name, p_name, near_dist])
+
+
+func _find_nearest_player() -> Node:
+	var nearest: Node = null
+	var near_dist: int = 999
+
+	for p in get_tree().get_nodes_in_group("players"):
+		var p_health: HealthComponent = p.get_node_or_null("HealthComponent") as HealthComponent
+		if p_health != null and p_health.is_dead():
+			continue
+
+		var p_pos: Vector2i = p.get("grid_pos") as Vector2i
+		var dist: int = GridManager.get_distance(grid_pos, p_pos)
+		if dist < near_dist:
+			near_dist = dist
+			nearest = p
+
+	return nearest
 
 
 func _setup_sprite() -> void:
@@ -106,7 +196,7 @@ func _setup_sprite() -> void:
 
 func _apply_idle_frames() -> void:
 	var frames := _load_frames_from_dir(INSECT_DIR)
-	if frames.is_empty():
+	if frames.is_empty() or sprite == null:
 		return
 
 	var sprite_frames := SpriteFrames.new()

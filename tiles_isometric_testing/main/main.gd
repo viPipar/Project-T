@@ -1,3 +1,16 @@
+# main/main.gd
+# Tanggung jawab:
+#   Entry scene utama untuk spawn player/enemy, cursor, debug UI, dan combat bridge.
+#   Base stat entity sekarang dibaca dari StatDataDB JSON.
+#
+# Cara pakai:
+#   Jalankan Main.tscn.
+#   Ubah data aktif di res://data/stat_module/entity_base_stats/*.json.
+#
+# Cara evaluasi:
+#   1. Ubah vit/str/acc Aria atau Goblin di JSON.
+#   2. Jalankan ulang Main.tscn.
+#   3. Tekan F1 dan pastikan debug stats mengikuti JSON.
 extends Node2D
 
 @onready var world: Node2D = $World
@@ -11,29 +24,13 @@ var _show_dice_sandbox: bool = false
 var _show_debug_grid: bool = false
 
 func _ready() -> void:
-	var player_scene := preload("res://entities/player/Player.tscn")
 	var cursor_scene := preload("res://world/SelectionCursor.tscn")
 	
 
 	GridManager.load_walls_for_map(1) #manggil mapping
 	
-	var p1 = world.spawn_entity(player_scene, Vector2i(0, 0), {
-		"player_id": 1, "char_name": "Aria"
-	})
-	p1.place_at(Vector2i(5, 7))
-
-	var p2 = world.spawn_entity(player_scene, Vector2i(0, 0), {
-		"player_id": 2, "char_name": "Kael"
-	})
-	p2.place_at(Vector2i(7, 7))
-
-	var p1_class := p1.get_node_or_null("ClassComponent") as ClassComponent
-	if p1_class != null:
-		p1_class.set_primary_class("slayer")
-
-	var p2_class := p2.get_node_or_null("ClassComponent") as ClassComponent
-	if p2_class != null:
-		p2_class.set_primary_class("scholar")
+	var p1: Node = _spawn_player_from_json("aria", "Aria", 1, Vector2i(5, 7))
+	var p2: Node = _spawn_player_from_json("kael", "Kael", 2, Vector2i(7, 7))
 
 	TurnManager.register_player(p1)
 	TurnManager.register_player(p2)
@@ -62,19 +59,8 @@ func _ready() -> void:
 	p2.bind_cursor(kb_cursor_p2)
 
 	# ── Spawn enemy placeholder untuk testing combat_core ─────────────────────
-	var enemy_scene := preload("res://entities/enemies/EnemyPlaceholder.tscn")
-
-	var e1 := enemy_scene.instantiate()
-	e1.set("enemy_name", "Goblin")
-	e1.set("tint_color", Color(0.3, 0.9, 0.3, 1.0))  # hijau
-	world.entities.add_child(e1)
-	e1.call_deferred("place_at", Vector2i(5, 5))
-
-	var e2 := enemy_scene.instantiate()
-	e2.set("enemy_name", "Orc")
-	e2.set("tint_color", Color(0.9, 0.4, 0.1, 1.0))  # oranye
-	world.entities.add_child(e2)
-	e2.call_deferred("place_at", Vector2i(8, 5))
+	_spawn_enemy_from_json("goblin", "Goblin", Vector2i(5, 5), Color(0.3, 0.9, 0.3, 1.0))
+	_spawn_enemy_from_json("orc", "Orc", Vector2i(8, 5), Color(0.9, 0.4, 0.1, 1.0))
 
 	# ── CombatTestBridge: hubungkan combat_core ke scene ini ──────────────────
 	var bridge := Node.new()
@@ -85,6 +71,42 @@ func _ready() -> void:
 	TurnManager.start_battle()
 
 	_apply_debug_visibility()
+
+
+func _spawn_player_from_json(
+	entity_id: String,
+	fallback_name: String,
+	fallback_player_id: int,
+	fallback_pos: Vector2i
+) -> Node:
+	var data: Dictionary = StatDataDB.get_player_data(entity_id)
+	var scene: PackedScene = StatDataDB.load_entity_scene(data, "res://entities/player/Player.tscn")
+	var display_name: String = str(data.get("display_name", fallback_name))
+	var player_id: int = int(data.get("player_id", fallback_player_id))
+	var player: Node = world.spawn_entity(scene, Vector2i.ZERO, {
+		"player_id": player_id,
+		"char_name": display_name
+	})
+	StatDataDB.apply_entity_data(player, data)
+	player.place_at(StatDataDB.get_spawn_grid_pos(data, fallback_pos))
+	return player
+
+
+func _spawn_enemy_from_json(
+	entity_id: String,
+	fallback_name: String,
+	fallback_pos: Vector2i,
+	tint_color: Color
+) -> Node:
+	var data: Dictionary = StatDataDB.get_enemy_data(entity_id)
+	var scene: PackedScene = StatDataDB.load_entity_scene(data, "res://entities/enemies/EnemyPlaceholder.tscn")
+	var enemy: Node = scene.instantiate()
+	enemy.set("enemy_name", str(data.get("display_name", fallback_name)))
+	enemy.set("tint_color", tint_color)
+	world.entities.add_child(enemy)
+	StatDataDB.apply_entity_data(enemy, data)
+	enemy.call_deferred("place_at", StatDataDB.get_spawn_grid_pos(data, fallback_pos))
+	return enemy
 
 
 func _unhandled_input(event: InputEvent) -> void:

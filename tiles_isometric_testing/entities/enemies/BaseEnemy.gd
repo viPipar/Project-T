@@ -1,94 +1,139 @@
+# entities/enemies/BaseEnemy.gd
+# Tanggung jawab:
+#   Base scene untuk enemy berbasis komponen: stats, health, movement, combat, condition, AI.
+#
+# Cara pakai:
+#   var enemy := preload("res://entities/enemies/BaseEnemy.tscn").instantiate()
+#   enemy.enemy_data = some_enemy_data
+#   enemy.place_at(Vector2i(8, 5))
+#
+# Cara evaluasi:
+#   1. Buka BaseEnemy.tscn dan pastikan child component lengkap.
+#   2. Jalankan scene test yang memakai BaseEnemy.
+#   3. Pastikan enemy bisa menerima damage, mati, dan dilepas dari GridManager.
 extends CharacterBody2D
 
-# ─────────────────────────────────────────────
-#  BaseEnemy
-#  Semua enemy turunan dari node ini.
-#  Komponen ditambahkan sebagai child di scene editor.
-#  EnemyData resource mengisi semua stats sekaligus.
-#
-#  Scene hierarchy:
-#    BaseEnemy (CharacterBody2D)
-#    ├── Sprite2D / AnimatedSprite2D
-#    ├── HealthComponent
-#    ├── StatsComponent
-#    ├── MovementComponent
-#    ├── CombatComponent
-#    ├── ConditionComponent
-#    └── AIComponent
-# ─────────────────────────────────────────────
+@export var enemy_data: Resource
 
-@export var enemy_data: Resource   # EnemyData resource
+var grid_pos: Vector2i = Vector2i.ZERO
+var char_name: String = "Enemy"
 
-var grid_pos:  Vector2i = Vector2i.ZERO
-var char_name: String   = "Enemy"
-
-# Komponen — gunakan get_node_or_null di _ready agar tidak crash
-# kalau scene belum punya semua child
-@onready var health:    HealthComponent    = $HealthComponent
-@onready var stats:     StatsComponent     = $StatsComponent
-@onready var movement:  MovementComponent  = $MovementComponent
-@onready var combat:    CombatComponent    = $CombatComponent
-@onready var cond:      ConditionComponent = $ConditionComponent
-@onready var ai:        AIComponent        = $AIComponent
+@onready var health: HealthComponent = get_node_or_null("HealthComponent") as HealthComponent
+@onready var stats: StatsComponent = get_node_or_null("StatsComponent") as StatsComponent
+@onready var movement: MovementComponent = get_node_or_null("MovementComponent") as MovementComponent
+@onready var combat: CombatComponent = get_node_or_null("CombatComponent") as CombatComponent
+@onready var cond: ConditionComponent = get_node_or_null("ConditionComponent") as ConditionComponent
+@onready var ai: AIComponent = get_node_or_null("AIComponent") as AIComponent
 
 
 func _ready() -> void:
 	add_to_group("enemies")
 	_apply_data()
-	health.died.connect(_on_died)
+	if health != null and not health.died.is_connected(_on_died):
+		health.died.connect(_on_died)
 
 
-# ── Data Application ──────────────────────────
+# -----------------------------------------------------------------------------
+# Data Application
+# -----------------------------------------------------------------------------
 
 func _apply_data() -> void:
 	if enemy_data == null:
 		return
 
-	char_name              = enemy_data.enemy_name
+	char_name = str(_data_value("enemy_name", char_name))
 
-	health.max_hp          = enemy_data.max_hp
-	health.current_hp      = enemy_data.max_hp
+	if stats != null:
+		stats.vit = _data_int("vit", _data_int("constitution", stats.vit))
+		stats.str_stat = _data_int("str", _data_int("strength", stats.str_stat))
+		stats.int_stat = _data_int("int", _data_int("intelligence", stats.int_stat))
+		stats.con = _data_int("con", _data_int("constitution", stats.con))
+		stats.acc = _data_int("acc", stats.acc)
+		stats.dex = _data_int("dex", _data_int("dexterity", stats.dex))
+		stats.mov = _data_int("mov", _data_int("movement_speed", stats.mov))
+		stats.att = _data_int("att", stats.att)
+		stats.lck = _data_int("lck", stats.lck)
+		if _data_value("base_armor_class", null) != null:
+			stats.set_mod_source("enemy_data", {"armor": _data_int("base_armor_class", 10) - 10})
+		stats.emit_changed()
 
-	stats.strength         = enemy_data.strength
-	stats.dexterity        = enemy_data.dexterity
-	stats.constitution     = enemy_data.constitution
-	stats.intelligence     = enemy_data.intelligence
-	stats.wisdom           = enemy_data.wisdom
-	stats.charisma         = enemy_data.charisma
-	stats.base_armor_class = enemy_data.base_armor_class
+	if health != null:
+		if _data_value("max_hp", null) != null:
+			health.setup_fixed_max(_data_int("max_hp", health.max_hp), true)
+		else:
+			health.setup_from_stats(stats, true)
 
-	movement.base_movement = enemy_data.movement_speed
-	movement.movement_left = enemy_data.movement_speed
+	if movement != null:
+		var movement_speed := _data_int("movement_speed", stats.get_stat("mov") if stats != null else movement.base_movement)
+		movement.base_movement = movement_speed
+		movement.movement_left = movement_speed
 
-	combat.attack_dice     = enemy_data.attack_dice
-	combat.attack_range    = enemy_data.attack_range
+	if combat != null:
+		combat.attack_dice = str(_data_value("attack_dice", combat.attack_dice))
+		combat.attack_range = _data_int("attack_range", combat.attack_range)
 
-	ai.behavior            = enemy_data.ai_behavior
-	ai.detection_range     = enemy_data.detection_range
-	ai.preferred_range     = enemy_data.attack_range
+	if ai != null:
+		ai.behavior = _data_int("ai_behavior", ai.behavior)
+		ai.detection_range = _data_int("detection_range", ai.detection_range)
+		ai.preferred_range = _data_int("attack_range", ai.preferred_range)
 
 
-# ── Grid Positioning ──────────────────────────
+# -----------------------------------------------------------------------------
+# Grid Positioning
+# -----------------------------------------------------------------------------
 
 func get_grid_pos() -> Vector2i:
 	return grid_pos
 
 
 func place_at(pos: Vector2i) -> void:
-	if grid_pos != Vector2i.ZERO:
+	if GridManager.get_entity_at(grid_pos) == self:
 		GridManager.unregister_entity(grid_pos)
-	grid_pos  = pos
+	grid_pos = pos
 	GridManager.register_entity(pos, self, GridManager.EntityType.ENEMY)
-	position  = IsoUtils.world_to_iso(pos)
-	z_index   = IsoUtils.get_depth(pos)
+	position = IsoUtils.world_to_iso(pos)
+	z_index = IsoUtils.get_depth(pos)
 
 
-# ── Death ─────────────────────────────────────
+# -----------------------------------------------------------------------------
+# HP API
+# -----------------------------------------------------------------------------
+
+func take_damage(amount: int, attacker: Node = null) -> int:
+	if health == null:
+		return 0
+	return health.take_damage(amount, attacker, "physical")
+
+
+func heal(amount: int) -> int:
+	if health == null:
+		return 0
+	return health.heal(amount, self)
+
+
+func is_dead() -> bool:
+	return health != null and health.is_dead()
+
 
 func _on_died(_killer: Node) -> void:
-	# Lepas dari grid segera
-	GridManager.unregister_entity(grid_pos)
-	# Animasi mati (jika ada), lalu hapus
+	if GridManager.get_entity_at(grid_pos) == self:
+		GridManager.unregister_entity(grid_pos)
+	remove_from_group("enemies")
 	set_process(false)
 	await get_tree().create_timer(0.6).timeout
 	queue_free()
+
+
+# -----------------------------------------------------------------------------
+# Helpers
+# -----------------------------------------------------------------------------
+
+func _data_value(property_name: String, fallback) -> Variant:
+	if enemy_data == null:
+		return fallback
+	var value = enemy_data.get(property_name)
+	return fallback if value == null else value
+
+
+func _data_int(property_name: String, fallback: int) -> int:
+	return int(_data_value(property_name, fallback))

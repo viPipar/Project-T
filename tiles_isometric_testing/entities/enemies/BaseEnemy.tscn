@@ -1,6 +1,30 @@
-[gd_scene load_steps=2 format=3 uid="uid://bubllkjht7ojs"]
+[gd_scene load_steps=8 format=3 uid="uid://bubllkjht7ojs"]
 
 [ext_resource type="Script" uid="uid://cj6wgnbf81aju" path="res://entities/enemies/BaseEnemy.gd" id="1_1udrh"]
+[ext_resource type="Script" path="res://components/HealthComponent.gd" id="2_health"]
+[ext_resource type="Script" path="res://components/StatsComponent.gd" id="3_stats"]
+[ext_resource type="Script" path="res://components/MovementComponent.gd" id="4_move"]
+[ext_resource type="Script" path="res://components/CombatComponent.gd" id="5_combat"]
+[ext_resource type="Script" path="res://components/ConditionComponent.gd" id="6_cond"]
+[ext_resource type="Script" path="res://components/AIComponent.gd" id="7_ai"]
 
-[node name="BaseEnemy" type="Node2D"]
+[node name="BaseEnemy" type="CharacterBody2D"]
 script = ExtResource("1_1udrh")
+
+[node name="HealthComponent" type="Node" parent="."]
+script = ExtResource("2_health")
+
+[node name="StatsComponent" type="Node" parent="."]
+script = ExtResource("3_stats")
+
+[node name="MovementComponent" type="Node" parent="."]
+script = ExtResource("4_move")
+
+[node name="CombatComponent" type="Node" parent="."]
+script = ExtResource("5_combat")
+
+[node name="ConditionComponent" type="Node" parent="."]
+script = ExtResource("6_cond")
+
+[node name="AIComponent" type="Node" parent="."]
+script = ExtResource("7_ai")

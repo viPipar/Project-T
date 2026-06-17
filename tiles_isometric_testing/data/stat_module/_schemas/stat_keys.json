@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "module": "stat_module",
+  "owner": "Candra",
+  "primary_stat_keys": [
+    "vit",
+    "str",
+    "int",
+    "con",
+    "acc",
+    "dex",
+    "mov",
+    "att",
+    "lck"
+  ],
+  "derived_modifier_keys": [
+    "hp",
+    "max_hp",
+    "armor",
+    "resist",
+    "physical_damage",
+    "magical_damage",
+    "action_points",
+    "hit_roll",
+    "crit_reduction",
+    "movement_tiles",
+    "spell_slots_l1",
+    "spell_slots_l2",
+    "spell_slots_l3",
+    "luck_roll"
+  ],
+  "source_id_examples": {
+    "class_buff": "class:slayer:blood_oath",
+    "item": "item:ring_str",
+    "condition": "condition:weakened",
+    "temporary_buff": "buff:blessing",
+    "temporary_debuff": "debuff:crippled"
+  },
+  "formula_notes": {
+    "max_hp": "15 + floor(vit / 2) + floor(str / 4)",
+    "armor": "10 + floor(con / 2) + floor(dex / 4)",
+    "resist": "5 + floor(vit / 4) + floor(con / 4)",
+    "spell_slots_l1": "2 + floor(att / 5)",
+    "spell_slots_l2": "2 + floor(att / 10)",
+    "spell_slots_l3": "1 + floor(att / 15)"
+  }
+}

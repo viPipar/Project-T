@@ -1,4 +1,4 @@
-[gd_scene load_steps=19 format=3 uid="uid://b6a7hhjouptf1"]
+[gd_scene load_steps=21 format=3 uid="uid://b6a7hhjouptf1"]
 
 [ext_resource type="Script" uid="uid://bob1mosrfauus" path="res://entities/player/Player.gd" id="1_mab2k"]
 [ext_resource type="Texture2D" uid="uid://ku20f3w7cjo3" path="res://assets/shadow.png" id="2_fmb3c"]
@@ -7,6 +7,8 @@
 [ext_resource type="Script" uid="uid://dleotlv76kabm" path="res://components/MovementComponent.gd" id="99_mvcomp"]
 [ext_resource type="Script" uid="uid://b5e8838ogl3f7" path="res://components/StatsComponent.gd" id="100_stats"]
 [ext_resource type="Script" uid="uid://c6x647xq2wo8i" path="res://components/ClassComponent.gd" id="101_class"]
+[ext_resource type="Script" uid="uid://cmbb03lnpiv3i" path="res://components/HealthComponent.gd" id="102_health"]
+[ext_resource type="Script" uid="uid://5ppdu5jndc7b" path="res://components/ConditionComponent.gd" id="103_cond"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_mab2k"]
 
@@ -357,3 +359,9 @@ script = ExtResource("101_class")
 
 [node name="MovementComponent" type="Node" parent="."]
 script = ExtResource("99_mvcomp")
+
+[node name="HealthComponent" type="Node" parent="."]
+script = ExtResource("102_health")
+
+[node name="ConditionComponent" type="Node" parent="."]
+script = ExtResource("103_cond")

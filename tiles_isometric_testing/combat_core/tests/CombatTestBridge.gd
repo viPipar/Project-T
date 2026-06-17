@@ -1,4 +1,17 @@
 # combat_core/tests/CombatTestBridge.gd
+# Tanggung jawab:
+#   Menjembatani input attack dari Main.tscn ke combat_core Tapip.
+#   Runtime utama memakai StatSystem dan HealthComponent; MockStatProvider hanya fallback test.
+#
+# Cara pakai:
+#   Script ini dipasang dari main.gd pada Main.tscn.
+#   EventBus.attackcam_started.emit(attacker, target, "main_attack")
+#
+# Cara evaluasi:
+#   1. Jalankan Main.tscn.
+#   2. Serang enemy dari player.
+#   3. Pastikan hit/miss tetap muncul dan damage masuk ke HealthComponent target.
+# combat_core/tests/CombatTestBridge.gd
 # ── JEMBATAN COMBAT CORE ↔ MAIN SCENE ────────────────────────────────────────
 # Attach ke Node di Main.tscn (sudah dilakukan otomatis dari main.gd).
 # Script ini TIDAK memodifikasi TurnManager — hanya hook ke signals-nya.
@@ -14,7 +27,7 @@
 extends Node
 
 # ── Combat Core Systems ───────────────────────────────────────────────────────
-var _stat_provider : MockStatProvider
+var _stat_provider
 var _dice_roller   : DiceRoller
 var _luck_roller   : LuckRoller
 var _hit_resolver  : HitMissResolver
@@ -41,7 +54,10 @@ func _ready() -> void:
 
 func _setup_combat_core() -> void:
 	# RNG
-	_stat_provider = MockStatProvider.new(); add_child(_stat_provider)
+	_stat_provider = get_node_or_null("/root/StatSystem")
+	if _stat_provider == null:
+		_stat_provider = MockStatProvider.new()
+		add_child(_stat_provider)
 	_dice_roller   = DiceRoller.new();       add_child(_dice_roller)
 	_luck_roller   = LuckRoller.new();       add_child(_luck_roller)
 	_hit_resolver  = HitMissResolver.new();  add_child(_hit_resolver)
@@ -112,6 +128,7 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 
 	if not hit:
 		print("[COMBAT] 💨 MISS!")
+		EventBus.miss_occurred.emit(attacker, target)
 		print("[COMBAT] ────────────────────────────")
 		return
 
@@ -126,14 +143,28 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 		print("[COMBAT] ⚔️  HIT! Damage (%s) = %d" % [dmg_formula, dmg])
 
 	# Apply damage ke target
-	if target.has_method("take_damage"):
-		target.take_damage(dmg)
-	else:
-		print("[COMBAT] ⚠️  Target tidak punya take_damage() — damage tidak di-apply")
+	var applied := _apply_damage_to_target(target, dmg, attacker)
 
 	# Emit ke EventBus untuk HUD/sistem lain
-	EventBus.damage_dealt.emit(target, dmg, "physical", crit)
+	EventBus.damage_dealt.emit(target, applied, "physical", crit)
 	print("[COMBAT] ────────────────────────────")
+
+
+func _apply_damage_to_target(target: Node, amount: int, attacker: Node) -> int:
+	var stat_system := get_node_or_null("/root/StatSystem")
+	if stat_system != null and stat_system.has_method("apply_damage"):
+		return int(stat_system.apply_damage(target, amount, attacker, "physical"))
+
+	var health := target.get_node_or_null("HealthComponent") as HealthComponent
+	if health != null:
+		return health.take_damage(amount, attacker, "physical")
+
+	if target.has_method("take_damage"):
+		target.call("take_damage", amount)
+		return maxi(0, amount)
+
+	print("[COMBAT] Target tidak punya HealthComponent/take_damage() - damage tidak di-apply")
+	return 0
 
 
 # ── PHASE TRACKING ────────────────────────────────────────────────────────────

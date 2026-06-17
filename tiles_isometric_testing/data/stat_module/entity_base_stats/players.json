@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "kind": "player_base_stats",
+  "players": {
+    "aria": {
+      "display_name": "Aria",
+      "scene": "res://entities/player/Player.tscn",
+      "player_id": 1,
+      "class_id": "slayer",
+      "starting_buffs": [
+        "slayer:blood_oath"
+      ],
+      "base_stats": {
+        "vit": 12,
+        "str": 10,
+        "int": 4,
+        "con": 8,
+        "acc": 8,
+        "dex": 6,
+        "mov": 5,
+        "att": 0,
+        "lck": 5
+      },
+      "health": {
+        "use_stats_max_hp": true
+      },
+      "spawn": {
+        "map_id": 1,
+        "grid_pos": [5, 7]
+      }
+    },
+    "kael": {
+      "display_name": "Kael",
+      "scene": "res://entities/player/Player.tscn",
+      "player_id": 2,
+      "class_id": "scholar",
+      "starting_buffs": [
+        "scholar:attuned_mind"
+      ],
+      "base_stats": {
+        "vit": 8,
+        "str": 3,
+        "int": 12,
+        "con": 5,
+        "acc": 6,
+        "dex": 5,
+        "mov": 4,
+        "att": 10,
+        "lck": 8
+      },
+      "health": {
+        "use_stats_max_hp": true
+      },
+      "spawn": {
+        "map_id": 1,
+        "grid_pos": [7, 7]
+      }
+    }
+  }
+}

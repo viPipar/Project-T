@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "kind": "condition_stat_mods",
+  "conditions": {
+    "stunned": {
+      "display_name": "Stunned",
+      "type": "debuff",
+      "default_duration_turns": 1,
+      "blocks_action": true,
+      "blocks_movement": false,
+      "stat_mods": {}
+    },
+    "frozen": {
+      "display_name": "Frozen",
+      "type": "debuff",
+      "default_duration_turns": 1,
+      "blocks_action": true,
+      "blocks_movement": true,
+      "stat_mods": {}
+    },
+    "weakened": {
+      "display_name": "Weakened",
+      "type": "debuff",
+      "default_duration_turns": 2,
+      "source_id": "condition:weakened",
+      "stat_mods": {
+        "armor": -2
+      },
+      "component_args": {
+        "armor_penalty": 2
+      }
+    },
+    "bleeding": {
+      "display_name": "Bleeding",
+      "type": "debuff",
+      "default_duration_turns": 3,
+      "stat_mods": {},
+      "turn_effect": {
+        "timing": "turn_start",
+        "damage_type": "bleeding",
+        "damage_per_stack": 1
+      }
+    },
+    "crippled": {
+      "display_name": "Crippled",
+      "type": "debuff",
+      "default_duration_turns": 2,
+      "source_id": "condition:crippled",
+      "stat_mods": {
+        "mov": -5,
+        "dex": -2
+      }
+    }
+  }
+}

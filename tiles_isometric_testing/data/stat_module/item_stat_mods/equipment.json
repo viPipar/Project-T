@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "kind": "item_stat_mods",
+  "items": {
+    "ring_str": {
+      "display_name": "Ring of Strength",
+      "item_type": "accessory",
+      "equip_slot": "ring",
+      "source_id": "item:ring_str",
+      "stat_mods": {
+        "str": 2
+      }
+    },
+    "iron_armor": {
+      "display_name": "Iron Armor",
+      "item_type": "armor",
+      "equip_slot": "body",
+      "source_id": "item:iron_armor",
+      "stat_mods": {
+        "armor": 3,
+        "dex": -1
+      }
+    },
+    "sage_charm": {
+      "display_name": "Sage Charm",
+      "item_type": "accessory",
+      "equip_slot": "charm",
+      "source_id": "item:sage_charm",
+      "stat_mods": {
+        "int": 2,
+        "att": 5
+      }
+    },
+    "swift_boots": {
+      "display_name": "Swift Boots",
+      "item_type": "boots",
+      "equip_slot": "feet",
+      "source_id": "item:swift_boots",
+      "stat_mods": {
+        "mov": 5,
+        "movement_tiles": 1
+      }
+    }
+  }
+}

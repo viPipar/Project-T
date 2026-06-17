@@ -1,3 +1,16 @@
+# entities/player/Player.gd
+# Tanggung jawab:
+#   Mengelola input, animasi, posisi grid, dan API health dasar milik player.
+#
+# Cara pakai:
+#   var player := preload("res://entities/player/Player.tscn").instantiate()
+#   player.place_at(Vector2i(5, 7))
+#   player.take_damage(4, enemy)
+#
+# Cara evaluasi:
+#   1. Jalankan Main.tscn.
+#   2. Tekan F1/checkbox debug stats dan serang enemy.
+#   3. Pastikan posisi grid tidak dobel dan HP player berubah saat terkena damage.
 extends CharacterBody2D
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -15,6 +28,8 @@ extends CharacterBody2D
 @onready var movement:   MovementComponent = $MovementComponent
 @onready var stats:      StatsComponent    = $StatsComponent
 @onready var class_comp: ClassComponent    = $ClassComponent
+@onready var health:     HealthComponent   = $HealthComponent
+@onready var cond:       ConditionComponent = $ConditionComponent
 
 var anim_sprite: AnimatedSprite2D
 
@@ -36,6 +51,8 @@ func _ready() -> void:
 
 	movement.move_finished.connect(_on_move_finished)
 	movement.step_started.connect(_on_step_started)
+	if health != null and not health.died.is_connected(_on_died):
+		health.died.connect(_on_died)
 
 
 func _process(_delta: float) -> void:
@@ -144,13 +161,29 @@ func bind_cursor(cursor: Node2D) -> void:
 	_cursor = cursor
 
 func place_at(pos: Vector2i) -> void:
-	if grid_pos != Vector2i.ZERO:
+	if GridManager.get_entity_at(grid_pos) == self:
 		GridManager.unregister_entity(grid_pos)
 
 	grid_pos = pos
 	GridManager.register_entity(pos, self, GridManager.EntityType.PLAYER)
 	position = IsoUtils.world_to_iso(pos)
 	z_index  = IsoUtils.get_depth(pos)
+
+
+func take_damage(amount: int, attacker: Node = null) -> int:
+	if health == null:
+		return 0
+	return health.take_damage(amount, attacker, "physical")
+
+
+func heal(amount: int) -> int:
+	if health == null:
+		return 0
+	return health.heal(amount, self)
+
+
+func is_dead() -> bool:
+	return health != null and health.is_dead()
 
 
 # ── Internal ──────────────────────────────────────────────────────────────────
@@ -237,3 +270,10 @@ func _apply_facing_flip() -> void:
 		anim_sprite.flip_h = true
 	elif _facing == "right":
 		anim_sprite.flip_h = false
+
+
+func _on_died(_killer: Node) -> void:
+	print("[Player] %s kalah." % char_name)
+	set_process(false)
+	if anim_sprite != null:
+		anim_sprite.modulate = Color(0.35, 0.35, 0.35, 0.6)

@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "kind": "class_buff_stat_mods",
+  "classes": {
+    "slayer": {
+      "display_name": "Slayer Order",
+      "buffs": {
+        "blood_oath": {
+          "display_name": "Blood Oath",
+          "source_id": "class:slayer:blood_oath",
+          "duration": "passive",
+          "stat_mods": {
+            "str": 2
+          }
+        },
+        "iron_heart": {
+          "display_name": "Iron Heart",
+          "source_id": "class:slayer:iron_heart",
+          "duration": "passive",
+          "stat_mods": {
+            "vit": 2
+          }
+        }
+      }
+    },
+    "scholar": {
+      "display_name": "Scholar Order",
+      "buffs": {
+        "arcane_thesis": {
+          "display_name": "Arcane Thesis",
+          "source_id": "class:scholar:arcane_thesis",
+          "duration": "passive",
+          "stat_mods": {
+            "int": 2
+          }
+        },
+        "attuned_mind": {
+          "display_name": "Attuned Mind",
+          "source_id": "class:scholar:attuned_mind",
+          "duration": "passive",
+          "stat_mods": {
+            "att": 10
+          }
+        }
+      }
+    }
+  },
+  "temporary_buffs": {
+    "blessing": {
+      "display_name": "Blessing",
+      "source_id": "buff:blessing",
+      "duration_turns": 3,
+      "stat_mods": {
+        "resist": 2,
+        "lck": 5
+      }
+    },
+    "guard_stance": {
+      "display_name": "Guard Stance",
+      "source_id": "buff:guard_stance",
+      "duration_turns": 1,
+      "stat_mods": {
+        "armor": 2,
+        "movement_tiles": -1
+      }
+    }
+  }
+}

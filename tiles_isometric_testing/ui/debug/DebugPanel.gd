@@ -1,3 +1,15 @@
+# ui/debug/DebugPanel.gd
+# Tanggung jawab:
+#   Panel debug ringan untuk melihat class, stat final, derived stat, dan HP runtime.
+#
+# Cara pakai:
+#   Panel ini aktif dari Main.tscn.
+#   Toggle "Show Stats & Classes" untuk melihat data player/enemy.
+#
+# Cara evaluasi:
+#   1. Jalankan Main.tscn.
+#   2. Aktifkan toggle stats.
+#   3. Serang enemy dan pastikan angka HP di panel ikut berubah.
 extends Control
 
 @export var show_stats_default: bool = false
@@ -116,18 +128,25 @@ func _format_entity_stats(entity: Node, prefix: String) -> String:
 			buffs_text = ", ".join(names)
 
 	var stats := entity.get_node_or_null("StatsComponent") as StatsComponent
+	var health := entity.get_node_or_null("HealthComponent") as HealthComponent
 	var stat_line := ""
 	var derived_line := ""
+	var hp_text := ""
+	if health != null:
+		hp_text = "HP %d/%d" % [health.current_hp, health.max_hp]
 	if stats != null:
 		stat_line = "VIT %d STR %d INT %d CON %d ACC %d DEX %d MOV %d ATT %d LCK %d" % [
 			stats.get_stat("vit"), stats.get_stat("str"), stats.get_stat("int"),
 			stats.get_stat("con"), stats.get_stat("acc"), stats.get_stat("dex"),
 			stats.get_stat("mov"), stats.get_stat("att"), stats.get_stat("lck")
 		]
-		derived_line = "HP+%d ARM+%d RES+%d AP+%d Mv+%d Hit+%d Crit-%d" % [
-			stats.bonus_hp(), stats.bonus_armor(), stats.bonus_resist(),
+		if hp_text == "":
+			hp_text = "MaxHP %d" % stats.get_max_hp()
+		derived_line = "%s ARM %d RES %d AP+%d Mv+%d Hit+%d Crit-%d Slots %d/%d/%d" % [
+			hp_text, stats.get_armor(), stats.get_resist(),
 			stats.bonus_action_points(), stats.bonus_movement_tiles(),
-			stats.hit_roll_bonus(), stats.crit_roll_reduction()
+			stats.hit_roll_bonus(), stats.crit_roll_reduction(),
+			stats.get_spell_slots_l1(), stats.get_spell_slots_l2(), stats.get_spell_slots_l3()
 		]
 
 	var header := "%s %s | Class: %s" % [prefix, name, class_title]
@@ -135,6 +154,8 @@ func _format_entity_stats(entity: Node, prefix: String) -> String:
 		header = "%s%d %s | Class: %s" % [prefix, pid, name, class_title]
 	var buffs_line := "Buffs: %s" % buffs_text
 	if stat_line == "":
+		if hp_text != "":
+			return "%s\n%s\n%s" % [header, buffs_line, hp_text]
 		return "%s\n%s" % [header, buffs_line]
 	return "%s\n%s\n%s\n%s" % [header, buffs_line, stat_line, derived_line]
 

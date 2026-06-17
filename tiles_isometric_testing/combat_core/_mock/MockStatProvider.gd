@@ -11,6 +11,8 @@
 #   get_att(entity)    -> int
 #   get_dex(entity)    -> int
 #   get_int_stat(entity) -> int
+#   get_str_stat(entity) -> int
+#   get_max_hp(entity) -> int
 class_name MockStatProvider
 extends Node
 
@@ -39,12 +41,12 @@ extends Node
 # Coba baca dari StatsComponent nyata dulu, fallback ke mock value
 func get_armor(entity: Node) -> int:
 	var sc := _get_stats(entity)
-	if sc: return 10 + sc.bonus_armor()
+	if sc: return sc.get_armor()
 	return mock_armor
 
 func get_resist(entity: Node) -> int:
 	var sc := _get_stats(entity)
-	if sc: return 5 + sc.bonus_resist()
+	if sc: return sc.get_resist()
 	return mock_resist
 
 func get_acc(entity: Node) -> int:
@@ -81,6 +83,11 @@ func get_str_stat(entity: Node) -> int:
 	var sc := _get_stats(entity)
 	if sc: return sc.get_stat("str")
 	return mock_str_val
+
+func get_max_hp(entity: Node) -> int:
+	var sc := _get_stats(entity)
+	if sc: return sc.get_max_hp()
+	return 15 + floori(mock_vit / 2.0) + floori(mock_str_val / 4.0)
 
 
 # Helper internal

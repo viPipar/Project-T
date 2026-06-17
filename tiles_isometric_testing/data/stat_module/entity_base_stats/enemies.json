@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "kind": "enemy_base_stats",
+  "enemies": {
+    "goblin": {
+      "display_name": "Goblin",
+      "scene": "res://entities/enemies/EnemyPlaceholder.tscn",
+      "base_stats": {
+        "vit": 6,
+        "str": 5,
+        "int": 0,
+        "con": 3,
+        "acc": 5,
+        "dex": 8,
+        "mov": 5,
+        "att": 0,
+        "lck": 2
+      },
+      "health": {
+        "use_stats_max_hp": false,
+        "max_hp": 20
+      },
+      "combat": {
+        "attack_dice": "1D6",
+        "attack_range": 1,
+        "is_magical": false
+      },
+      "spawn": {
+        "map_id": 1,
+        "grid_pos": [5, 5]
+      }
+    },
+    "orc": {
+      "display_name": "Orc",
+      "scene": "res://entities/enemies/EnemyPlaceholder.tscn",
+      "base_stats": {
+        "vit": 14,
+        "str": 10,
+        "int": 0,
+        "con": 8,
+        "acc": 4,
+        "dex": 3,
+        "mov": 3,
+        "att": 0,
+        "lck": 1
+      },
+      "health": {
+        "use_stats_max_hp": false,
+        "max_hp": 35
+      },
+      "combat": {
+        "attack_dice": "1D8",
+        "attack_range": 1,
+        "is_magical": false
+      },
+      "spawn": {
+        "map_id": 1,
+        "grid_pos": [8, 5]
+      }
+    }
+  }
+}
