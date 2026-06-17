@@ -11,10 +11,17 @@ var _show_dice_sandbox: bool = false
 var _show_debug_grid:   bool = false
 var _split_screen: SplitScreenManager = null
 var _stat_debug_panel: StatDebugPanel = null  # Debug stat manipulator (F1)
+var roguelike_ui_shell: CanvasLayer = null
 
 func _ready() -> void:
 	var player_scene := preload("res://entities/player/Player.tscn")
 	var cursor_scene := preload("res://world/SelectionCursor.tscn")
+	
+	# Instantiate Roguelike UI early
+	var shell_scene = load("res://ui/roguelike/RoguelikeUIShell.tscn")
+	if shell_scene:
+		roguelike_ui_shell = shell_scene.instantiate()
+		add_child(roguelike_ui_shell)
 
 	GridManager.load_walls_for_map(1) # manggil mapping
 
@@ -151,10 +158,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		match event.keycode:
 			KEY_F1:
 				_show_debug_panel = not _show_debug_panel
+				debug_panel.visible = _show_debug_panel
 			KEY_F2:
 				_show_dice_sandbox = not _show_dice_sandbox
 			KEY_F3:
 				_show_debug_grid = not _show_debug_grid
+			KEY_F4:
+				if roguelike_ui_shell:
+					roguelike_ui_shell.toggle()
 			_:
 				return
 		_apply_debug_visibility()
