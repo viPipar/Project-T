@@ -33,9 +33,10 @@ const WEAKENED_SOURCE_ID := "condition:weakened"
 const AUTOTOMY_SOURCE_ID := "condition:autotomy"
 
 var _conditions: Dictionary = {}
-
+var _status_db: Dictionary = {}
 
 func _ready() -> void:
+	_load_status_db()
 	if EventBus != null and not EventBus.turn_started.is_connected(_on_turn_started):
 		EventBus.turn_started.connect(_on_turn_started)
 	if EventBus != null and not EventBus.on_status_applied.is_connected(_on_status_applied):
@@ -344,8 +345,6 @@ func _get_health() -> HealthComponent:
 	return p.get_node_or_null("HealthComponent") as HealthComponent
 
 
-func _normalize_id(condition_id: String) -> String:
-	return condition_id.strip_edges().to_lower()
 
 
 func _merge_data(current, incoming: Dictionary) -> Dictionary:

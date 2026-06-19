@@ -75,6 +75,66 @@
       "stat_mods": {
         "armor": 1
       }
+    },
+
+    "fire": {
+      "display_name": "Burn",
+      "type": "debuff",
+      "default_duration_turns": 2,
+      "stat_mods": {}
+    },
+    "water": {
+      "display_name": "Wet",
+      "type": "debuff",
+      "default_duration_turns": 2,
+      "stat_mods": {}
+    },
+    "earth": {
+      "display_name": "Dust",
+      "type": "debuff",
+      "default_duration_turns": 2,
+      "stat_mods": {}
+    },
+    "air": {
+      "display_name": "Wind",
+      "type": "debuff",
+      "default_duration_turns": 2,
+      "stat_mods": {}
+    },
+    "magma": {
+      "display_name": "Magma",
+      "type": "debuff",
+      "default_duration_turns": 2,
+      "stat_mods": {},
+      "dot": {
+        "damage": 3,
+        "damage_type": "fire",
+        "timing": "start"
+      }
+    },
+    "mud": {
+      "display_name": "Mud",
+      "type": "debuff",
+      "default_duration_turns": 2,
+      "stat_mods": {
+        "mov": -2
+      }
+    },
+    "mist": {
+      "display_name": "Mist",
+      "type": "debuff",
+      "default_duration_turns": 2,
+      "stat_mods": {
+        "acc": -10
+      }
+    },
+    "erosion": {
+      "display_name": "Erosion",
+      "type": "debuff",
+      "default_duration_turns": 2,
+      "stat_mods": {
+        "armor": -2
+      }
     }
   }
 }

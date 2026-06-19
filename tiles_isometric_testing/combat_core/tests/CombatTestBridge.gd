@@ -113,6 +113,13 @@ func _setup_combat_core() -> void:
 	_p2_mov.setup(p2_mov)
 	_p2_ss.setup(p2_att)
 
+	# --- DEBUG INFINITE RESOURCES FOR TESTING ---
+	_p1_ap.max_ap += 99; _p1_ap.current_ap += 99
+	_p2_ap.max_ap += 99; _p2_ap.current_ap += 99
+	_p1_ec.max_charges += 99; _p1_ec.current_charges += 99
+	for i in range(4):
+		_p2_ss.max_slots[i] += 99
+		_p2_ss.current_slots[i] += 99
 	# Mana cross-converter
 	_mana = ManaConverter.new(); add_child(_mana)
 	_mana.setup(_p1_ec, _p2_ss)
@@ -194,14 +201,61 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 		print("[COMBAT] ⚠️ P%d — Animasi sedang berjalan, input diblok" % pid)
 		return
 		
-	# Deduksi 1 Action Point untuk serangan
-	var has_ap := false
-	if pid == 1: has_ap = _p1_ap.spend_ap(1)
-	elif pid == 2: has_ap = _p2_ap.spend_ap(1)
+	# ── Load Ability ──────────────────────────────────────────────────────────
+	var ability_path := "res://combat_core/abilities/instances/%s.tres" % _ability_id
+	var ability := load(ability_path) as BaseAbility
+	var base_dice := "1D8"
+	var knockback := 2
+	var is_magical := false
+	var element_tag := "physical"
+	var is_projectile := false
 	
-	if not has_ap:
-		print("[COMBAT] ⚠️ P%d — Tidak ada Action Point yang tersisa untuk menyerang!" % pid)
-		return
+	if ability != null:
+		base_dice = ability.damage_dice
+		knockback = ability.knockback_tiles
+		is_magical = (ability.ability_type == BaseAbility.AbilityType.MAGICAL)
+		element_tag = ability.element_tag
+		if "is_projectile" in ability: is_projectile = ability.is_projectile
+		
+		var cost_ap = ability.cost_action
+		var cost_bap = ability.cost_bonus_action
+		var cost_mana = ability.cost_mana
+		
+		# Validasi AP/BAP
+		var ap_mgr = _p1_ap if pid == 1 else _p2_ap
+		if ap_mgr.current_ap < cost_ap or ap_mgr.current_bap < cost_bap:
+			print("[COMBAT] ⚠️ P%d — Tidak cukup AP/BAP untuk %s!" % [pid, ability.ability_name])
+			return
+			
+		# Validasi Mana
+		if pid == 1 and cost_mana > 0:
+			if _p1_ec.current_charges < cost_mana:
+				print("[COMBAT] ⚠️ P1 — Tidak cukup Energy Charge untuk %s!" % ability.ability_name)
+				return
+		elif pid == 2 and cost_mana > 0:
+			if _p2_ss.current_slots[cost_mana - 1] < 1:
+				print("[COMBAT] ⚠️ P2 — Tidak cukup Spell Slot Lv%d untuk %s!" % [cost_mana, ability.ability_name])
+				return
+				
+		# Deduct Cost
+		if cost_ap > 0: ap_mgr.spend_ap(cost_ap)
+		if cost_bap > 0: ap_mgr.spend_bap(cost_bap)
+		if pid == 1 and cost_mana > 0:
+			_p1_ec.spend_charge(cost_mana)
+			print("[COMBAT] P1 Menghabiskan %d Energy Charge." % cost_mana)
+		elif pid == 2 and cost_mana > 0:
+			_p2_ss.spend_slot(cost_mana)
+			print("[COMBAT] P2 Menghabiskan 1 Spell Slot Lv%d." % cost_mana)
+			
+		print("[COMBAT] Menggunakan Ability: %s (%s)" % [ability.ability_name, base_dice])
+	else:
+		push_warning("[COMBAT] Ability '%s' tidak ditemukan! Fallback ke 1D8." % _ability_id)
+		var has_ap := false
+		if pid == 1: has_ap = _p1_ap.spend_ap(1)
+		elif pid == 2: has_ap = _p2_ap.spend_ap(1)
+		if not has_ap:
+			print("[COMBAT] ⚠️ P%d — Tidak ada Action Point yang tersisa!" % pid)
+			return
 
 	# Set busy & blok input hanya untuk player ini
 	if pid == 1: _p1_busy = true
@@ -225,21 +279,6 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 	var crit   : bool  = result["crit"]
 
 	print("[COMBAT] D20: %d (raw) + modifier → %d  vs  Armor: %d" % [raw, total, thresh])
-
-	# ── Load Ability ──────────────────────────────────────────────────────────
-	var ability_path := "res://combat_core/abilities/instances/%s.tres" % _ability_id
-	var ability := load(ability_path) as BaseAbility
-	var base_dice := "1D8"
-	var knockback := 2
-	var is_magical := false
-	
-	if ability != null:
-		base_dice = ability.damage_dice
-		knockback = ability.knockback_tiles
-		is_magical = (ability.ability_type == BaseAbility.AbilityType.MAGICAL)
-		print("[COMBAT] Menggunakan Ability: %s (%s)" % [ability.ability_name, base_dice])
-	else:
-		push_warning("[COMBAT] Ability '%s' tidak ditemukan! Fallback ke 1D8." % _ability_id)
 
 	# ── Siapkan data damage (diroll di sini, tapi diapply SETELAH animasi) ────
 	var dmg_formula := base_dice
@@ -271,6 +310,24 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 			print("[COMBAT] 💥 CRITICAL HIT! Damage (%s × 2 %s) = %d" % [base_dice, mod_str, dmg_total])
 		else:
 			print("[COMBAT] ⚔️  HIT! Damage (%s) = %d" % [dmg_formula, dmg_total])
+
+		# ---- DAMAGE MULTIPLIERS (Vulnerable + Vapor) ----
+		var mult = 1.0
+		var cond_comp = target.get_node_or_null("ConditionComponent")
+		if cond_comp and cond_comp.has_condition("vulnerable"):
+			mult += 0.2
+			print("[COMBAT] Target VULNERABLE! Damage +20%")
+
+		if ElementSystem != null and ElementSystem.has_method("get_damage_multiplier"):
+			var vapor_mult = ElementSystem.get_damage_multiplier(target, element_tag)
+			if vapor_mult > 1.0:
+				mult += (vapor_mult - 1.0)
+				print("[COMBAT] ⬜ VAPOR COMBO! Damage +20%")
+
+		if mult > 1.0:
+			var old_total = dmg_total
+			dmg_total = floori(dmg_total * mult)
+			print("[COMBAT] Multiplied Damage: %d -> %d (x%.2f)" % [old_total, dmg_total, mult])
 	else:
 		print("[COMBAT] 💨 MISS!")
 		# TODO (Team): migrated from miss_occurred to on_miss
@@ -291,17 +348,27 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 		push_warning("[CombatTestBridge] Overlay P%d null! Langsung apply damage." % pid)
 		await get_tree().process_frame
 
+	# ---- MAGICAL PROJECTILE PLACEHOLDER ----
+	if hit and is_instance_valid(target) and (is_projectile or is_magical):
+		await _spawn_magic_projectile(attacker, target, element_tag)
+
 	# ── Apply damage ke target SETELAH animasi selesai ───────────────────────
 	if hit:
 		if is_instance_valid(target):
 			var applied := _apply_damage_to_target(target, dmg_total, attacker)
 			var type_str = "magical" if is_magical else "physical"
 			EventBus.damage_dealt.emit(target, applied, type_str, crit)
+
+			if ElementSystem != null and element_tag != "physical" and element_tag != "":
+				ElementSystem.resolve_elemental_hit(target, element_tag, applied)
+
 			if applied > 0 and is_instance_valid(target) and knockback > 0:
 				ForcedMovementResolver.knockback_from_attack(attacker, target, knockback)
 			
 			if ability != null and ability.status_effect != "":
-				EventBus.on_status_applied.emit(target, ability.status_effect, ability.status_duration, ability.status_stacks)
+				var is_base_element = ability.status_effect in ["fire", "water", "air", "earth"]
+				if not is_base_element:
+					EventBus.on_status_applied.emit(target, ability.status_effect, ability.status_duration, ability.status_stacks)
 		else:
 			print("[COMBAT] ⚠️  Target sudah dikalahkan sebelum serangan mendarat!")
 
@@ -435,3 +502,35 @@ func _print_banner() -> void:
 	print("║  F2 Dice Sandbox | F5 Status | F6 Item sim   ║")
 	print("║  F7 Luck Roll    | F8 Contested Pick         ║")
 	print("╚══════════════════════════════════════════════╝")
+
+func _spawn_magic_projectile(attacker: Node, target: Node, element: String) -> void:
+	print("[COMBAT] 🌠 Merender efek sihir elemen: %s" % element)
+	
+	var orb = Polygon2D.new()
+	# Gambar lingkaran kecil
+	var points = PackedVector2Array()
+	var radius = 10.0
+	for i in range(16):
+		var angle = (i / 16.0) * TAU
+		points.append(Vector2(cos(angle), sin(angle)) * radius)
+	orb.polygon = points
+	
+	# Warna sesuai elemen
+	match element:
+		"fire": orb.color = Color.ORANGE_RED
+		"water": orb.color = Color.DODGER_BLUE
+		"air": orb.color = Color.WHITE_SMOKE
+		"earth": orb.color = Color.SADDLE_BROWN
+		_: orb.color = Color.MEDIUM_PURPLE
+		
+	var start_pos = attacker.global_position + Vector2(0, -32) # Angkat sedikit
+	var end_pos = target.global_position + Vector2(0, -32)
+	
+	orb.global_position = start_pos
+	add_child(orb)
+	
+	var tween = create_tween()
+	tween.tween_property(orb, "global_position", end_pos, 0.3).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	await tween.finished
+	
+	orb.queue_free()

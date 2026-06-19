@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="BaseAbility" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://combat_core/abilities/BaseAbility.gd" id="1_xxx"]
+
+[resource]
+script = ExtResource("1_xxx")
+ability_name = "Gust of Wind"
+ability_type = 1
+element_tag = "air"
+description = "A powerful blast of wind."
+cost_action = 1
+cost_bonus_action = 0
+cost_mana = 2
+is_projectile = false
+range_tiles = 2
+area_of_effect_tiles = 1
+damage_dice = "1D6"
+knockback_tiles = 0
+status_effect = "air"
+status_duration = 2
+status_stacks = 1

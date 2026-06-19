@@ -175,13 +175,23 @@ func _on_action_wheel_selected(pid: int, action_name: String) -> void:
 		return
 
 	var raw_id = action_name.to_lower().replace(" ", "_")
-	# Map generic UI actions to our .tres physical abilities
-	match raw_id:
-		"attack": raw_id = "main_attack"
-		"skill": raw_id = "slash_flash"
-		"guard": raw_id = "autotomy"
-		"item": raw_id = "cleave"
-		"reload": raw_id = "divine_departure"
+	# Map generic UI actions to our .tres physical/magical abilities
+	if player_id == 1:
+		# Fighter / Warrior
+		match raw_id:
+			"attack": raw_id = "main_attack"
+			"skill": raw_id = "slash_flash"
+			"guard": raw_id = "autotomy"
+			"item": raw_id = "cleave"
+			"reload": raw_id = "divine_departure"
+	elif player_id == 2:
+		# Mage / Wizard
+		match raw_id:
+			"attack": raw_id = "staff_bonk"
+			"skill": raw_id = "fireball"
+			"guard": raw_id = "water_blast"
+			"item": raw_id = "earth_spike"
+			"reload": raw_id = "gust_of_wind"
 
 	selected_ability_id = raw_id
 	print("[Player P%d] Ability terpilih: %s" % [player_id, selected_ability_id])

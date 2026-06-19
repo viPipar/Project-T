@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="BaseAbility" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://combat_core/abilities/BaseAbility.gd" id="1_xxx"]
+
+[resource]
+script = ExtResource("1_xxx")
+ability_name = "Water Blast"
+ability_type = 1
+element_tag = "water"
+description = "A high-pressure water blast that pushes the target back."
+cost_action = 1
+cost_bonus_action = 0
+cost_mana = 1
+is_projectile = true
+range_tiles = 2
+area_of_effect_tiles = 0
+damage_dice = "1D6"
+knockback_tiles = 1
+status_effect = "water"
+status_duration = 2
+status_stacks = 1

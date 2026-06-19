@@ -18,6 +18,7 @@ config/features=PackedStringArray("4.4", "GL Compatibility")
 
 EventBus="*res://autoloads/EventBus.gd"
 StatSystem="*res://autoloads/StatSystem.gd"
+ElementSystem="*res://autoloads/ElementSystem.gd"
 StatDataDB="*res://autoloads/StatDataDB.gd"
 IsoUtils="*res://autoloads/IsoUtils.gd"
 GridManager="*res://autoloads/GridManager.gd"

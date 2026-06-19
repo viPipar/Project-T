@@ -23,18 +23,22 @@ func _load_abilities() -> void:
 	if dir:
 		dir.list_dir_begin()
 		var file_name = dir.get_next()
-		var ability_names: PackedStringArray = []
+		var p1_abilities: PackedStringArray = []
+		var p2_abilities: PackedStringArray = []
 		
 		while file_name != "":
 			if file_name.ends_with(".tres") or file_name.ends_with(".res"):
 				var ability = load("res://combat_core/abilities/instances/" + file_name) as BaseAbility
 				if ability:
 					loaded_abilities.append(ability)
-					ability_names.append(ability.ability_name)
+					if ability.ability_type == BaseAbility.AbilityType.PHYSICAL:
+						p1_abilities.append(ability.ability_name)
+					else:
+						p2_abilities.append(ability.ability_name)
 			file_name = dir.get_next()
 			
-		action_wheel_left.set_actions(ability_names)
-		action_wheel_right.set_actions(PackedStringArray())
+		action_wheel_left.set_actions(p1_abilities)
+		action_wheel_right.set_actions(p2_abilities)
 	else:
 		push_error("Failed to open abilities directory.")
 

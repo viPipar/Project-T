@@ -26,12 +26,12 @@
 | Gilang | Ability System | Define SignalBus autoload (on_hit, on_miss, on_knockback, on_status) | Critical | Done | — | #9 |
 | Gilang | Ability System | Implement Physical Abilities (Main Attack, Elbow Smash, Slash Flash, Cleave, Dagger Throw, Rupture, Epimorphic, Autotomy) | Critical | Done | Ability Base Class | #9 |
 | Gilang | Ability System | Tambahin deskripsi ability field. Sama divine departure ketinggalan.| Critical | Done | Ability Base Class | #9 |
-| Gilang | Ability System | Calculate Damage Multipliers (Vulnerable/Vapor) in BaseAbility before sending to Candra | High | To Do | Status Effects | #9 |
-| Gilang | Ability System | Implement Magic Abilities & Spell Slot Consumer | High | To Do | Ability Base Class, Spell Slot Mgr (Tapip) | — |
+| Gilang | Ability System | Calculate Damage Multipliers (Vulnerable/Vapor) in BaseAbility before sending to Candra | High | Done | Status Effects | #9 |
+| Gilang | Ability System | Implement Magic Abilities & Spell Slot Consumer | High | Done | Ability Base Class, Spell Slot Mgr (Tapip) | — |
 | Gilang | Friendly Fire | Build Ally Damage Resolver (inside IAbility) | High | Done | Ability Base Class | #11 |
 | Gilang | Friendly Fire | Build Enemy Heal/Buff Resolver (inside IAbility) | Medium | Done | Ability Base Class | #11 |
-| Gilang | Elemental System | Element Tag Manager (True/Fire/Water/Air/Earth) | High | To Do | — | — |
-| Gilang | Elemental System | Elemental Combo Resolver (6 combos: Magma/Mud/Vapor/Mist/Erosion/Conflagration) | High | To Do | Element Tag Mgr | — |
+| Gilang | Elemental System | Element Tag Manager (True/Fire/Water/Air/Earth) | High | Done | — | — |
+| Gilang | Elemental System | Elemental Combo Resolver (6 combos: Magma/Mud/Vapor/Mist/Erosion/Conflagration) | High | Done | Element Tag Mgr | — |
 | Gilang | Status Effects | Physical Status Effects (Bleeding/Stun/Lacerate/Weakened/Vulnerable) | High | Done | SignalBus | — |
 | Gilang | Status Effects | DoT / Persistent Effect Ticker | Medium | To Do | Status Effects | — |
 | Gilang | Status Particle FX | Per-entity particle emitter (attach to entity node) | Medium | To Do | Status Effects | #15 |
