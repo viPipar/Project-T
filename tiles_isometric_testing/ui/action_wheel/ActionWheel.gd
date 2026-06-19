@@ -30,7 +30,7 @@ const LABEL_OFFSETS := [
 	"Test 11",
 ]
 @export var title_text: String = "Action Wheel"
-@export var subtitle_text: String = "WASD pilih arah, Q / E geser wheel"
+@export var subtitle_text: String = "WASD pilih arah, Q/E geser wheel, F confirm"
 @export var starts_visible: bool = true
 @export var wraps_pages: bool = true
 @export var blocks_game_input: bool = true
@@ -42,6 +42,7 @@ const LABEL_OFFSETS := [
 @export var hover_right_key: Key = KEY_D
 @export var previous_page_key: Key = KEY_Q
 @export var next_page_key: Key = KEY_E
+@export var confirm_key: Key = KEY_F
 
 @export var _page_index: int = 0
 @export var _hovered_slot: int = 0
@@ -60,8 +61,7 @@ var _slide_tween: Tween
 	"d": false,
 	"q": false,
 	"e": false,
-	"enter": false,
-	"space": false,
+	"confirm": false,
 }
 const PREVIEW_VISIBLE_RATIO := 0.25
 
@@ -123,7 +123,7 @@ func _process(_delta: float) -> void:
 		_shift_page(-1)
 	if _consume_key("e", next_page_key):
 		_shift_page(1)
-	if _consume_key("enter", KEY_ENTER) or _consume_key("space", KEY_SPACE):
+	if _consume_key("confirm", confirm_key):
 		_emit_selected()
 
 	queue_redraw()
@@ -155,7 +155,7 @@ func _build_ui() -> void:
 
 	_hint_label = _make_label(13, HORIZONTAL_ALIGNMENT_CENTER)
 	_hint_label.modulate = Color(0.82, 0.86, 0.92, 0.88)
-	_hint_label.text = "Q/E pindah page | Enter/Space pilih action"
+	_hint_label.text = "Q/E pindah page | Confirm pilih action"
 	add_child(_hint_label)
 
 	for slot_index in range(PAGE_SIZE):
@@ -343,6 +343,8 @@ func _emit_selected() -> void:
 	if not (action["valid"] as bool):
 		return
 	action_selected.emit(action["name"], action["action_index"], _page_index, _hovered_slot)
+	if EventBus != null:
+		EventBus.action_wheel_selected.emit(player_id, action["name"])
 
 
 func _get_action_data(slot_index: int) -> Dictionary:
@@ -402,7 +404,7 @@ func _sync_menu_state() -> void:
 	if not blocks_game_input:
 		return
 	if is_instance_valid(InputManager):
-		InputManager.is_in_menu = visible
+		InputManager.is_in_menu = is_visible_in_tree()
 
 
 func _consume_key(name: String, keycode: Key) -> bool:

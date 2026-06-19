@@ -104,8 +104,8 @@ func _build_ui() -> void:
 	info_text.bbcode_enabled = true
 	info_text.fit_content = true
 	info_text.text = """[b]Controls:[/b]
-[color=#aaa]- [b]P1 Move:[/b] WASD | [b]Confirm:[/b] E | [b]End Turn:[/b] Q[/color]
-[color=#aaa]- [b]P2 Move:[/b] IJKL | [b]Confirm:[/b] O | [b]End Turn:[/b] U[/color]
+[color=#aaa]- [b]P1 Move:[/b] WASD | [b]Confirm/Action:[/b] F | [b]End Turn:[/b] Q[/color]
+[color=#aaa]- [b]P2 Move:[/b] IJKL | [b]Confirm/Action:[/b] ; | [b]End Turn:[/b] U[/color]
 
 [b]Hotkeys:[/b]
 [color=#aaa]- [b]F1:[/b] Main Console

@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://0usmt4clg1yi"]
+[gd_scene load_steps=3 format=3 uid="uid://0usmt4clg1yi"]
 
 [ext_resource type="PackedScene" uid="uid://bbwemedkpc6lc" path="res://ui/action_wheel/ActionWheel.tscn" id="1_faht1"]
+[ext_resource type="Script" uid="uid://colslj4ypbcr0" path="res://ui/action_wheel/ActionWheelTestController.gd" id="2_script"]
 
 [node name="Control" type="Control"]
 layout_mode = 3
@@ -9,6 +10,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("2_script")
 
 [node name="CenterDividerGlow" type="ColorRect" parent="."]
 layout_mode = 1
@@ -59,7 +61,7 @@ grow_vertical = 2
 [node name="ActionWheelRight" parent="RightSide" instance=ExtResource("1_faht1")]
 layout_mode = 1
 title_text = "Player 2"
-subtitle_text = "IJKL pilih arah, U / O geser wheel"
+subtitle_text = "IJKL pilih arah, U/O geser wheel, ; confirm"
 player_id = 2
 hover_up_key = 73
 hover_left_key = 74
@@ -67,3 +69,4 @@ hover_down_key = 75
 hover_right_key = 76
 previous_page_key = 85
 next_page_key = 79
+confirm_key = 59

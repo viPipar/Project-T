@@ -17,8 +17,8 @@
 # Script ini TIDAK memodifikasi TurnManager — hanya hook ke signals-nya.
 #
 # KONTROL:
-#   P1 : WASD gerak | E konfirm/serang | Q end turn
-#   P2 : IJKL gerak | O konfirm/serang | U end turn
+#   P1 : WASD gerak | F konfirm/serang | Q end turn
+#   P2 : IJKL gerak | ; konfirm/serang | U end turn
 #   F2 : Dice Sandbox
 #   F5 : Print status resource
 #   F6 : Simulasi equip slot_lv2 item (Fighter P1 +2 charge)
@@ -226,8 +226,22 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 
 	print("[COMBAT] D20: %d (raw) + modifier → %d  vs  Armor: %d" % [raw, total, thresh])
 
-	# ── Siapkan data damage (diroll di sini, tapi diapply SETELAH animasi) ────
+	# ── Load Ability ──────────────────────────────────────────────────────────
+	var ability_path := "res://tiles_isometric_testing/combat_core/abilities/instances/%s.tres" % _ability_id
+	var ability := load(ability_path) as BaseAbility
 	var base_dice := "1D8"
+	var knockback := 2
+	var is_magical := false
+	
+	if ability != null:
+		base_dice = ability.damage_dice
+		knockback = ability.knockback_tiles
+		is_magical = (ability.ability_type == BaseAbility.AbilityType.MAGICAL)
+		print("[COMBAT] Menggunakan Ability: %s (%s)" % [ability.ability_name, base_dice])
+	else:
+		push_warning("[COMBAT] Ability '%s' tidak ditemukan! Fallback ke 1D8." % _ability_id)
+
+	# ── Siapkan data damage (diroll di sini, tapi diapply SETELAH animasi) ────
 	var dmg_formula := base_dice
 	var dmg_rolls   : Array[int] = []
 	var dmg_total   : int = 0
@@ -281,9 +295,10 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 	if hit:
 		if is_instance_valid(target):
 			var applied := _apply_damage_to_target(target, dmg_total, attacker)
-			EventBus.damage_dealt.emit(target, applied, "physical", crit)
-			if applied > 0 and is_instance_valid(target):
-				ForcedMovementResolver.knockback_from_attack(attacker, target, 2)
+			var type_str = "magical" if is_magical else "physical"
+			EventBus.damage_dealt.emit(target, applied, type_str, crit)
+			if applied > 0 and is_instance_valid(target) and knockback > 0:
+				ForcedMovementResolver.knockback_from_attack(attacker, target, knockback)
 		else:
 			print("[COMBAT] ⚠️  Target sudah dikalahkan sebelum serangan mendarat!")
 
@@ -412,8 +427,8 @@ func _print_banner() -> void:
 		_p2_ss.current_slots[1], _p2_ss.max_slots[1],
 		_p2_ss.current_slots[2], _p2_ss.max_slots[2]])
 	print("╠══════════════════════════════════════════════╣")
-	print("║  P1: WASD gerak | E serang | Q end turn      ║")
-	print("║  P2: IJKL gerak | O serang | U end turn      ║")
+	print("║  P1: WASD gerak | F serang | Q end turn      ║")
+	print("║  P2: IJKL gerak | ; serang | U end turn      ║")
 	print("║  F2 Dice Sandbox | F5 Status | F6 Item sim   ║")
 	print("║  F7 Luck Roll    | F8 Contested Pick         ║")
 	print("╚══════════════════════════════════════════════╝")

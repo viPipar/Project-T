@@ -18,6 +18,7 @@ signal entity_died(entity: Node, killer: Node)
 # TODO (Team): miss_occurred has been deleted and merged into on_miss below
 signal dice_rolled(player_id: int, natural: int, total: int, vs_ac: int, is_hit: bool, is_crit: bool)
 signal attackcam_started(attacker: Node, target: Node, ability_id: String)
+signal action_wheel_selected(player_id: int, action_name: String)
 signal attackcam_finished(attacker: Node)
 
 # Phase movement+ - forced movement / knockback events

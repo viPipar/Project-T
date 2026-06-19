@@ -1,5 +1,5 @@
 class_name SlashFlashAbility
-extends "res://tiles_isometric_testing/combat_core/abilities/BaseAbility.gd"
+extends "res://combat_core/abilities/BaseAbility.gd"
 
 func execute(caster: Node, targets: Array) -> void:
 	# Custom logic: Dash to adjacent tile before executing the normal attack.

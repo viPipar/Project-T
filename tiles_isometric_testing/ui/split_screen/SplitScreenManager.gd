@@ -311,7 +311,7 @@ func _spawn_combat_hud_bars() -> void:
 # ── INVENTORY TOGGLE (TAB KEY) ───────────────────────────────────────────────
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("open_inventory"):
+	if event.is_action_pressed("p1_inventory") or event.is_action_pressed("p2_inventory"):
 		EventBus.inventory_toggled.emit()
 		get_viewport().set_input_as_handled()
 
