@@ -67,16 +67,45 @@ func _on_turn_started(entity: Node, player_id: int) -> void:
 	# Apply turn-based passive effects (e.g., Cursed Amulet, Berserker Axe)
 	var items = InventoryManager.get_player_items(player_id)
 	for item_id in items:
-		var item = StatDataDB.get_item_data(item_id)
-		if item.is_empty():
+		# Let's try StatDataDB first, then fallback to ItemRegistry
+		var on_turn = {}
+		var item_name = ""
+		
+		var item_data = StatDataDB.get_item_data(item_id)
+		if not item_data.is_empty():
+			on_turn = item_data.get("on_turn", {})
+			item_name = item_data.get("display_name", item_id)
+		elif ItemRegistry != null:
+			var reg_item = ItemRegistry.get_item(item_id)
+			if not reg_item.is_empty():
+				item_name = reg_item.get("name", item_id)
+				var effect = reg_item.get("effect", {})
+				if effect.get("type") == "stat_mod_complex" and effect.has("curse"):
+					if effect["curse"].get("type") == "damage_per_turn":
+						on_turn["damage_per_turn"] = effect["curse"].get("amount", 0)
+					if effect["curse"].get("type") == "ap_drain":
+						on_turn["ap_drain"] = effect["curse"].get("amount", 0)
+				elif effect.get("type") == "stat_mod" and effect.get("stat") == "ap" and effect.get("amount", 0) < 0:
+					# Explicitly handle cursed_amulet style
+					on_turn["ap_drain"] = abs(effect.get("amount", 0))
+		
+		if on_turn.is_empty():
 			continue
 			
-		var on_turn = item.get("on_turn", {})
-		
 		# Handle negative passive (Curse)
 		if on_turn.has("damage_per_turn"):
-			print("[ItemEffectApplier] P%d takes %d damage from %s" % [player_id, on_turn.get("damage_per_turn", 0), item.get("display_name", "")])
+			print("[ItemEffectApplier] P%d takes %d damage from %s" % [player_id, on_turn.get("damage_per_turn", 0), item_name])
 			if entity.has_node("HealthComponent"):
 				var hc = entity.get_node("HealthComponent")
 				if hc.has_method("take_damage"):
 					hc.take_damage(on_turn.get("damage_per_turn", 0), null, "true_damage")
+					EventNotifier.show_message("Curse! P%d took damage!" % player_id, Color.PURPLE)
+					
+		if on_turn.has("ap_drain"):
+			print("[ItemEffectApplier] P%d loses %d AP from %s" % [player_id, on_turn.get("ap_drain", 0), item_name])
+			var bridge = entity.get_tree().get_root().find_child("CombatTestBridge", true, false)
+			if bridge:
+				var ap_mgr = bridge.get("_p%d_ap" % player_id)
+				if ap_mgr and ap_mgr.has_method("spend_ap"):
+					ap_mgr.spend_ap(on_turn.get("ap_drain", 0))
+					EventNotifier.show_message("Curse! P%d lost AP!" % player_id, Color.PURPLE)

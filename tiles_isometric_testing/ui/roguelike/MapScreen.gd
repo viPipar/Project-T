@@ -56,6 +56,24 @@ func _ready() -> void:
 	)
 	add_child(btn_force_shop)
 
+	# Add a direct "Force Open Loot" debug button!
+	var btn_force_loot = Button.new()
+	btn_force_loot.text = "🎁 DEBUG: Force Open Loot"
+	btn_force_loot.add_theme_font_size_override("font_size", 24)
+	btn_force_loot.position = Vector2(600, 20)
+	btn_force_loot.pressed.connect(func():
+		var current = get_parent()
+		var found_shell = null
+		while current and current != get_tree().get_root():
+			if "RoguelikeUIShell" in current.name or current.has_method("show_screen"):
+				found_shell = current
+				break
+			current = current.get_parent()
+		if found_shell:
+			found_shell.show_screen("res://ui/roguelike/LootScreen.tscn")
+	)
+	add_child(btn_force_loot)
+
 	var graph = NodeGraph.new()
 	graph.generate()
 	
@@ -181,9 +199,32 @@ func _on_node_clicked(node_id: int, node_type: NodeGraph.NodeType) -> void:
 				
 		if EventBus != null:
 			EventBus.start_combat.emit(node_type)
+	elif node_type == NodeGraph.NodeType.SHOP:
+		print("[MapScreen] Entering SHOP node!")
+		var current = get_parent()
+		var found_shell = null
+		while current and current != get_tree().get_root():
+			if "RoguelikeUIShell" in current.name or current.has_method("show_screen"):
+				found_shell = current
+				break
+			current = current.get_parent()
+		if found_shell:
+			found_shell.show_screen("res://ui/roguelike/ShopScreen.tscn")
+			
+	elif node_type in [NodeGraph.NodeType.LOOT, NodeGraph.NodeType.REST]:
+		print("[MapScreen] Entering LOOT node!")
+		var current = get_parent()
+		var found_shell = null
+		while current and current != get_tree().get_root():
+			if "RoguelikeUIShell" in current.name or current.has_method("show_screen"):
+				found_shell = current
+				break
+			current = current.get_parent()
+		if found_shell:
+			found_shell.show_screen("res://ui/roguelike/LootScreen.tscn")
+			
 	else:
-		print("[MapScreen] Node clicked: %s. (UI Switch Logic needed here)" % NodeGraph.NodeType.keys()[node_type])
-		# TODO: Notify RoguelikeUIShell to switch screen based on node_type
+		print("[MapScreen] Node clicked: %s. (No UI Logic implemented yet)" % NodeGraph.NodeType.keys()[node_type])
 
 # ── CAMERA / SCROLLING LOGIC ──────────────────────────────────────────────────
 

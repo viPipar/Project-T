@@ -10,12 +10,13 @@ func handle_win(battle_type: String) -> void:
 	# 1. Distribute Coins (Mocking global economy if needed, skipping for now)
 	# 2. Distribute Items
 	var rewards = []
-	if ItemRegistry != null and ItemRegistry.get("items") != null:
-		var items = ItemRegistry.items.keys()
-		rewards.append(items[randi() % items.size()])
-		rewards.append(items[randi() % items.size()])
-	else:
-		rewards = ["potion_small", "iron_sword"]
+	var battle_key = battle_type.to_lower()
+	if battle_key == "2": battle_key = "boss" # Enum to string fix
+	elif battle_key == "1": battle_key = "elite"
+	elif battle_key == "0": battle_key = "normal"
+	
+	rewards.append(ItemPoolGenerator.generate_drop(battle_key))
+	rewards.append(ItemPoolGenerator.generate_drop(battle_key))
 	
 	if InventoryManager != null:
 		InventoryManager.add_item(1, rewards[0])
