@@ -1,5 +1,4 @@
 extends Node
-class_name CoinEconomy
 
 # Handles the player wallets and money transfers.
 

@@ -143,10 +143,10 @@ func _generate_map_ui(parent_content: Control, graph: NodeGraph, positions: Dict
 	parent_content.move_child(path_renderer, 0)
 
 func _on_node_clicked(node_id: int, node_type: NodeGraph.NodeType) -> void:
-	if not path_handler.travel_to(node_id):
-		print("[MapScreen] Cannot travel to locked node %d" % node_id)
-		return
-		
+	# TEMPORARY DEBUG CHEAT: Bypassing map path restrictions completely.
+	# We force the path_handler to accept the teleport so you can test any node without holding SHIFT!
+	path_handler.current_node_id = node_id
+	
 	print("[MapScreen] Traveled to Node ID: ", node_id)
 	_update_node_visuals()
 	

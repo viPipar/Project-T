@@ -112,7 +112,12 @@ func _build_ui() -> void:
 - [b]F2:[/b] Dice Sandbox
 - [b]F3:[/b] Debug Grid
 - [b]F4:[/b] Stat Debug Manipulator
-- [b]T:[/b] Run All System Tests[/color]"""
+- [b]T:[/b] Run All System Tests[/color]
+
+[b]Developer Tips & Cheats:[/b]
+[color=#aaa]- [b]Map Teleport:[/b] Hold [b]SHIFT[/b] and click any node on the Map to bypass path restrictions and teleport directly to it.
+- [b]Free Coins:[/b] Go to the 'Roguelite Events' tab to instantly grant 1000 coins for Shop testing.
+- [b]UI Glass Mode:[/b] Go to the 'Config' tab to lower the opacity of the black backgrounds for any of the debug panels.[/color]"""
 	info_vbox.add_child(info_text)
 
 	# Toggles Grid
