@@ -65,6 +65,10 @@ var _slide_tween: Tween
 }
 const PREVIEW_VISIBLE_RATIO := 0.25
 
+var _last_tap_time_left: int = 0
+var _last_tap_time_right: int = 0
+const DOUBLE_TAP_THRESHOLD: int = 300 # milliseconds
+
 @export var _title_label: Label
 @export var _subtitle_label: Label
 @export var _page_label: Label
@@ -113,16 +117,28 @@ func _process(_delta: float) -> void:
 
 	if _consume_action("w", "p%d_move_up" % player_id, hover_up_key):
 		_set_hovered_slot(0)
+		
 	if _consume_action("a", "p%d_move_left" % player_id, hover_left_key):
-		_set_hovered_slot(1)
+		var now = Time.get_ticks_msec()
+		if now - _last_tap_time_left < DOUBLE_TAP_THRESHOLD:
+			_shift_page(-1)
+			_last_tap_time_left = 0
+		else:
+			_set_hovered_slot(1)
+			_last_tap_time_left = now
+			
 	if _consume_action("s", "p%d_move_down" % player_id, hover_down_key):
 		_set_hovered_slot(2)
+		
 	if _consume_action("d", "p%d_move_right" % player_id, hover_right_key):
-		_set_hovered_slot(3)
-	if _consume_key("q", previous_page_key):
-		_shift_page(-1)
-	if _consume_key("e", next_page_key):
-		_shift_page(1)
+		var now = Time.get_ticks_msec()
+		if now - _last_tap_time_right < DOUBLE_TAP_THRESHOLD:
+			_shift_page(1)
+			_last_tap_time_right = 0
+		else:
+			_set_hovered_slot(3)
+			_last_tap_time_right = now
+			
 	if _consume_key("confirm", confirm_key):
 		_emit_selected()
 
