@@ -97,7 +97,9 @@ func _populate_shop() -> void:
 	for i in range(_current_stock.size()):
 		var stock = _current_stock[i]
 		var item_card = Button.new()
-		item_card.custom_minimum_size = Vector2(250, 350)
+		item_card.custom_minimum_size = Vector2(220, 250)
+		item_card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		item_card.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		
 		if stock.purchased:
 			NeobrutalStyle.apply_to_button(item_card, NeobrutalStyle.COLOR_GRAY)
@@ -124,6 +126,7 @@ func _populate_shop() -> void:
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		label.set_anchors_preset(Control.PRESET_FULL_RECT)
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD
 		label.add_theme_color_override("font_color", Color.BLACK)
 		item_card.add_child(label)
 		

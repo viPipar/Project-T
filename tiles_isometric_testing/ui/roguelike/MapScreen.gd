@@ -37,6 +37,24 @@ func _ready() -> void:
 			debug_panel.visible = true
 	)
 	add_child(btn_close)
+	
+	# Add a direct "Force Open Shop" debug button for the mouse!
+	var btn_force_shop = Button.new()
+	btn_force_shop.text = "💰 DEBUG: Force Open Shop"
+	btn_force_shop.add_theme_font_size_override("font_size", 24)
+	btn_force_shop.position = Vector2(250, 20)
+	btn_force_shop.pressed.connect(func():
+		var current = get_parent()
+		var found_shell = null
+		while current and current != get_tree().get_root():
+			if "RoguelikeUIShell" in current.name or current.has_method("show_screen"):
+				found_shell = current
+				break
+			current = current.get_parent()
+		if found_shell:
+			found_shell.show_screen("res://ui/roguelike/ShopScreen.tscn")
+	)
+	add_child(btn_force_shop)
 
 	var graph = NodeGraph.new()
 	graph.generate()

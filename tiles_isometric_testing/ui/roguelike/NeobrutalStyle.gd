@@ -44,6 +44,7 @@ static var COLOR_CYAN := Color("#00ffff")
 static var COLOR_GREEN := Color("#00bf63")
 static var COLOR_RED := Color("#ff3131")
 static var COLOR_PURPLE := Color("#8c52ff")
+static var COLOR_GRAY := Color("#888888")
 
 static func apply_to_button(btn: Button, color: Color) -> void:
 	btn.add_theme_stylebox_override("normal", get_button_normal(color))
