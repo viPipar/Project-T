@@ -405,6 +405,7 @@ func _build_ui() -> void:
 		var ds = get_tree().get_root().find_child("DiceSandbox", true, false)
 		if ds: ds.modulate.a = v
 	)
+func _process(delta: float) -> void:
 	if not visible:
 		return
 	_refresh_timer += delta

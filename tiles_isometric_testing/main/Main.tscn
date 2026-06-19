@@ -196,7 +196,6 @@ offset_top = 36.0
 offset_right = 640.0
 offset_bottom = 260.0
 script = ExtResource("8_dbgpanel")
-show_stats_default = null
 
 [node name="DebugPanelBg" type="ColorRect" parent="DebugUI/Root/DebugPanel"]
 layout_mode = 1
