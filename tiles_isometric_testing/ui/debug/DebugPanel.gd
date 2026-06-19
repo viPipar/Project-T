@@ -55,15 +55,9 @@ func _create_item_debug_buttons() -> void:
 	item_picker.name = "ItemPicker"
 	container.add_child(item_picker)
 	
-	var items = []
-	if ItemRegistry != null and ItemRegistry.get("items") != null:
-		for key in ItemRegistry.items.keys():
-			item_picker.add_item(key)
-			items.append(key)
-	else:
-		items = ["iron_sword", "potion_small", "magic_ring", "berserker_axe", "cursed_amulet"]
-		for item in items:
-			item_picker.add_item(item)
+	var items = StatDataDB.get_item_ids()
+	for key in items:
+		item_picker.add_item(key)
 			
 	var p1_add = Button.new()
 	p1_add.text = "P1 +Item"

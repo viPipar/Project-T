@@ -40,6 +40,52 @@
         "mov": 5,
         "movement_tiles": 1
       }
+    },
+    "potion_small": {
+      "display_name": "Small Potion",
+      "item_type": "consumable",
+      "on_use": {
+        "heal": 10
+      }
+    },
+    "iron_sword": {
+      "display_name": "Iron Sword",
+      "item_type": "weapon",
+      "equip_slot": "hand_right",
+      "source_id": "item:iron_sword",
+      "stat_mods": {
+        "str": 4
+      }
+    },
+    "magic_ring": {
+      "display_name": "Magic Ring",
+      "item_type": "accessory",
+      "equip_slot": "ring",
+      "source_id": "item:magic_ring",
+      "stat_mods": {
+        "att": 5
+      }
+    },
+    "berserker_axe": {
+      "display_name": "Berserker Axe",
+      "item_type": "weapon",
+      "equip_slot": "hand_right",
+      "source_id": "item:berserker_axe",
+      "stat_mods": {
+        "str": 10
+      },
+      "on_turn": {
+        "damage_per_turn": 1
+      }
+    },
+    "cursed_amulet": {
+      "display_name": "Cursed Amulet",
+      "item_type": "accessory",
+      "equip_slot": "neck",
+      "source_id": "item:cursed_amulet",
+      "stat_mods": {
+        "dex": -10
+      }
     }
   }
 }
