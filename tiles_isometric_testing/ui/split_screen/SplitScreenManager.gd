@@ -25,6 +25,8 @@ var _p1_end_overlay : ColorRect = null
 var _p2_end_overlay : ColorRect = null
 var _p1_end_label   : Label    = null
 var _p2_end_label   : Label    = null
+var _p1_end_tween   : Tween    = null
+var _p2_end_tween   : Tween    = null
 
 # ── Public API ────────────────────────────────────────────────────────────────
 var cam_p1: PlayerCamera2D:
@@ -232,23 +234,51 @@ func _connect_turn_signals() -> void:
 		return
 	if not TurnManager.player_end_state_changed.is_connected(_on_player_end_state):
 		TurnManager.player_end_state_changed.connect(_on_player_end_state)
+	if not TurnManager.turn_state_changed.is_connected(_on_turn_state_changed):
+		TurnManager.turn_state_changed.connect(_on_turn_state_changed)
+
+
+func _on_turn_state_changed(_turn_number: int, _phase: int) -> void:
+	_set_end_overlay(1, false)
+	_set_end_overlay(2, false)
 
 
 func _on_player_end_state(player_id: int, ended: bool) -> void:
+	_set_end_overlay(player_id, ended)
+
+
+func _set_end_overlay(player_id: int, ended: bool) -> void:
 	var overlay : ColorRect = _p1_end_overlay if player_id == 1 else _p2_end_overlay
 	var lbl     : Label    = _p1_end_label   if player_id == 1 else _p2_end_label
 	if overlay == null or lbl == null:
 		return
+
+	_kill_end_tween(player_id)
 
 	if ended:
 		# Darken layar player yang sudah end turn
 		var cancel_key := "Q" if player_id == 1 else "U"
 		lbl.text = "End Turn\n[%s] Cancel" % cancel_key
 		var tw := create_tween().set_ease(Tween.EASE_OUT)
+		_store_end_tween(player_id, tw)
 		tw.tween_property(overlay, "color",     Color(0, 0, 0, 0.55), 0.35)
 		tw.parallel().tween_property(lbl, "modulate:a", 1.0,           0.35)
 	else:
 		# Cancel end turn — kembalikan layar normal
 		var tw := create_tween().set_ease(Tween.EASE_IN)
+		_store_end_tween(player_id, tw)
 		tw.tween_property(overlay, "color",     Color(0, 0, 0, 0),    0.25)
 		tw.parallel().tween_property(lbl, "modulate:a", 0.0,           0.25)
+
+
+func _kill_end_tween(player_id: int) -> void:
+	var tw: Tween = _p1_end_tween if player_id == 1 else _p2_end_tween
+	if tw != null and tw.is_valid():
+		tw.kill()
+
+
+func _store_end_tween(player_id: int, tw: Tween) -> void:
+	if player_id == 1:
+		_p1_end_tween = tw
+	else:
+		_p2_end_tween = tw

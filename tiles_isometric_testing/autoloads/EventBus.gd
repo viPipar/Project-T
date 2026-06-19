@@ -20,7 +20,13 @@ signal dice_rolled(player_id: int, natural: int, total: int, vs_ac: int, is_hit:
 signal attackcam_started(attacker: Node, target: Node, ability_id: String)
 signal attackcam_finished(attacker: Node)
 
-# Phase 1+ — Input blocking during combat animations
+# Phase movement+ - forced movement / knockback events
+signal forced_movement_started(entity: Node, from: Vector2i, direction: Vector2i, power: int)
+signal forced_movement_finished(entity: Node, from: Vector2i, to: Vector2i, moved_steps: int)
+signal forced_movement_collided(entity: Node, collision_tile: Vector2i, collision_damage: int, collision_type: String)
+
+# Phase 1+ - input blocking during combat animations
+# player_id: 1 atau 2. blocked: true = blok, false = buka
 signal combat_input_blocked(player_id: int, blocked: bool)
 
 # ═══════════════════════════════════════════════════════════

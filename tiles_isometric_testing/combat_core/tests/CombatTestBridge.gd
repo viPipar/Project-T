@@ -221,6 +221,8 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 		if is_instance_valid(target):
 			var applied := _apply_damage_to_target(target, dmg_total, attacker)
 			EventBus.damage_dealt.emit(target, applied, "physical", crit)
+			if applied > 0 and is_instance_valid(target):
+				ForcedMovementResolver.knockback_from_attack(attacker, target, 2)
 		else:
 			print("[COMBAT] ⚠️  Target sudah dikalahkan sebelum serangan mendarat!")
 
