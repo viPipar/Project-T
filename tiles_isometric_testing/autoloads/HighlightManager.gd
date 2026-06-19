@@ -86,20 +86,20 @@ func register_layer(layer: Node2D) -> void:
 ## Tampilkan highlight untuk SATU tile.
 ## [param grid_pos]  posisi grid (Vector2i)
 ## [param type]      tipe highlight (String), lihat HIGHLIGHT_CONFIG
-func show_tile(grid_pos: Vector2i, type: String) -> void:
+func show_tile(grid_pos: Vector2i, type: String, player_id: int = 0) -> void:
 	if not _is_valid_type(type):
 		return
-	_place_sprite(grid_pos, type)
+	_place_sprite(grid_pos, type, "", player_id)
 
 
 ## Tampilkan highlight untuk BANYAK tile sekaligus.
 ## [param tiles]  Array[Vector2i] posisi grid
 ## [param type]   tipe highlight (String)
-func show_tiles(tiles: Array, type: String) -> void:
+func show_tiles(tiles: Array, type: String, player_id: int = 0) -> void:
 	if not _is_valid_type(type):
 		return
 	for pos in tiles:
-		_place_sprite(pos, type)
+		_place_sprite(pos, type, "", player_id)
 
 
 ## Hapus semua highlight untuk satu tipe tertentu.
@@ -119,9 +119,9 @@ func clear_all() -> void:
 
 ## Ganti highlight: hapus tipe dulu, lalu isi ulang dengan tiles baru.
 ## Berguna untuk update highlight setiap giliran tanpa duplicate.
-func replace_tiles(tiles: Array, type: String) -> void:
+func replace_tiles(tiles: Array, type: String, player_id: int = 0) -> void:
 	clear(type)
-	show_tiles(tiles, type)
+	show_tiles(tiles, type, player_id)
 
 
 ## Cek apakah tile tertentu sedang di-highlight oleh tipe tertentu.
@@ -156,7 +156,7 @@ func show_cursor(grid_pos: Vector2i, player_id: int, state: String) -> void:
 		return
 	# Cursor hanya 1 tile aktif sekaligus — clear dulu sebelum place
 	clear(type)
-	_place_sprite(grid_pos, type, state)
+	_place_sprite(grid_pos, type, state, player_id)
 
 func show_back_cursor(grid_pos: Vector2i, player_id: int, state: String) -> void:
 	var type := "cursor_p%d_back" % player_id
@@ -167,7 +167,7 @@ func show_back_cursor(grid_pos: Vector2i, player_id: int, state: String) -> void
 		return
 	# Cursor hanya 1 tile aktif sekaligus — clear dulu sebelum place
 	clear(type)
-	_place_sprite(grid_pos, type, state)
+	_place_sprite(grid_pos, type, state, player_id)
 
 ## Hapus cursor highlight untuk player tertentu.
 ##
@@ -196,7 +196,7 @@ func move_cursor(grid_pos: Vector2i, player_id: int, state: String) -> void:
 ## Tempatkan sprite highlight di grid_pos.
 ## [param anim_override] jika tidak kosong, pakai animasi ini alih-alih cfg.anim
 ## (digunakan oleh cursor yang satu node-template-nya punya banyak animasi)
-func _place_sprite(grid_pos: Vector2i, type: String, anim_override: String = "") -> void:
+func _place_sprite(grid_pos: Vector2i, type: String, anim_override: String = "", player_id: int = 0) -> void:
 	
 	if _layer == null:
 		push_error("HighlightManager: layer belum diregister! Pastikan HighlightLayer ada di scene.")
@@ -221,6 +221,14 @@ func _place_sprite(grid_pos: Vector2i, type: String, anim_override: String = "")
 	sprite.position = IsoUtils.world_to_iso(grid_pos) + inspector_pos_offset  # ← pakai offset
 	sprite.z_index = IsoUtils.get_depth(grid_pos) + inspector_z_offset
 	sprite.set_meta("grid_pos", grid_pos)
+	
+	var vis_layer := 1
+	if player_id == 1 or type.ends_with("_p1") or type == "cursor_p1" or type == "cursor_p1_back":
+		vis_layer = 2
+	elif player_id == 2 or type.ends_with("_p2") or type == "cursor_p2" or type == "cursor_p2_back":
+		vis_layer = 4
+	sprite.visibility_layer = vis_layer
+	
 	sprite.visible  = true
 
 	# Mulai / ganti animasi jika perlu

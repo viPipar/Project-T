@@ -208,7 +208,7 @@ func _enter_targeting() -> void:
 	_state = PlayerState.TARGETING
 	_targeting_tiles = _loaded_ability.get_target_tiles(grid_pos)
 	var highlight_type := _loaded_ability.get_highlight_type()
-	HighlightManager.replace_tiles(_targeting_tiles, highlight_type)
+	HighlightManager.replace_tiles(_targeting_tiles, highlight_type, player_id)
 	print("[Player P%d] TARGETING mode — %d tiles highlighted" % [player_id, _targeting_tiles.size()])
 
 
@@ -261,7 +261,7 @@ func _on_targeting_confirm() -> void:
 
 ## Dipanggil saat combat_input_blocked signal diterima dari EventBus.
 ## Player hanya peduli jika player_id-nya yang diblok.
-func _on_combat_input_blocked(blocked_player_id: int, _blocked: bool) -> void:
+func _on_combat_input_blocked(_blocked_player_id: int, _blocked: bool) -> void:
 	pass  # InputManager.set_player_blocked() sudah dipanggil oleh CombatTestBridge
 
 

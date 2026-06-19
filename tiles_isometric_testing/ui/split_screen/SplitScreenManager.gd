@@ -87,6 +87,7 @@ func _build_layout() -> void:
 	_p1_viewport.name               = "P1Viewport"
 	_p1_viewport.transparent_bg     = false
 	_p1_viewport.handle_input_locally = false
+	_p1_viewport.canvas_cull_mask = 1 | 2 # Layer 1 (Shared) + Layer 2 (P1)
 	_p1_viewport_container.add_child(_p1_viewport)
 
 	# ── Viewport Kanan (P2) ─────────────────────────────────────────────────────
@@ -101,6 +102,7 @@ func _build_layout() -> void:
 	_p2_viewport.name               = "P2Viewport"
 	_p2_viewport.transparent_bg     = false
 	_p2_viewport.handle_input_locally = false
+	_p2_viewport.canvas_cull_mask = 1 | 4 # Layer 1 (Shared) + Layer 3 (P2)
 	_p2_viewport_container.add_child(_p2_viewport)
 
 	# ── Garis pembatas 2px di tengah ────────────────────────────────────────────
