@@ -37,6 +37,7 @@
 | Gilang | Status Particle FX | Per-entity particle emitter (attach to entity node) | Medium | To Do | Status Effects | #15 |
 | Gilang | Status Particle FX | Particle sets: Bleeding/Stun/Fire/Water/Earth/Air/Magma/Mud/Mist/Conflagration | Low | To Do | Particle Emitter | #15 |
 | Gilang | Status Effects | Implement `autotomy_armor_buff` (+4 Armor for 1 turn) from Autotomy | Medium | To Do | Status Effects | #9 |
+| Gilang | Audio System | SFX & BGM Manager (Combat sounds, UI clicks, bgm tracks) | High | To Do | EventBus | — |
 
 ## Candra · Movement, Projectile & Stats
 
@@ -100,3 +101,13 @@
 | Rapit | FX | Dice Roll Animation (D20 Spin Overlay) | Low | To Do | RNG (Tapip) | — |
 | Rapit | Input | Pointer/Target Cursor (Tapip & Gilang) | High | Done | Grid (Candra) | — |
 | Rapit | Input | Input Manager (P1: WASD/QE/F/X/R/ZC, P2: IJKL/UO/;/,/P/M.) | Critical | To Do | — | — |
+| Rapit (w/ Gilang) | Animation System | Character Sprite/Model State Machine (Idle/Walk/Attack/Hurt/Die) | High | To Do | Ability System, Grid | — |
+
+## Unassigned / Missing Systems (To Be Organized by Ilham)
+
+| Programmer | System | Task | Priority | Status | Depends On | Ref # |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| TBD | AI System | Enemy AI Brain (Target Selection, Ability Choice, Movement Logic) | Critical | To Do | Phase Mgr, A* Grid | — |
+| TBD | Game Loop | Scene Transition Flow (Node Graph ↔ Combat Scene ↔ Win/Lose) | Critical | To Do | Node Graph | — |
+| TBD | UI System | Core Menus (Main Menu, Pause, Settings, Game Over Screen) | High | To Do | — | — |
+| TBD | Save System | Run State & Meta-Progression Persistence (Save/Load) | High | To Do | Data structures | — |
