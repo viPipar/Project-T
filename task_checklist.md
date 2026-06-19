@@ -16,6 +16,7 @@
 | Tapip | RNG System | Damage/Heal Dice Roller (D4–D20, multi-dice) | Critical | Done tinggal tunggu yang lain | — | — |
 | Tapip | RNG System | Critical Hit Resolver (threshold = 20 − ACC/10) | High | Done tinggal tunggu yang lain | Hit/Miss Resolver | — |
 | Tapip | RNG System | Luck Event Roller (D20 + LCK/5) | Medium | Done tinggal tunggu yang lain | — | — |
+| Tapip | RNG System | Register HitMissResolver to /root for BaseAbility access | High | To Do | Hit/Miss Resolver | #9 |
 
 ## Gilang · Ability & Status System
 
@@ -23,7 +24,8 @@
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | Gilang | Ability System | Design & implement Ability Base Class (Resource) | Critical | Done | SignalBus | #9 |
 | Gilang | Ability System | Define SignalBus autoload (on_hit, on_miss, on_knockback, on_status) | Critical | Done | — | #9 |
-| Gilang | Ability System | Implement Physical Abilities (Main Attack, Elbow Smash, Slash Flash, Cleave, Dagger Throw, Rupture, Epimorphic, Autotomy) | Critical | To Do | Ability Base Class | #9 |
+| Gilang | Ability System | Implement Physical Abilities (Main Attack, Elbow Smash, Slash Flash, Cleave, Dagger Throw, Rupture, Epimorphic, Autotomy) | Critical | Done | Ability Base Class | #9 |
+| Gilang | Ability System | Calculate Damage Multipliers (Vulnerable/Vapor) in BaseAbility before sending to Candra | High | To Do | Status Effects | #9 |
 | Gilang | Ability System | Implement Magic Abilities & Spell Slot Consumer | High | To Do | Ability Base Class, Spell Slot Mgr (Tapip) | — |
 | Gilang | Friendly Fire | Build Ally Damage Resolver (inside IAbility) | High | Done | Ability Base Class | #11 |
 | Gilang | Friendly Fire | Build Enemy Heal/Buff Resolver (inside IAbility) | Medium | Done | Ability Base Class | #11 |
@@ -33,6 +35,7 @@
 | Gilang | Status Effects | DoT / Persistent Effect Ticker | Medium | To Do | Status Effects | — |
 | Gilang | Status Particle FX | Per-entity particle emitter (attach to entity node) | Medium | To Do | Status Effects | #15 |
 | Gilang | Status Particle FX | Particle sets: Bleeding/Stun/Fire/Water/Earth/Air/Magma/Mud/Mist/Conflagration | Low | To Do | Particle Emitter | #15 |
+| Gilang | Status Effects | Implement `autotomy_armor_buff` (+4 Armor for 1 turn) from Autotomy | Medium | To Do | Status Effects | #9 |
 
 ## Candra · Movement, Projectile & Stats
 
@@ -49,6 +52,8 @@
 | Candra | Stat System | Attribute Manager (VIT/STR/INT/CON/ACC/DEX/MOV/ATT/LCK) | Critical | To Do | — | — |
 | Candra | Stat System | Derived Stat Calculator (HP/Armor/Resist/PhysDMG/MagDMG) | Critical | To Do | Attribute Mgr | — |
 | Candra | Stat System | Health Manager (Damage/Heal/Downed/Revive) | Critical | To Do | Derived Stats | — |
+| Candra | Grid System | Provide `GridManager.is_walkable(pos)` so Slash Flash can check if dash destination is blocked by a wall/obstacle | High | To Do | Grid Manager | #9 |
+| Candra | Stat System | Ensure all units have `HealthComponent` or register to `/root/StatSystem` so `BaseAbility._apply_damage()` can deal damage | Critical | To Do | Health Manager | #9 |
 
 ## Ilham · Roguelite Run System
 

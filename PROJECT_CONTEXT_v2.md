@@ -108,15 +108,15 @@ Game
 │   │   │   ├── get_cost() → ActionCost
 │   │   │   ├── get_area() → GridArea
 │   │   │   └── emit_signals() → [on_hit, on_miss (replaces miss_occurred), on_knockback, on_status_applied(stacks)]
-│   │   ├── Physical Abilities  [implements IAbility]
-│   │   │   ├── Main Attack
-│   │   │   ├── Elbow Smash
-│   │   │   ├── Slash Flash
-│   │   │   ├── Cleave
-│   │   │   ├── Dagger Throw
-│   │   │   ├── Rupture
-│   │   │   ├── Epimorphic
-│   │   │   └── Autotomy
+│   │   ├── Physical Abilities  [instances in tiles_isometric_testing/combat_core/abilities/instances/]
+│   │   │   ├── Main Attack (.tres)
+│   │   │   ├── Elbow Smash (.tres)
+│   │   │   ├── Slash Flash (SlashFlashAbility.gd)
+│   │   │   ├── Cleave (.tres)
+│   │   │   ├── Dagger Throw (.tres)
+│   │   │   ├── Rupture (.tres)
+│   │   │   ├── Epimorphic (.tres)
+│   │   │   └── Autotomy (AutotomyAbility.gd)
 │   │   ├── Magic Abilities  [implements IAbility]
 │   │   │   ├── Spell Slot Consumer
 │   │   │   └── Scholar / Wizard Skill Set (TBD)
@@ -458,8 +458,11 @@ Plus **True (Physical)** as the fifth damage type.
 ### 2. Action Point Economy
 Full action economy per turn (AP, Bonus AP, Spell Slots / Energy Charge, Movement).
 
-### 3. RNG Hit/Miss & Damage System
-D20 for hit resolution, separate dice for damage/heal amounts.
+### 3. RNG Hit/Miss & Damage Pipeline (The "Terima Jadi" Architecture)
+The damage pipeline is strictly divided into three phases to prevent overlapping code:
+1. **Hit/Miss Check (Tapip):** `HitMissResolver` rolls `D20 + floor(ACC/2)` vs. target `Armor`. If the roll is higher, it connects. (Armor acts as Evasion, not Damage Reduction).
+2. **Raw Output & Multipliers (Gilang):** `BaseAbility` rolls the raw damage dice (e.g. `1D6`). It then queries the Status System for multipliers (like `Vulnerable` or `Vapor` combo) and multiplies the raw damage.
+3. **Application / "Terima Jadi" (Candra):** Candra's `StatSystem.apply_damage()` simply receives the final, fully-calculated integer and directly subtracts it from HP. No math or mitigation happens here.
 
 ### 4. Friendly Fire (Built into Ability System) ← #11
 - Friendly fire logic is part of the `BaseAbility` (IAbility) interface — not a separate system.

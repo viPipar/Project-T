@@ -76,6 +76,7 @@ func execute(caster: Node, targets: Array) -> void:
 			if hit_miss_resolver != null and hit_miss_resolver.has_method("resolve"):
 				hit_result = hit_miss_resolver.resolve(caster, target, is_magical)
 			else:
+				# TODO (Tapip): HitMissResolver is currently missing from /root or lacks resolve()
 				push_warning("[BaseAbility] HitMissResolver not found or lacks resolve() method!")
 				hit_result = {"hit": true, "is_magical": is_magical}
 
@@ -96,6 +97,10 @@ func execute(caster: Node, targets: Array) -> void:
 			if is_heal:
 				_apply_heal(target, output_amount)
 			else:
+				# TODO (Gilang): Calculate Damage Multipliers here!
+				# Query your upcoming Status Effect System to see if the target 
+				# is "Vulnerable" or has the "Vapor" (+20%) elemental combo.
+				# output_amount = floori(output_amount * status_multiplier)
 				_apply_damage(target, output_amount, caster, is_magical)
 				
 			if knockback_tiles > 0:
@@ -131,6 +136,9 @@ func _apply_damage(target: Node, amount: int, attacker: Node, is_magical: bool) 
 		if health != null and health.has_method("take_damage"):
 			var applied = health.take_damage(amount, attacker, type_str)
 			EventBus.damage_dealt.emit(target, applied, type_str, false)
+		else:
+			# TODO (Candra): Ensure entities have either a StatSystem or HealthComponent
+			push_warning("[BaseAbility] Target %s has no known health component!" % target.name)
 
 func _apply_heal(target: Node, amount: int) -> void:
 	var stat_sys = target.get_node_or_null("/root/StatSystem")
