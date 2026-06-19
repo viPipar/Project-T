@@ -33,6 +33,65 @@ enum TargetAlignment { ENEMY_ONLY, ALLY_ONLY, SELF_ONLY, ANY }
 @export var cost_bonus_action : int  = 0
 @export var cost_mana       : int    = 0
 
+
+## Returns true if this ability only targets the caster (e.g. Epimorphic, Autotomy).
+func is_self_target() -> bool:
+	return target_alignment == TargetAlignment.SELF_ONLY
+
+
+## Compute which grid tiles are valid targets from the caster's position.
+## Returns Array[Vector2i].
+func get_target_tiles(caster_pos: Vector2i) -> Array[Vector2i]:
+	var tiles: Array[Vector2i] = []
+
+	if is_self_target():
+		tiles.append(caster_pos)
+		return tiles
+
+	match range_type:
+		"adjacent":
+			# Cardinal neighbors within range_size steps
+			for dx in range(-range_size, range_size + 1):
+				for dy in range(-range_size, range_size + 1):
+					if dx == 0 and dy == 0:
+						continue
+					# Manhattan distance filter for "adjacent" feel
+					if abs(dx) + abs(dy) <= range_size:
+						tiles.append(caster_pos + Vector2i(dx, dy))
+
+		"line":
+			# Straight lines in 4 cardinal directions, range_size tiles deep
+			var dirs := [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
+			for dir in dirs:
+				for step in range(1, range_size + 1):
+					tiles.append(caster_pos + dir * step)
+
+		"aoe":
+			# NxN box centered on caster (range_size = radius)
+			for dx in range(-range_size, range_size + 1):
+				for dy in range(-range_size, range_size + 1):
+					var tile := caster_pos + Vector2i(dx, dy)
+					tiles.append(tile)
+
+		_:
+			# Fallback: 4 adjacent tiles
+			tiles.append(caster_pos + Vector2i(1, 0))
+			tiles.append(caster_pos + Vector2i(-1, 0))
+			tiles.append(caster_pos + Vector2i(0, 1))
+			tiles.append(caster_pos + Vector2i(0, -1))
+
+	return tiles
+
+
+## Get the HighlightManager type string for this ability's grid area color.
+func get_highlight_type() -> String:
+	if is_self_target():
+		return "skill"   # green/purple for self
+	if range_type == "aoe" and target_alignment == TargetAlignment.ANY:
+		return "attack"  # red for AoE
+	return "attack"      # yellow/red for targeted
+
+
 func execute(caster: Node, targets: Array) -> void:
 	var dice_roller = DiceRoller.new()
 	var hit_miss_resolver = caster.get_node_or_null("/root/HitMissResolver")

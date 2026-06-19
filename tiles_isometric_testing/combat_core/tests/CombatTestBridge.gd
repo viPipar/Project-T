@@ -17,8 +17,8 @@
 # Script ini TIDAK memodifikasi TurnManager — hanya hook ke signals-nya.
 #
 # KONTROL:
-#   P1 : WASD gerak | F konfirm/serang | Q end turn
-#   P2 : IJKL gerak | ; konfirm/serang | U end turn
+#   P1 : WASD gerak | F konfirm/serang | X cancel | R end turn
+#   P2 : IJKL gerak | ; konfirm/serang | , cancel | P end turn
 #   F2 : Dice Sandbox
 #   F5 : Print status resource
 #   F6 : Simulasi equip slot_lv2 item (Fighter P1 +2 charge)
@@ -427,8 +427,8 @@ func _print_banner() -> void:
 		_p2_ss.current_slots[1], _p2_ss.max_slots[1],
 		_p2_ss.current_slots[2], _p2_ss.max_slots[2]])
 	print("╠══════════════════════════════════════════════╣")
-	print("║  P1: WASD gerak | F serang | Q end turn      ║")
-	print("║  P2: IJKL gerak | ; serang | U end turn      ║")
+	print("║  P1: WASD gerak | F serang | X cancel | R end  ║")
+	print("║  P2: IJKL gerak | ; serang | , cancel | P end  ║")
 	print("║  F2 Dice Sandbox | F5 Status | F6 Item sim   ║")
 	print("║  F7 Luck Roll    | F8 Contested Pick         ║")
 	print("╚══════════════════════════════════════════════╝")

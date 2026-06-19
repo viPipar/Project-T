@@ -37,6 +37,11 @@ var _facing:  String   = "down"
 var grid_pos: Vector2i = Vector2i.ZERO
 var _cursor:  Node2D   = null
 var selected_ability_id: String = "main_attack"
+var _loaded_ability: BaseAbility = null
+var _targeting_tiles: Array[Vector2i] = []
+
+enum PlayerState { IDLE, TARGETING }
+var _state: PlayerState = PlayerState.IDLE
 # Tidak ada _combat_blocked lokal — InputManager.set_player_blocked() yang handle
 
 const INSECT1_DIR := "res://assets/characters/insect1_placeholder"
@@ -71,21 +76,27 @@ func _process(_delta: float) -> void:
 	_play_facing_anim()
 	_apply_facing_flip()
 	
-	# ── END TURN / CANCEL ──────────────────────────────────────────────────────
+	# ── CANCEL KEY ─────────────────────────────────────────────────────────────
+	if Input.is_action_just_pressed("p%d_cancel" % player_id):
+		if _state == PlayerState.TARGETING:
+			_exit_targeting()
+			return
+
+	# ── END TURN ──────────────────────────────────────────────────────────────
 	if InputManager.is_end_turn_pressed(player_id):
 		if TurnManager != null and TurnManager.is_player_ended(player_id):
-			# Player sudah end turn → tekan lagi = CANCEL
 			TurnManager.cancel_end_turn(player_id)
 		elif not movement._is_moving:
-			# Player belum end turn → end turn normal
 			if TurnManager != null:
 				TurnManager.request_end_turn(player_id)
 		return
 
-
+	# ── CONFIRM KEY ────────────────────────────────────────────────────────────
 	if InputManager.is_confirm_pressed(player_id):
-		_on_confirm()
-	
+		if _state == PlayerState.TARGETING:
+			_on_targeting_confirm()
+		else:
+			_on_confirm()
 
 
 # ── Input Handler ────────────────────────────────────────────────────────────
@@ -160,18 +171,92 @@ func _on_step_started(from: Vector2i, to: Vector2i) -> void:
 
 
 func _on_action_wheel_selected(pid: int, action_name: String) -> void:
-	if pid == player_id:
-		var raw_id = action_name.to_lower().replace(" ", "_")
-		# Map generic UI actions to our .tres physical abilities
-		match raw_id:
-			"attack": raw_id = "main_attack"
-			"skill": raw_id = "slash_flash" # test ability 1
-			"guard": raw_id = "autotomy"    # test ability 2
-			"item": raw_id = "cleave"       # test ability 3
-			"reload": raw_id = "divine_departure" # test ultimate
-		
-		selected_ability_id = raw_id
-		print("[Player P%d] Ability terpilih: %s" % [player_id, selected_ability_id])
+	if pid != player_id:
+		return
+
+	var raw_id = action_name.to_lower().replace(" ", "_")
+	# Map generic UI actions to our .tres physical abilities
+	match raw_id:
+		"attack": raw_id = "main_attack"
+		"skill": raw_id = "slash_flash"
+		"guard": raw_id = "autotomy"
+		"item": raw_id = "cleave"
+		"reload": raw_id = "divine_departure"
+
+	selected_ability_id = raw_id
+	print("[Player P%d] Ability terpilih: %s" % [player_id, selected_ability_id])
+
+	# Load the .tres resource
+	var path := "res://combat_core/abilities/instances/%s.tres" % selected_ability_id
+	_loaded_ability = load(path) as BaseAbility
+	if _loaded_ability == null:
+		push_warning("[Player P%d] Ability resource '%s' tidak ditemukan!" % [player_id, path])
+		return
+
+	# Self-targeting abilities skip the cursor entirely
+	if _loaded_ability.is_self_target():
+		print("[Player P%d] Self-target: %s — executing immediately" % [player_id, _loaded_ability.ability_name])
+		EventBus.attackcam_started.emit(self, self, selected_ability_id)
+		return
+
+	# Enter targeting mode — show grid, hide wheel
+	_enter_targeting()
+
+
+## Enter TARGETING state: show highlighted tiles, let cursor pick a target.
+func _enter_targeting() -> void:
+	_state = PlayerState.TARGETING
+	_targeting_tiles = _loaded_ability.get_target_tiles(grid_pos)
+	var highlight_type := _loaded_ability.get_highlight_type()
+	HighlightManager.replace_tiles(_targeting_tiles, highlight_type)
+	print("[Player P%d] TARGETING mode — %d tiles highlighted" % [player_id, _targeting_tiles.size()])
+
+
+## Exit TARGETING state: clear highlights, return to idle.
+func _exit_targeting() -> void:
+	_state = PlayerState.IDLE
+	HighlightManager.clear("attack")
+	HighlightManager.clear("skill")
+	_targeting_tiles.clear()
+	_loaded_ability = null
+	print("[Player P%d] Targeting CANCELLED" % player_id)
+
+
+## Confirm target selection during TARGETING state.
+func _on_targeting_confirm() -> void:
+	if _cursor == null or not _cursor.has_method("get_hovered_tile"):
+		return
+
+	var target_tile: Vector2i = _cursor.get_hovered_tile()
+	if target_tile.x < 0:
+		return
+
+	# Check if the cursor is on a valid highlighted tile
+	if target_tile not in _targeting_tiles:
+		print("[Player P%d] Target tile %s is NOT in range!" % [player_id, target_tile])
+		return
+
+	# Check if there's an entity to hit on that tile
+	var occupant := GridManager.get_entity_at(target_tile)
+	if occupant == null:
+		print("[Player P%d] No target entity at tile %s" % [player_id, target_tile])
+		return
+
+	print("[Player P%d] TARGET CONFIRMED: %s → %s" % [player_id, _loaded_ability.ability_name, occupant.name])
+
+	# Fire the ability
+	_update_facing_from_to(grid_pos, target_tile)
+	EventBus.attackcam_started.emit(self, occupant, selected_ability_id)
+	if player_id == 1:
+		AttackCam.play(true, false)
+	elif player_id == 2:
+		AttackCam.play(false, true)
+
+	# Clean up targeting state
+	_state = PlayerState.IDLE
+	HighlightManager.clear("attack")
+	HighlightManager.clear("skill")
+	_targeting_tiles.clear()
 
 
 ## Dipanggil saat combat_input_blocked signal diterima dari EventBus.
