@@ -21,12 +21,12 @@
 
 | Programmer | System | Task | Priority | Status | Depends On | Ref # |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| Gilang | Ability System | Design & implement Ability Base Class (Resource) | Critical | To Do | SignalBus | #9 |
+| Gilang | Ability System | Design & implement Ability Base Class (Resource) | Critical | Done | SignalBus | #9 |
 | Gilang | Ability System | Define SignalBus autoload (on_hit, on_miss, on_knockback, on_status) | Critical | Done | — | #9 |
 | Gilang | Ability System | Implement Physical Abilities (Main Attack, Elbow Smash, Slash Flash, Cleave, Dagger Throw, Rupture, Epimorphic, Autotomy) | Critical | To Do | Ability Base Class | #9 |
 | Gilang | Ability System | Implement Magic Abilities & Spell Slot Consumer | High | To Do | Ability Base Class, Spell Slot Mgr (Tapip) | — |
-| Gilang | Friendly Fire | Build Ally Damage Resolver (inside IAbility) | High | To Do | Ability Base Class | #11 |
-| Gilang | Friendly Fire | Build Enemy Heal/Buff Resolver (inside IAbility) | Medium | To Do | Ability Base Class | #11 |
+| Gilang | Friendly Fire | Build Ally Damage Resolver (inside IAbility) | High | Done | Ability Base Class | #11 |
+| Gilang | Friendly Fire | Build Enemy Heal/Buff Resolver (inside IAbility) | Medium | Done | Ability Base Class | #11 |
 | Gilang | Elemental System | Element Tag Manager (True/Fire/Water/Air/Earth) | High | To Do | — | — |
 | Gilang | Elemental System | Elemental Combo Resolver (6 combos: Magma/Mud/Vapor/Mist/Erosion/Conflagration) | High | To Do | Element Tag Mgr | — |
 | Gilang | Status Effects | Physical Status Effects (Bleeding/Stun/Lacerate/Weakened/Vulnerable) | High | To Do | SignalBus | — |

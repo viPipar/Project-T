@@ -462,8 +462,10 @@ Full action economy per turn (AP, Bonus AP, Spell Slots / Energy Charge, Movemen
 D20 for hit resolution, separate dice for damage/heal amounts.
 
 ### 4. Friendly Fire (Built into Ability System) ← #11
-- Friendly fire logic is part of the IAbility interface — not a separate system.
+- Friendly fire logic is part of the `BaseAbility` (IAbility) interface — not a separate system.
 - Can damage allies, can heal/buff enemies.
+- **Rule 1 (Lethality):** Allies caught in AoE or targeted directly take full damage.
+- **Rule 2 (Ally Targeting DC):** Healing/Buffing an ally bypasses their Armor/Resist and instead rolls against a skill-defined `ally_targeting_dc` (default 10). If the roll misses this DC, the spell applies half its effect.
 - Discourages mindless AoE spam; rewards strategic positioning.
 
 ### 5. Turn Order: Player Phase (Concurrent) → Enemy Phase (Sequential) ← #7 #8
