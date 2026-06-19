@@ -25,7 +25,7 @@
 | Gilang | Ability System | Design & implement Ability Base Class (Resource) | Critical | Done | SignalBus | #9 |
 | Gilang | Ability System | Define SignalBus autoload (on_hit, on_miss, on_knockback, on_status) | Critical | Done | — | #9 |
 | Gilang | Ability System | Implement Physical Abilities (Main Attack, Elbow Smash, Slash Flash, Cleave, Dagger Throw, Rupture, Epimorphic, Autotomy) | Critical | Done | Ability Base Class | #9 |
-| Gilang | Ability System | Tambahin deskripsi ability field. Sama divine departure ketinggalan.| Critical | To Do | Ability Base Class | #9 |
+| Gilang | Ability System | Tambahin deskripsi ability field. Sama divine departure ketinggalan.| Critical | Done | Ability Base Class | #9 |
 | Gilang | Ability System | Calculate Damage Multipliers (Vulnerable/Vapor) in BaseAbility before sending to Candra | High | To Do | Status Effects | #9 |
 | Gilang | Ability System | Implement Magic Abilities & Spell Slot Consumer | High | To Do | Ability Base Class, Spell Slot Mgr (Tapip) | — |
 | Gilang | Friendly Fire | Build Ally Damage Resolver (inside IAbility) | High | Done | Ability Base Class | #11 |
@@ -99,4 +99,4 @@
 | Rapit | FX | Item Rarity Reveal FX (White/Blue/Gold glow) | Medium | To Do | Rarity Handler (Ilham) | #4 |
 | Rapit | FX | Dice Roll Animation (D20 Spin Overlay) | Low | To Do | RNG (Tapip) | — |
 | Rapit | Input | Pointer/Target Cursor (Tapip & Gilang) | High | To Do | Grid (Candra) | — |
-| Rapit | Input | Input Manager (Tapip: WASD/QE/ZXC, Gilang: IJKL/UO/M,.) | Critical | To Do | — | — |
+| Rapit | Input | Input Manager (Tapip: WASD/QE/F/ZXC, Gilang: IJKL/UO/;/M,.) | Critical | To Do | — | — |

@@ -69,6 +69,7 @@ var _drag_offset: Vector2 = Vector2.ZERO
 var _is_resizing: bool = false
 var _resize_offset: Vector2 = Vector2.ZERO
 
+var bg_panel: Panel = null
 
 # ── BUILD UI ──────────────────────────────────────────────────────────────────
 
@@ -89,12 +90,15 @@ func _build_ui() -> void:
 	custom_minimum_size = Vector2(420, 0)
 	size_flags_horizontal = Control.SIZE_SHRINK_END
 
+	bg_panel = Panel.new()
+	bg_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.05, 0.05, 0.08, 0.92)
+	style.bg_color = Color(0.0, 0.0, 0.0, 0.95) # Solid black
 	style.border_color = Color(0.3, 0.3, 0.5, 0.8)
 	style.set_border_width_all(1)
 	style.set_corner_radius_all(6)
-	add_theme_stylebox_override("panel", style)
+	bg_panel.add_theme_stylebox_override("panel", style)
+	add_child(bg_panel)
 
 	# ── Scroll container ──────────────────────────────────────────────────────
 	var scroll := ScrollContainer.new()

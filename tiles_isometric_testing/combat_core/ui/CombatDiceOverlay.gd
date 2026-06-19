@@ -25,7 +25,7 @@ var _result_lbl  : Label     # "HIT" / "MISS" / "CRITICAL"
 
 const PANEL_W := 300.0
 const PANEL_H := 190.0
-const PANEL_Y := 20.0
+var _panel_y := 265.0 # Centered vertically
 
 
 # ── LIFECYCLE ─────────────────────────────────────────────────────────────────
@@ -60,7 +60,8 @@ func _build_ui() -> void:
 	_dim_bg = ColorRect.new()
 	_dim_bg.color = Color(0, 0, 0, 0)
 	_dim_bg.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
-	_dim_bg.offset_bottom = PANEL_H + PANEL_Y + 40
+	_dim_bg.offset_top = _panel_y - 20
+	_dim_bg.offset_bottom = _panel_y + PANEL_H + 20
 	_root.add_child(_dim_bg)
 
 	# ── DicePanel ─────────────────────────────────────────────────────────────
@@ -182,7 +183,7 @@ func play_attack_sequence(
 
 	# ── Phase 1: Slide panel masuk ─────────────────────────────────────────────
 	var cx := (vp_size.x - PANEL_W) * 0.5
-	_dice_panel.position = Vector2(_offscreen_x(vp_size, false), PANEL_Y)
+	_dice_panel.position = Vector2(_offscreen_x(vp_size, false), _panel_y)
 
 	var tw_dim := create_tween()
 	tw_dim.tween_property(_dim_bg, "color", Color(0, 0, 0, 0.5), 0.4)
@@ -221,7 +222,7 @@ func play_attack_sequence(
 	# ── Phase 5: VS row slide masuk ───────────────────────────────────────────
 	_roll_disp.text = str(total_hit)
 	_ac_disp.text   = "AC %d" % threshold
-	var acy := PANEL_Y + PANEL_H * 0.5 - 25.0
+	var acy := _panel_y + PANEL_H * 0.5 - 25.0
 	_vs_row.position = Vector2(_offscreen_x(vp_size, true), acy)
 	_vs_row.modulate.a = 1.0
 

@@ -17,10 +17,17 @@ func _ready() -> void:
 	btn_close.add_theme_font_size_override("font_size", 24)
 	btn_close.position = Vector2(20, 20)
 	btn_close.pressed.connect(func():
-		# Use find_child recursively to guarantee we find the shell even if it was renamed
-		var shell = get_tree().get_root().find_child("RoguelikeUIShell", true, false)
-		if shell:
-			shell.queue_free()
+		# Walk up the tree to find the shell, bypassing any dynamic renaming issues
+		var current = get_parent()
+		var found_shell = null
+		while current and current != get_tree().get_root():
+			if "RoguelikeUIShell" in current.name or current.has_method("show_screen"):
+				found_shell = current
+				break
+			current = current.get_parent()
+			
+		if found_shell:
+			found_shell.queue_free()
 		else:
 			queue_free()
 			
