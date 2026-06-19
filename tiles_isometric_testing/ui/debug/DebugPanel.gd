@@ -239,6 +239,116 @@ func _build_ui() -> void:
 	p2_add.pressed.connect(func(): if InventoryManager != null: InventoryManager.add_item(2, item_list[item_picker.selected]))
 	hbox_btns.add_child(p2_add)
 
+	# --- TAB 4: Roguelite Events ---
+	var tab_events = MarginContainer.new()
+	tab_events.name = "Roguelite Events"
+	tab_events.add_theme_constant_override("margin_left", 10)
+	tab_events.add_theme_constant_override("margin_top", 10)
+	tab_events.add_theme_constant_override("margin_right", 10)
+	tab_events.add_theme_constant_override("margin_bottom", 10)
+	tabs.add_child(tab_events)
+	
+	var ev_scroll = ScrollContainer.new()
+	tab_events.add_child(ev_scroll)
+	
+	var ev_vbox = VBoxContainer.new()
+	ev_vbox.add_theme_constant_override("separation", 10)
+	ev_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	ev_scroll.add_child(ev_vbox)
+
+	var btn_map = Button.new()
+	btn_map.text = "🗺️ Open Roguelite Map Generator"
+	btn_map.add_theme_color_override("font_color", Color.AQUA)
+	btn_map.pressed.connect(func():
+		var shell_scene = load("res://ui/roguelike/RoguelikeUIShell.tscn")
+		if shell_scene:
+			var shell_inst = shell_scene.instantiate()
+			get_tree().current_scene.add_child(shell_inst)
+			shell_inst.show_screen("res://ui/roguelike/MapScreen.tscn")
+			self.visible = false # hide debug menu
+	)
+	ev_vbox.add_child(btn_map)
+	
+	var btn_run_win = Button.new()
+	btn_run_win.text = "🏆 Trigger RUN VICTORY (End Game)"
+	btn_run_win.add_theme_color_override("font_color", Color.GOLD)
+	btn_run_win.pressed.connect(func():
+		if RunManager != null:
+			RunManager.is_run_active = true # Force active so we can end it
+			RunManager.end_run(true)
+	)
+	ev_vbox.add_child(btn_run_win)
+	
+	var btn_run_lose = Button.new()
+	btn_run_lose.text = "💀 Trigger GAME OVER (Run Failed)"
+	btn_run_lose.add_theme_color_override("font_color", Color.RED)
+	btn_run_lose.pressed.connect(func():
+		if RunManager != null:
+			RunManager.is_run_active = true
+			RunManager.end_run(false)
+	)
+	ev_vbox.add_child(btn_run_lose)
+
+	var btn_win = Button.new()
+	btn_win.text = "🏆 Trigger Battle Win (Give Items)"
+	btn_win.pressed.connect(func():
+		var h = WinLoseHandler.new()
+		get_tree().current_scene.add_child(h)
+		h.handle_win("normal")
+		h.queue_free()
+	)
+	ev_vbox.add_child(btn_win)
+
+	var btn_boss_win = Button.new()
+	btn_boss_win.text = "👑 Trigger Boss Win State (Full Heal + Items)"
+	btn_boss_win.pressed.connect(func():
+		var h = WinLoseHandler.new()
+		get_tree().current_scene.add_child(h)
+		h.handle_win("boss")
+		h.queue_free()
+	)
+	ev_vbox.add_child(btn_boss_win)
+	
+	var btn_lose = Button.new()
+	btn_lose.text = "💀 Trigger Lose State (-50% HP + Curse)"
+	btn_lose.pressed.connect(func():
+		var h = WinLoseHandler.new()
+		get_tree().current_scene.add_child(h)
+		h.handle_lose()
+		h.queue_free()
+	)
+	ev_vbox.add_child(btn_lose)
+
+	var btn_rest_full = Button.new()
+	btn_rest_full.text = "⛺ Rest: Full Heal (P1)"
+	btn_rest_full.pressed.connect(func():
+		var h = RestLootHandler.new()
+		get_tree().current_scene.add_child(h)
+		h.handle_rest_choice(1, 0) # FULL_HEAL
+		h.queue_free()
+	)
+	ev_vbox.add_child(btn_rest_full)
+
+	var btn_luck_win = Button.new()
+	btn_luck_win.text = "🍀 Luck Event: Win (Random Item)"
+	btn_luck_win.pressed.connect(func():
+		var h = LuckEventHandler.new()
+		get_tree().current_scene.add_child(h)
+		h._apply_reward_or_penalty({"reward": "random_item"})
+		h.queue_free()
+	)
+	ev_vbox.add_child(btn_luck_win)
+	
+	var btn_luck_lose = Button.new()
+	btn_luck_lose.text = "💥 Luck Event: Lose (-5 HP)"
+	btn_luck_lose.pressed.connect(func():
+		var h = LuckEventHandler.new()
+		get_tree().current_scene.add_child(h)
+		h._apply_reward_or_penalty({"reward": "damage", "amount": 5})
+		h.queue_free()
+	)
+	ev_vbox.add_child(btn_luck_lose)
+
 
 func _process(delta: float) -> void:
 	if not visible:

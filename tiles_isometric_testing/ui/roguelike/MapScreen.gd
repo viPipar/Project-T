@@ -11,6 +11,18 @@ var node_buttons_p2: Dictionary = {}
 var path_handler: PathHandler
 
 func _ready() -> void:
+	# Add a quick debug close button so we aren't trapped!
+	var btn_close = Button.new()
+	btn_close.text = "✖ Close Map"
+	btn_close.add_theme_font_size_override("font_size", 24)
+	btn_close.position = Vector2(20, 20)
+	btn_close.pressed.connect(func():
+		var parent = get_parent()
+		if parent is CanvasLayer: parent.queue_free()
+		queue_free()
+	)
+	add_child(btn_close)
+
 	var graph = NodeGraph.new()
 	graph.generate()
 	
@@ -139,3 +151,31 @@ func _on_node_clicked(node_id: int, node_type: NodeGraph.NodeType) -> void:
 	else:
 		print("[MapScreen] Node clicked: %s. (UI Switch Logic needed here)" % NodeGraph.NodeType.keys()[node_type])
 		# TODO: Notify RoguelikeUIShell to switch screen based on node_type
+
+# ── CAMERA / SCROLLING LOGIC ──────────────────────────────────────────────────
+
+var _is_dragging: bool = false
+var _last_mouse_pos: Vector2 = Vector2.ZERO
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		if event.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_MIDDLE, MOUSE_BUTTON_RIGHT]:
+			if event.pressed:
+				_is_dragging = true
+				_last_mouse_pos = event.global_position
+			else:
+				_is_dragging = false
+		elif event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			_scroll_map(60)
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			_scroll_map(-60)
+			
+	elif event is InputEventMouseMotion and _is_dragging:
+		var delta = event.global_position - _last_mouse_pos
+		_scroll_map(delta.y)
+		_last_mouse_pos = event.global_position
+
+func _scroll_map(amount: float) -> void:
+	# Move the content containers so the nodes appear to scroll
+	map_content_p1.position.y += amount
+	map_content_p2.position.y += amount

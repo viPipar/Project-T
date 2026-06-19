@@ -62,12 +62,27 @@ func _apply_reward_or_penalty(outcome: Dictionary) -> void:
 	var amount = outcome.get("amount", 0)
 	
 	if reward_type == "damage" or reward_type == "heal":
-		if TurnManager != null and TurnManager.has_method("_get_player_by_id"):
-			for pid in [1, 2]:
-				var player = TurnManager._get_player_by_id(pid)
-				if player != null and player.has_node("HealthComponent"):
-					var hc = player.get_node("HealthComponent")
-					if reward_type == "damage" and hc.has_method("take_damage"):
-						hc.take_damage(amount, null, "true_damage")
-					elif reward_type == "heal" and hc.has_method("heal"):
-						hc.heal(amount)
+		if reward_type == "damage":
+			EventNotifier.show_message("Luck Failed! -%d HP" % amount, Color.RED)
+		else:
+			EventNotifier.show_message("Luck Succeeded! +%d HP" % amount, Color.GREEN)
+			
+		for p in get_tree().get_nodes_in_group("players"):
+			var hc = p.get_node_or_null("HealthComponent")
+			if hc:
+				if reward_type == "damage" and hc.has_method("take_damage"):
+					hc.take_damage(amount, null, "true_damage")
+				elif reward_type == "heal" and hc.has_method("heal"):
+					hc.heal(amount)
+					
+	elif reward_type == "random_item":
+		if InventoryManager != null:
+			var items = ["iron_sword", "potion_small", "magic_ring", "berserker_axe"]
+			if ItemRegistry != null and ItemRegistry.get("items") != null:
+				items = ItemRegistry.items.keys()
+			var reward = items[randi() % items.size()]
+			EventNotifier.show_message("Luck Succeeded! You found %s!" % reward, Color.GOLD)
+			for p in get_tree().get_nodes_in_group("players"):
+				var pid = p.get("player_id")
+				if pid != null and typeof(pid) == TYPE_INT:
+					InventoryManager.add_item(pid, reward)

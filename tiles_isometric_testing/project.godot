@@ -34,6 +34,8 @@ MovementRangeManager="*res://autoloads/MovementRangeManager.gd"
 CombatManager="*res://autoloads/CombatManager.gd"
 InventoryManager="*res://systems/items/InventoryManager.gd"
 ItemEffectApplier="*res://systems/items/ItemEffectApplier.gd"
+EventNotifier="*res://autoloads/EventNotifier.gd"
+RunManager="*res://systems/progression/RunManager.gd"
 
 [display]
 
