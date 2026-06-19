@@ -365,7 +365,7 @@ func _build_ui() -> void:
 		var hb = HBoxContainer.new()
 		var l = Label.new()
 		l.text = lbl_text
-		l.custom_minimum_size = Vector2(160, 0)
+		l.custom_minimum_size = Vector2(170, 0)
 		var s = HSlider.new()
 		s.min_value = min_v
 		s.max_value = max_v
@@ -386,22 +386,64 @@ func _build_ui() -> void:
 		cfg_vbox.add_child(hb)
 
 	var lbl_desc = Label.new()
-	lbl_desc.text = "Adjust the UI scale and opacity for all Debug overlays:"
+	lbl_desc.text = "Adjust the UI scale and opacity for Debug overlays:"
 	lbl_desc.add_theme_color_override("font_color", Color.GRAY)
 	cfg_vbox.add_child(lbl_desc)
 
-	mk_slider.call("Master UI Scale", 1.0, 0.5, 2.0, 0.05, func(v: float):
+	# 1. Master Scale with Apply Button
+	var scale_hbox = HBoxContainer.new()
+	var scale_lbl = Label.new()
+	scale_lbl.text = "Master UI Scale"
+	scale_lbl.custom_minimum_size = Vector2(170, 0)
+	var scale_slider = HSlider.new()
+	scale_slider.min_value = 0.5
+	scale_slider.max_value = 2.0
+	scale_slider.step = 0.05
+	scale_slider.value = 1.0
+	scale_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scale_slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var scale_val = Label.new()
+	scale_val.text = "1.0"
+	scale_val.custom_minimum_size = Vector2(40, 0)
+	scale_slider.value_changed.connect(func(v: float): scale_val.text = str(v))
+	var btn_apply_scale = Button.new()
+	btn_apply_scale.text = "Apply Scale"
+	btn_apply_scale.custom_minimum_size = Vector2(100, 30)
+	btn_apply_scale.pressed.connect(func():
+		var v = scale_slider.value
 		self.scale = Vector2(v, v)
 		var sd = get_tree().get_root().find_child("StatDebugPanel", true, false)
 		if sd: sd.scale = Vector2(v, v)
 		var ds = get_tree().get_root().find_child("DiceSandbox", true, false)
 		if ds: ds.scale = Vector2(v, v)
 	)
+	scale_hbox.add_child(scale_lbl)
+	scale_hbox.add_child(scale_slider)
+	scale_hbox.add_child(scale_val)
+	scale_hbox.add_child(btn_apply_scale)
+	cfg_vbox.add_child(scale_hbox)
 	
+	cfg_vbox.add_child(HSeparator.new())
+	
+	# 2. Opacity Sliders
 	mk_slider.call("Master Opacity", 0.9, 0.1, 1.0, 0.05, func(v: float):
 		self.modulate.a = v
 		var sd = get_tree().get_root().find_child("StatDebugPanel", true, false)
 		if sd: sd.modulate.a = v
+		var ds = get_tree().get_root().find_child("DiceSandbox", true, false)
+		if ds: ds.modulate.a = v
+	)
+	
+	mk_slider.call("Main Menu Opacity", 0.9, 0.1, 1.0, 0.05, func(v: float):
+		self.modulate.a = v
+	)
+	
+	mk_slider.call("Live Stats Opacity", 0.9, 0.1, 1.0, 0.05, func(v: float):
+		var sd = get_tree().get_root().find_child("StatDebugPanel", true, false)
+		if sd: sd.modulate.a = v
+	)
+	
+	mk_slider.call("Dice Sandbox Opacity", 0.9, 0.1, 1.0, 0.05, func(v: float):
 		var ds = get_tree().get_root().find_child("DiceSandbox", true, false)
 		if ds: ds.modulate.a = v
 	)
