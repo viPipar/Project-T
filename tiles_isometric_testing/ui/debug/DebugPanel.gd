@@ -16,9 +16,23 @@ func _ready() -> void:
 		c.visible = false
 		c.queue_free()
 
+	# Move self to a top-level CanvasLayer so it always renders above RoguelikeUIShell (layer 100)
+	if is_inside_tree() and not get_parent() is CanvasLayer:
+		var layer = CanvasLayer.new()
+		layer.layer = 128
+		layer.name = "DebugCanvasLayer"
+		var p = get_parent()
+		# We must defer reparenting so we don't mess up the scene tree during ready propagation
+		call_deferred("_reparent_to_layer", p, layer)
+
 	_build_ui()
 	_connect_bus()
 	_refresh_stats()
+
+func _reparent_to_layer(old_parent: Node, layer: CanvasLayer) -> void:
+	old_parent.remove_child(self)
+	old_parent.add_child(layer)
+	layer.add_child(self)
 
 func _build_ui() -> void:
 	# Main container
