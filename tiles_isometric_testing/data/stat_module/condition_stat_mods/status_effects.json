@@ -50,6 +50,31 @@
         "mov": -5,
         "dex": -2
       }
+    },
+    "vulnerable": {
+      "display_name": "Vulnerable",
+      "type": "debuff",
+      "default_duration_turns": 2,
+      "stat_mods": {}
+    },
+    "lacerate": {
+      "display_name": "Lacerate",
+      "type": "debuff",
+      "default_duration_turns": 2,
+      "stat_mods": {},
+      "dot": {
+        "damage": 2,
+        "damage_type": "physical",
+        "timing": "start"
+      }
+    },
+    "autotomy_armor_buff": {
+      "display_name": "Autotomy Armor",
+      "type": "buff",
+      "default_duration_turns": 1,
+      "stat_mods": {
+        "armor": 1
+      }
     }
   }
 }

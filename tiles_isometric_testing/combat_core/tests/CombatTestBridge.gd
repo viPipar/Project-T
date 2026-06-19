@@ -227,7 +227,7 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 	print("[COMBAT] D20: %d (raw) + modifier → %d  vs  Armor: %d" % [raw, total, thresh])
 
 	# ── Load Ability ──────────────────────────────────────────────────────────
-	var ability_path := "res://tiles_isometric_testing/combat_core/abilities/instances/%s.tres" % _ability_id
+	var ability_path := "res://combat_core/abilities/instances/%s.tres" % _ability_id
 	var ability := load(ability_path) as BaseAbility
 	var base_dice := "1D8"
 	var knockback := 2
@@ -299,6 +299,9 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 			EventBus.damage_dealt.emit(target, applied, type_str, crit)
 			if applied > 0 and is_instance_valid(target) and knockback > 0:
 				ForcedMovementResolver.knockback_from_attack(attacker, target, knockback)
+			
+			if ability != null and ability.status_effect != "":
+				EventBus.on_status_applied.emit(target, ability.status_effect, ability.status_duration, ability.status_stacks)
 		else:
 			print("[COMBAT] ⚠️  Target sudah dikalahkan sebelum serangan mendarat!")
 

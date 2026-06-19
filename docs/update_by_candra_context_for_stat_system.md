@@ -11,7 +11,7 @@ Bagian Candra tahap fondasi sudah dibuat:
 - Modifier stat sudah multi-source, jadi class, item, buff, dan status tidak saling overwrite.
 - `StatSystem` sudah menjadi autoload provider stat untuk combat runtime.
 - `HealthComponent` sudah menangani HP, damage, heal, dan death.
-- `ConditionComponent` sudah menangani status minimal: `stunned`, `frozen`, `bleeding`, `weakened`.
+- `ConditionComponent` sekarang sudah terintegrasi penuh dengan `status_effects.json`. Semua stat mods dan DoT dari JSON otomatis dieksekusi tanpa perlu hardcode, selain legacy support untuk `stunned`, `frozen`, `bleeding`, `weakened`.
 - `CombatComponent` minimal sudah tersedia untuk enemy/AI.
 - `CombatTestBridge` sudah memakai `StatSystem` dan apply damage ke `HealthComponent`.
 - Data stat sudah mulai dipindah ke JSON lewat `StatDataDB`.

@@ -26,7 +26,11 @@ const STUNNED := "stunned"
 const FROZEN := "frozen"
 const BLEEDING := "bleeding"
 const WEAKENED := "weakened"
+const VULNERABLE := "vulnerable"
+const LACERATE := "lacerate"
+const AUTOTOMY_ARMOR_BUFF := "autotomy_armor_buff"
 const WEAKENED_SOURCE_ID := "condition:weakened"
+const AUTOTOMY_SOURCE_ID := "condition:autotomy"
 
 var _conditions: Dictionary = {}
 
@@ -34,6 +38,10 @@ var _conditions: Dictionary = {}
 func _ready() -> void:
 	if EventBus != null and not EventBus.turn_started.is_connected(_on_turn_started):
 		EventBus.turn_started.connect(_on_turn_started)
+	if EventBus != null and not EventBus.on_status_applied.is_connected(_on_status_applied):
+		EventBus.on_status_applied.connect(_on_status_applied)
+	if EventBus != null and not EventBus.on_status_removed.is_connected(_on_status_removed):
+		EventBus.on_status_removed.connect(_on_status_removed)
 
 
 # -----------------------------------------------------------------------------
@@ -66,6 +74,10 @@ func add_condition(
 			"data": data.duplicate(true),
 		}
 
+	var parent = get_parent()
+	var pname = parent.name if parent else "Unknown"
+	print("[Condition] %s terkena status: %s (Durasi: %d)" % [pname, id, duration])
+
 	_apply_passive_mods(id)
 	var current: Dictionary = _conditions[id] as Dictionary
 	condition_added.emit(id, int(current["stacks"]), int(current["turns"]))
@@ -80,6 +92,14 @@ func remove_condition(condition_id: String) -> void:
 	_conditions.erase(id)
 	if id == WEAKENED:
 		_clear_weakened_mod()
+	elif id == AUTOTOMY_ARMOR_BUFF:
+		_clear_autotomy_armor_buff()
+	else:
+		_clear_dynamic_mod(id)
+
+	var parent = get_parent()
+	var pname = parent.name if parent else "Unknown"
+	print("[Condition] %s sembuh dari status: %s" % [pname, id])
 
 	condition_removed.emit(id)
 	conditions_changed.emit()
@@ -104,8 +124,16 @@ func tick_turn(timing: String = "start") -> void:
 		if not _conditions.has(id):
 			continue
 
-		if timing == "start" and id == BLEEDING:
-			_apply_bleeding(id)
+		if timing == "start":
+			if id == BLEEDING:
+				_apply_bleeding(id)
+			elif id == LACERATE:
+				_apply_lacerate(id)
+			elif _status_db.has(id):
+				var db_entry = _status_db[id]
+				if db_entry.has("dot") and db_entry["dot"].get("timing", "start") == timing:
+					var dot = db_entry["dot"]
+					_apply_dynamic_dot(id, int(dot.get("damage", 1)), dot.get("damage_type", "true"))
 
 		var entry: Dictionary = _conditions[id] as Dictionary
 		entry["turns"] = int(entry.get("turns", 1)) - 1
@@ -113,7 +141,10 @@ func tick_turn(timing: String = "start") -> void:
 		condition_ticked.emit(id, int(entry["turns"]))
 
 		if int(entry["turns"]) <= 0:
-			remove_condition(id)
+			if EventBus != null and EventBus.has_signal("on_status_removed"):
+				EventBus.on_status_removed.emit(get_parent(), id)
+			else:
+				remove_condition(id)
 
 
 func clear_all() -> void:
@@ -133,7 +164,32 @@ func get_conditions() -> Dictionary:
 func _apply_passive_mods(condition_id: String) -> void:
 	if condition_id == WEAKENED:
 		_apply_weakened_mod()
+	elif condition_id == AUTOTOMY_ARMOR_BUFF:
+		_apply_autotomy_armor_buff()
+	else:
+		_apply_dynamic_mod(condition_id)
 
+func _apply_dynamic_mod(id: String) -> void:
+	var stats: StatsComponent = _get_stats()
+	if stats == null or not _conditions.has(id) or not _status_db.has(id):
+		return
+	var db_entry = _status_db[id]
+	if db_entry.has("stat_mods") and typeof(db_entry["stat_mods"]) == TYPE_DICTIONARY and not db_entry["stat_mods"].is_empty():
+		var mods = db_entry["stat_mods"]
+		var entry = _conditions[id] as Dictionary
+		var stacks: int = int(entry.get("stacks", 1))
+		var scaled_mods = {}
+		for stat in mods.keys():
+			scaled_mods[stat] = mods[stat] * stacks
+		stats.set_mod_source("condition:" + id, scaled_mods)
+
+func _clear_dynamic_mod(id: String) -> void:
+	if _status_db.has(id):
+		var db_entry = _status_db[id]
+		if db_entry.has("stat_mods") and typeof(db_entry["stat_mods"]) == TYPE_DICTIONARY and not db_entry["stat_mods"].is_empty():
+			var stats: StatsComponent = _get_stats()
+			if stats != null:
+				stats.remove_mod_source("condition:" + id)
 
 func _apply_weakened_mod() -> void:
 	var stats: StatsComponent = _get_stats()
@@ -153,6 +209,23 @@ func _clear_weakened_mod() -> void:
 		stats.remove_mod_source(WEAKENED_SOURCE_ID)
 
 
+func _apply_autotomy_armor_buff() -> void:
+	var stats: StatsComponent = _get_stats()
+	if stats == null or not _conditions.has(AUTOTOMY_ARMOR_BUFF):
+		return
+
+	var entry: Dictionary = _conditions[AUTOTOMY_ARMOR_BUFF] as Dictionary
+	var stacks: int = int(entry.get("stacks", 1))
+	# AutotomyAbility emits stacks = 4 to mean +4 armor
+	stats.set_mod_source(AUTOTOMY_SOURCE_ID, {"armor": stacks})
+
+
+func _clear_autotomy_armor_buff() -> void:
+	var stats: StatsComponent = _get_stats()
+	if stats != null:
+		stats.remove_mod_source(AUTOTOMY_SOURCE_ID)
+
+
 func _apply_bleeding(condition_id: String) -> void:
 	if not _conditions.has(condition_id):
 		return
@@ -169,30 +242,106 @@ func _apply_bleeding(condition_id: String) -> void:
 	if amount <= 0:
 		return
 
-	var applied: int = health.take_damage(amount, owner, "bleeding")
+	var parent = get_parent()
+	var pname = parent.name if parent else "Unknown"
+	print("[Condition] %s terkena tick DoT (%s): %d damage" % [pname, condition_id, amount])
+
+	var applied: int = health.take_damage(amount, parent, "bleeding")
 	if applied > 0:
 		condition_damage.emit(condition_id, applied)
+		if EventBus != null and EventBus.has_signal("damage_dealt"):
+			EventBus.damage_dealt.emit(parent, applied, "bleeding", false)
 
+func _apply_lacerate(condition_id: String) -> void:
+	if not _conditions.has(condition_id):
+		return
+
+	var health: HealthComponent = _get_health()
+	if health == null or health.is_dead():
+		return
+
+	var entry: Dictionary = _conditions[condition_id] as Dictionary
+	var stacks: int = int(entry.get("stacks", 1))
+	var data: Dictionary = entry.get("data", {}) as Dictionary
+	var per_stack: int = int(data.get("damage", 2)) # Lacerate base dmg
+	var amount: int = maxi(0, per_stack * stacks)
+	if amount <= 0:
+		return
+
+	var parent = get_parent()
+	var pname = parent.name if parent else "Unknown"
+	print("[Condition] %s terkena tick DoT (%s): %d damage" % [pname, condition_id, amount])
+
+	var applied: int = health.take_damage(amount, parent, "lacerate")
+	if applied > 0:
+		condition_damage.emit(condition_id, applied)
+		if EventBus != null and EventBus.has_signal("damage_dealt"):
+			EventBus.damage_dealt.emit(parent, applied, "lacerate", false)
+
+func _apply_dynamic_dot(condition_id: String, damage_per_stack: int, damage_type: String) -> void:
+	if not _conditions.has(condition_id):
+		return
+
+	var entry: Dictionary = _conditions[condition_id] as Dictionary
+	var stacks: int = int(entry.get("stacks", 1))
+	var total_dmg: int = damage_per_stack * stacks
+
+	var parent = get_parent()
+	var pname = parent.name if parent else "Unknown"
+	print("[Condition] %s terkena %s DoT: %d damage" % [pname, condition_id, total_dmg])
+
+	var applied := 0
+	var health: HealthComponent = _get_health()
+
+	if health != null:
+		applied = health.take_damage(total_dmg, null, damage_type)
+	else:
+		var stat_sys = get_node_or_null("/root/StatSystem")
+		if stat_sys != null and stat_sys.has_method("apply_damage"):
+			applied = stat_sys.apply_damage(parent, total_dmg, null, damage_type)
+
+	if EventBus != null and applied > 0:
+		EventBus.damage_dealt.emit(parent, applied, damage_type, false)
 
 # -----------------------------------------------------------------------------
-# Helpers
+# Internal
 # -----------------------------------------------------------------------------
+
+func _load_status_db() -> void:
+	var f = FileAccess.open("res://data/stat_module/condition_stat_mods/status_effects.json", FileAccess.READ)
+	if f:
+		var txt = f.get_as_text()
+		var json = JSON.parse_string(txt)
+		if typeof(json) == TYPE_DICTIONARY and json.has("conditions"):
+			_status_db = json["conditions"]
+		f.close()
+
+func _normalize_id(condition_id: String) -> String:
+	return condition_id.strip_edges().to_lower()
 
 func _on_turn_started(entity: Node, _player_id: int) -> void:
-	if entity == owner:
+	if entity == get_parent():
 		tick_turn("start")
 
+func _on_status_applied(entity: Node, status_id: String, duration: int, stacks: int) -> void:
+	if entity == get_parent():
+		add_condition(status_id, duration, stacks, {})
+
+func _on_status_removed(entity: Node, status_id: String) -> void:
+	if entity == get_parent():
+		remove_condition(status_id)
 
 func _get_stats() -> StatsComponent:
-	if owner == null:
+	var p = get_parent()
+	if p == null:
 		return null
-	return owner.get_node_or_null("StatsComponent") as StatsComponent
-
+	return p.get_node_or_null("StatsComponent") as StatsComponent
 
 func _get_health() -> HealthComponent:
-	if owner == null:
+	var p = get_parent()
+	if p == null:
 		return null
-	return owner.get_node_or_null("HealthComponent") as HealthComponent
+	return p.get_node_or_null("HealthComponent") as HealthComponent
 
 
 func _normalize_id(condition_id: String) -> String:
