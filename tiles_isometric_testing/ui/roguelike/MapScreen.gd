@@ -17,9 +17,17 @@ func _ready() -> void:
 	btn_close.add_theme_font_size_override("font_size", 24)
 	btn_close.position = Vector2(20, 20)
 	btn_close.pressed.connect(func():
-		var parent = get_parent()
-		if parent is CanvasLayer: parent.queue_free()
-		queue_free()
+		# Use find_child recursively to guarantee we find the shell even if it was renamed
+		var shell = get_tree().get_root().find_child("RoguelikeUIShell", true, false)
+		if shell:
+			shell.queue_free()
+		else:
+			queue_free()
+			
+		# Restore Debug Menu
+		var debug_panel = get_tree().get_root().find_child("DebugPanel", true, false)
+		if debug_panel:
+			debug_panel.visible = true
 	)
 	add_child(btn_close)
 
@@ -171,8 +179,8 @@ func _input(event: InputEvent) -> void:
 			_scroll_map(-60)
 			
 	elif event is InputEventMouseMotion and _is_dragging:
-		var delta = event.global_position - _last_mouse_pos
-		_scroll_map(delta.y)
+		var drag_delta = event.global_position - _last_mouse_pos
+		_scroll_map(drag_delta.y)
 		_last_mouse_pos = event.global_position
 
 func _scroll_map(amount: float) -> void:

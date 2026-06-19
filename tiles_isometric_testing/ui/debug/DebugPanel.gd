@@ -355,8 +355,62 @@ func _build_ui() -> void:
 	)
 	ev_vbox.add_child(btn_luck_lose)
 
+	# --- TAB 5: Config ---
+	var tab_config = MarginContainer.new()
+	tab_config.name = "Config"
+	tab_config.add_theme_constant_override("margin_left", 15)
+	tab_config.add_theme_constant_override("margin_top", 15)
+	tab_config.add_theme_constant_override("margin_right", 15)
+	tabs.add_child(tab_config)
 
-func _process(delta: float) -> void:
+	var cfg_vbox = VBoxContainer.new()
+	cfg_vbox.add_theme_constant_override("separation", 20)
+	tab_config.add_child(cfg_vbox)
+
+	var mk_slider = func(lbl_text: String, start_val: float, min_v: float, max_v: float, step: float, callback: Callable) -> void:
+		var hb = HBoxContainer.new()
+		var l = Label.new()
+		l.text = lbl_text
+		l.custom_minimum_size = Vector2(160, 0)
+		var s = HSlider.new()
+		s.min_value = min_v
+		s.max_value = max_v
+		s.step = step
+		s.value = start_val
+		s.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		s.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		var vl = Label.new()
+		vl.text = str(start_val)
+		vl.custom_minimum_size = Vector2(40, 0)
+		s.value_changed.connect(func(v: float):
+			vl.text = str(v)
+			callback.call(v)
+		)
+		hb.add_child(l)
+		hb.add_child(s)
+		hb.add_child(vl)
+		cfg_vbox.add_child(hb)
+
+	var lbl_desc = Label.new()
+	lbl_desc.text = "Adjust the UI scale and opacity for all Debug overlays:"
+	lbl_desc.add_theme_color_override("font_color", Color.GRAY)
+	cfg_vbox.add_child(lbl_desc)
+
+	mk_slider.call("Master UI Scale", 1.0, 0.5, 2.0, 0.05, func(v: float):
+		self.scale = Vector2(v, v)
+		var sd = get_tree().get_root().find_child("StatDebugPanel", true, false)
+		if sd: sd.scale = Vector2(v, v)
+		var ds = get_tree().get_root().find_child("DiceSandbox", true, false)
+		if ds: ds.scale = Vector2(v, v)
+	)
+	
+	mk_slider.call("Master Opacity", 0.9, 0.1, 1.0, 0.05, func(v: float):
+		self.modulate.a = v
+		var sd = get_tree().get_root().find_child("StatDebugPanel", true, false)
+		if sd: sd.modulate.a = v
+		var ds = get_tree().get_root().find_child("DiceSandbox", true, false)
+		if ds: ds.modulate.a = v
+	)
 	if not visible:
 		return
 	_refresh_timer += delta
