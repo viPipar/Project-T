@@ -75,4 +75,3 @@ signal floating_text_requested(entity: Node, text: String, color: Color, type: S
 signal item_picked(player_id: int, item_data: Resource)
 signal contested_pick_started(item_data: Resource, p1_roll: int, p2_roll: int)
 signal contested_pick_resolved(winner_id: int, item_data: Resource)
-

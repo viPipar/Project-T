@@ -1,12 +1,12 @@
 [gd_scene load_steps=8 format=3 uid="uid://bubllkjht7ojs"]
 
 [ext_resource type="Script" uid="uid://cj6wgnbf81aju" path="res://entities/enemies/BaseEnemy.gd" id="1_1udrh"]
-[ext_resource type="Script" path="res://components/HealthComponent.gd" id="2_health"]
-[ext_resource type="Script" path="res://components/StatsComponent.gd" id="3_stats"]
-[ext_resource type="Script" path="res://components/MovementComponent.gd" id="4_move"]
-[ext_resource type="Script" path="res://components/CombatComponent.gd" id="5_combat"]
-[ext_resource type="Script" path="res://components/ConditionComponent.gd" id="6_cond"]
-[ext_resource type="Script" path="res://components/AIComponent.gd" id="7_ai"]
+[ext_resource type="Script" uid="uid://cmbb03lnpiv3i" path="res://components/HealthComponent.gd" id="2_health"]
+[ext_resource type="Script" uid="uid://b5e8838ogl3f7" path="res://components/StatsComponent.gd" id="3_stats"]
+[ext_resource type="Script" uid="uid://dleotlv76kabm" path="res://components/MovementComponent.gd" id="4_move"]
+[ext_resource type="Script" uid="uid://dehtujp1qplci" path="res://components/CombatComponent.gd" id="5_combat"]
+[ext_resource type="Script" uid="uid://5ppdu5jndc7b" path="res://components/ConditionComponent.gd" id="6_cond"]
+[ext_resource type="Script" uid="uid://dfgx2uqpj1g3d" path="res://components/AIComponent.gd" id="7_ai"]
 
 [node name="BaseEnemy" type="CharacterBody2D"]
 script = ExtResource("1_1udrh")

@@ -72,6 +72,8 @@ func get_att(entity: Node) -> int:
 func get_dex(entity: Node) -> int:
 	var sc := _get_stats(entity)
 	if sc: return sc.get_stat("dex")
+	var ent_dex = entity.get("mock_dex")
+	if ent_dex != null: return int(ent_dex)
 	return mock_dex
 
 func get_int_stat(entity: Node) -> int:

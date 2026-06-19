@@ -20,7 +20,7 @@ func generate_stock() -> void:
 		var item_id = item_pool.roll_item("elite")
 		current_stock.append(item_id)
 		
-	print("[StockManager] Stock Generated: %s" % current_stock)
+	print("[StockManager] Stock Generated: %s" % str(current_stock))
 
 func reroll_stock(player_id: int) -> bool:
 	var cost = BalancingData.SHOP_PRICES.get("reroll", 100)

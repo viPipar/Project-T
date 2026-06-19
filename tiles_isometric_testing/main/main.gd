@@ -195,11 +195,37 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_F3:
 				_show_debug_grid = not _show_debug_grid
 			KEY_F4:
-				if roguelike_ui_shell:
-					roguelike_ui_shell.toggle()
+				if _stat_debug_panel != null:
+					_stat_debug_panel.visible = not _stat_debug_panel.visible
+			KEY_T:
+				print("--- 'T' KEY DETECTED ---")
+				_run_all_tests()
 			_:
 				return
 		_apply_debug_visibility()
+
+func _run_all_tests() -> void:
+	print("\n\n>>> RUNNING ALL SYSTEM TESTS FROM DEBUG MENU <<<")
+	
+	# Roguelike Tests
+	var roguelike_tester = load("res://testing/RoguelikeTester.gd").new()
+	if roguelike_tester.has_method("run_all_tests"):
+		roguelike_tester.run_all_tests()
+	
+	# Combat Tests
+	var ae_test = load("res://combat_core/tests/test_action_economy.gd").new()
+	ae_test.name = "TestAE"
+	add_child(ae_test)
+	
+	var dr_test = load("res://combat_core/tests/test_dice_roller.gd").new()
+	dr_test.name = "TestDR"
+	add_child(dr_test)
+	
+	var pm_test = load("res://combat_core/tests/test_phase_manager.gd").new()
+	pm_test.name = "TestPM"
+	add_child(pm_test)
+	
+	print(">>> ALL TESTS TRIGGERED <<<\n")
 
 
 func _apply_debug_visibility() -> void:
@@ -210,9 +236,7 @@ func _apply_debug_visibility() -> void:
 	if debug_tooltip != null:
 		debug_tooltip.visible = true
 	if _stat_debug_panel != null:
-		_stat_debug_panel.visible = _show_debug_panel  # ikut F1
-		if _show_debug_panel:
-			_stat_debug_panel._refresh_all()  # paksa refresh saat panel dibuka
+		pass
 	if world != null and world.has_method("set_debug_grid_visible"):
 		world.set_debug_grid_visible(_show_debug_grid)
 	var autoload_debug := get_node_or_null("/root/DebugGrid")

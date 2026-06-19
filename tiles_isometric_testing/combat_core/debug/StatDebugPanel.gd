@@ -63,6 +63,12 @@ var _p2_row_refs: Dictionary = {}
 var _derived_label_p1: Label = null
 var _derived_label_p2: Label = null
 
+# Drag & Resize
+var _is_dragging: bool = false
+var _drag_offset: Vector2 = Vector2.ZERO
+var _is_resizing: bool = false
+var _resize_offset: Vector2 = Vector2.ZERO
+
 
 # ── BUILD UI ──────────────────────────────────────────────────────────────────
 
@@ -73,6 +79,11 @@ func _ready() -> void:
 
 
 func _build_ui() -> void:
+	# Lepas anchor agar bisa di-drag bebas
+	set_anchors_preset(PRESET_TOP_LEFT)
+	position = Vector2(50, 50)
+	size = Vector2(420, 600)
+
 	# ── Root panel ────────────────────────────────────────────────────────────
 	custom_minimum_size = Vector2(420, 0)
 	size_flags_horizontal = Control.SIZE_SHRINK_END
@@ -96,13 +107,19 @@ func _build_ui() -> void:
 	scroll.add_child(vbox)
 
 	# ── Header ────────────────────────────────────────────────────────────────
+	var header_container = MarginContainer.new()
+	header_container.mouse_filter = Control.MOUSE_FILTER_STOP
+	header_container.gui_input.connect(_on_header_gui_input)
+	vbox.add_child(header_container)
+
 	var header := Label.new()
 	header.text = "🎛  STAT DEBUG MANIPULATOR"
 	header.add_theme_color_override("font_color", Color(0.9, 0.7, 1.0))
 	header.add_theme_font_size_override("font_size", 14)
 	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	header.add_theme_constant_override("margin_top", 8)
-	vbox.add_child(header)
+	header.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	header_container.add_child(header)
 
 	var hint := Label.new()
 	hint.text = "Ubah stat → efek langsung ke combat\nBase stat tidak berubah (external mod)"
@@ -112,6 +129,16 @@ func _build_ui() -> void:
 	vbox.add_child(hint)
 
 	_add_separator(vbox)
+
+	# ── Resize Handle ─────────────────────────────────────────────────────────
+	var resize_handle = ColorRect.new()
+	resize_handle.color = Color(1, 1, 1, 0.15)
+	resize_handle.custom_minimum_size = Vector2(25, 25)
+	resize_handle.size_flags_horizontal = Control.SIZE_SHRINK_END
+	resize_handle.size_flags_vertical = Control.SIZE_SHRINK_END
+	resize_handle.mouse_default_cursor_shape = Control.CURSOR_FDIAGSIZE
+	resize_handle.gui_input.connect(_on_resize_gui_input)
+	add_child(resize_handle)
 
 	# ── P1 Section ────────────────────────────────────────────────────────────
 	_p1_row_refs = {}
@@ -466,3 +493,26 @@ func _process(delta: float) -> void:
 		if _hold_timer >= (1.0 / HOLD_REPEAT_HZ):
 			_hold_timer = 0.0
 			_held_callback.call()
+
+
+# ── DRAG & RESIZE LOGIC ───────────────────────────────────────────────────────
+
+func _on_header_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed:
+			_is_dragging = true
+			_drag_offset = event.global_position - self.global_position
+		else:
+			_is_dragging = false
+	elif event is InputEventMouseMotion and _is_dragging:
+		self.global_position = event.global_position - _drag_offset
+
+func _on_resize_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed:
+			_is_resizing = true
+			_resize_offset = event.global_position - self.size
+		else:
+			_is_resizing = false
+	elif event is InputEventMouseMotion and _is_resizing:
+		self.size = event.global_position - _resize_offset
