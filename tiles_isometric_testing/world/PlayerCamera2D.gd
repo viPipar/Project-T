@@ -50,6 +50,9 @@ func _process(delta: float) -> void:
 
 
 func _handle_pan_input(delta: float) -> void:
+	if is_instance_valid(InputManager) and InputManager.is_in_menu:
+		return
+
 	var dir := Vector2.ZERO
 
 	# Pakai raw Input — kamera pan tidak diblok oleh InputManager

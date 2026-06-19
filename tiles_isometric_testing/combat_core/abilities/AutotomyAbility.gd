@@ -1,5 +1,5 @@
 class_name AutotomyAbility
-extends "res://tiles_isometric_testing/combat_core/abilities/BaseAbility.gd"
+extends "res://combat_core/abilities/BaseAbility.gd"
 
 func execute(caster: Node, targets: Array) -> void:
 	# Autotomy only affects the caster (self)

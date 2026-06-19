@@ -25,6 +25,7 @@ var _show_debug_grid:   bool = false
 var _split_screen: SplitScreenManager = null
 var _stat_debug_panel: StatDebugPanel = null  # Debug stat manipulator (F1)
 var roguelike_ui_shell: CanvasLayer = null
+var _action_wheel_test_overlay: Control = null
 
 func _ready() -> void:
 	var cursor_scene := preload("res://world/SelectionCursor.tscn")
@@ -105,6 +106,9 @@ func _ready() -> void:
 	# ── Stat Debug Panel ─────────────────────────────────────────────────────
 	_spawn_stat_debug_panel()
 
+	# ── Action Wheel Test Overlay ────────────────────────────────────────────
+	_spawn_action_wheel_test_overlay()
+
 	_apply_debug_visibility()
 
 
@@ -160,6 +164,25 @@ func _spawn_stat_debug_panel() -> void:
 	print("[Main] StatDebugPanel siap — tekan F1 untuk toggle ✅")
 
 
+func _spawn_action_wheel_test_overlay() -> void:
+	var test_scene := load("res://ui/action_wheel/testing.tscn")
+	if test_scene == null:
+		push_warning("[Main] ActionWheel testing.tscn tidak ditemukan!")
+		return
+	_action_wheel_test_overlay = test_scene.instantiate() as Control
+	_action_wheel_test_overlay.name = "ActionWheelTestOverlay"
+	
+	# Masukkan ke dalam CanvasLayer agar berada di atas UI lainnya
+	var canvas = CanvasLayer.new()
+	canvas.layer = 100
+	canvas.name = "ActionWheelCanvas"
+	canvas.add_child(_action_wheel_test_overlay)
+	add_child(canvas)
+	
+	_action_wheel_test_overlay.visible = false
+	print("[Main] ActionWheel Test Overlay siap — tekan F9 untuk toggle ✅")
+
+
 # ── SPLIT-SCREEN SETUP ───────────────────────────────────────────────────────
 
 func _setup_split_screen() -> void:
@@ -197,6 +220,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_F4:
 				if _stat_debug_panel != null:
 					_stat_debug_panel.visible = not _stat_debug_panel.visible
+			KEY_F9:
+				if _action_wheel_test_overlay != null:
+					_action_wheel_test_overlay.visible = not _action_wheel_test_overlay.visible
 			KEY_T:
 				print("--- 'T' KEY DETECTED ---")
 				_run_all_tests()

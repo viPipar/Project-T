@@ -60,8 +60,7 @@ var _slide_tween: Tween
 	"d": false,
 	"q": false,
 	"e": false,
-	"enter": false,
-	"space": false,
+	"confirm": false,
 }
 const PREVIEW_VISIBLE_RATIO := 0.25
 
@@ -123,7 +122,7 @@ func _process(_delta: float) -> void:
 		_shift_page(-1)
 	if _consume_key("e", next_page_key):
 		_shift_page(1)
-	if _consume_key("enter", KEY_ENTER) or _consume_key("space", KEY_SPACE):
+	if _consume_action("confirm", "p%d_confirm" % player_id, KEY_ENTER):
 		_emit_selected()
 
 	queue_redraw()
@@ -402,7 +401,7 @@ func _sync_menu_state() -> void:
 	if not blocks_game_input:
 		return
 	if is_instance_valid(InputManager):
-		InputManager.is_in_menu = visible
+		InputManager.is_in_menu = is_visible_in_tree()
 
 
 func _consume_key(name: String, keycode: Key) -> bool:
