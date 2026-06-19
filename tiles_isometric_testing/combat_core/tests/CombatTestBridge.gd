@@ -198,7 +198,8 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 			print("[COMBAT] ⚔️  HIT! Damage (%s) = %d" % [dmg_formula, dmg_total])
 	else:
 		print("[COMBAT] 💨 MISS!")
-		EventBus.miss_occurred.emit(attacker, target)
+		# TODO (Team): migrated from miss_occurred to on_miss
+		EventBus.on_miss.emit(attacker, target)
 	print("[COMBAT] ────────────────────────────")
 
 	# ── Jalankan animasi overlay (AWAIT — blok sampai selesai) ────────────────

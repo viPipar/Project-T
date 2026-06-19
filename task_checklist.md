@@ -22,7 +22,7 @@
 | Programmer | System | Task | Priority | Status | Depends On | Ref # |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | Gilang | Ability System | Design & implement Ability Base Class (Resource) | Critical | To Do | SignalBus | #9 |
-| Gilang | Ability System | Define SignalBus autoload (on_hit, on_miss, on_knockback, on_status) | Critical | To Do | — | #9 |
+| Gilang | Ability System | Define SignalBus autoload (on_hit, on_miss, on_knockback, on_status) | Critical | Done | — | #9 |
 | Gilang | Ability System | Implement Physical Abilities (Main Attack, Elbow Smash, Slash Flash, Cleave, Dagger Throw, Rupture, Epimorphic, Autotomy) | Critical | To Do | Ability Base Class | #9 |
 | Gilang | Ability System | Implement Magic Abilities & Spell Slot Consumer | High | To Do | Ability Base Class, Spell Slot Mgr (Tapip) | — |
 | Gilang | Friendly Fire | Build Ally Damage Resolver (inside IAbility) | High | To Do | Ability Base Class | #11 |

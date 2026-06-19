@@ -107,7 +107,7 @@ Game
 │   │   │   ├── execute(caster, target, grid) → void
 │   │   │   ├── get_cost() → ActionCost
 │   │   │   ├── get_area() → GridArea
-│   │   │   └── emit_signals() → [on_hit, on_miss, on_knockback, on_status]
+│   │   │   └── emit_signals() → [on_hit, on_miss (replaces miss_occurred), on_knockback, on_status_applied(stacks)]
 │   │   ├── Physical Abilities  [implements IAbility]
 │   │   │   ├── Main Attack
 │   │   │   ├── Elbow Smash

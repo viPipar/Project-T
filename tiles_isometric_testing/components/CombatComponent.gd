@@ -75,7 +75,8 @@ func attack(target: Node) -> Dictionary:
 	result["hit"] = hit
 
 	if not hit:
-		EventBus.miss_occurred.emit(owner, target)
+		# TODO (Team): migrated from miss_occurred to on_miss
+		EventBus.on_miss.emit(owner, target)
 		attack_resolved.emit(owner, target, result)
 		return result
 
