@@ -209,6 +209,10 @@ func _enter_targeting() -> void:
 	_targeting_tiles = _loaded_ability.get_target_tiles(grid_pos)
 	var highlight_type := _loaded_ability.get_highlight_type()
 	HighlightManager.replace_tiles(_targeting_tiles, highlight_type, player_id)
+	
+	if MovementRangeManager != null and MovementRangeManager.has_method("_refresh_player"):
+		MovementRangeManager._refresh_player(self)
+		
 	print("[Player P%d] TARGETING mode — %d tiles highlighted" % [player_id, _targeting_tiles.size()])
 
 
@@ -219,6 +223,10 @@ func _exit_targeting() -> void:
 	HighlightManager.clear("skill")
 	_targeting_tiles.clear()
 	_loaded_ability = null
+	
+	if MovementRangeManager != null and MovementRangeManager.has_method("_refresh_player"):
+		MovementRangeManager._refresh_player(self)
+		
 	print("[Player P%d] Targeting CANCELLED" % player_id)
 
 
@@ -257,6 +265,9 @@ func _on_targeting_confirm() -> void:
 	HighlightManager.clear("attack")
 	HighlightManager.clear("skill")
 	_targeting_tiles.clear()
+	
+	if MovementRangeManager != null and MovementRangeManager.has_method("_refresh_player"):
+		MovementRangeManager._refresh_player(self)
 
 
 ## Dipanggil saat combat_input_blocked signal diterima dari EventBus.

@@ -63,6 +63,11 @@ func _refresh_player(player: Node) -> void:
 	var pid = _safe_get_int(player, "player_id", -1)
 	var type := _type_for_player(pid)
 
+	# Jika player sedang dalam mode targeting ability, sembunyikan movement range
+	if player.get("_state") == 1: # 1 == PlayerState.TARGETING
+		_clear_type(type)
+		return
+
 	if TurnManager != null and pid >= 0 and not TurnManager.can_player_act(pid):
 		_clear_type(type)
 		_store_range(pid, player.get("grid_pos") as Vector2i, [] as Array[Vector2i])
