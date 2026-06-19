@@ -81,7 +81,8 @@ func _ready() -> void:
 func _build_ui() -> void:
 	# Lepas anchor agar bisa di-drag bebas
 	set_anchors_preset(PRESET_TOP_LEFT)
-	position = Vector2(50, 50)
+	var vp_size = get_viewport_rect().size
+	position = Vector2(max(50, vp_size.x - 470), 50) # 420 width + 50 margin
 	size = Vector2(420, 600)
 
 	# ── Root panel ────────────────────────────────────────────────────────────
