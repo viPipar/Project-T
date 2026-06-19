@@ -179,8 +179,8 @@ func _spawn_action_wheel_test_overlay() -> void:
 	canvas.add_child(_action_wheel_test_overlay)
 	add_child(canvas)
 	
-	_action_wheel_test_overlay.visible = false
-	print("[Main] ActionWheel Test Overlay siap — tekan F9 untuk toggle ✅")
+	_action_wheel_test_overlay.visible = true
+	print("[Main] ActionWheel Test Overlay siap — use Q/E (P1) or U/O (P2) to toggle ✅")
 
 
 # ── SPLIT-SCREEN SETUP ───────────────────────────────────────────────────────
@@ -220,9 +220,6 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_F4:
 				if _stat_debug_panel != null:
 					_stat_debug_panel.visible = not _stat_debug_panel.visible
-			KEY_F9:
-				if _action_wheel_test_overlay != null:
-					_action_wheel_test_overlay.visible = not _action_wheel_test_overlay.visible
 			KEY_T:
 				print("--- 'T' KEY DETECTED ---")
 				_run_all_tests()

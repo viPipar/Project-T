@@ -12,6 +12,9 @@ func _ready() -> void:
 	_load_abilities()
 	_setup_dummies()
 	
+	action_wheel_left.visible = false
+	action_wheel_right.visible = false
+	
 	action_wheel_left.action_selected.connect(_on_player_1_ability_selected)
 	action_wheel_right.action_selected.connect(_on_player_2_ability_selected)
 
@@ -75,14 +78,25 @@ func _on_player_2_ability_selected(action_name: String, action_index: int, page_
 	_execute_ability(action_index, dummy_target, dummy_caster, "Player 2")
 
 func _execute_ability(action_index: int, caster: Node, target: Node, caster_name: String) -> void:
-	if action_index >= 0 and action_index < loaded_abilities.size():
-		var ability = loaded_abilities[action_index]
-		print("\n--- ", caster_name, " Executing: ", ability.ability_name, " ---")
-		print(caster.name, " HP before: ", caster.get_node("HealthComponent").current_hp)
-		print(target.name, " HP before: ", target.get_node("HealthComponent").current_hp)
+	# Removed dummy logic and prints. Main game player script will handle ability execution.
+	pass
+
+func _unhandled_input(event: InputEvent) -> void:
+	# P1 open (Q or E)
+	if (event.is_action_pressed("p1_ability_1") or event.is_action_pressed("p1_ability_2")) and not action_wheel_left.visible:
+		action_wheel_left.visible = true
+		get_viewport().set_input_as_handled()
 		
-		ability.execute(caster, [target])
+	# P2 open (U or O)
+	if (event.is_action_pressed("p2_ability_1") or event.is_action_pressed("p2_ability_2")) and not action_wheel_right.visible:
+		action_wheel_right.visible = true
+		get_viewport().set_input_as_handled()
 		
-		print(caster.name, " HP after: ", caster.get_node("HealthComponent").current_hp)
-		print(target.name, " HP after: ", target.get_node("HealthComponent").current_hp)
-		print("---------------------------------------\n")
+	# Close on Cancel
+	if event.is_action_pressed("p1_cancel") and action_wheel_left.visible:
+		action_wheel_left.visible = false
+		get_viewport().set_input_as_handled()
+		
+	if event.is_action_pressed("p2_cancel") and action_wheel_right.visible:
+		action_wheel_right.visible = false
+		get_viewport().set_input_as_handled()
