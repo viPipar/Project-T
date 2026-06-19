@@ -35,6 +35,8 @@ CombatManager="*res://autoloads/CombatManager.gd"
 ItemRegistry="*res://systems/items/ItemRegistry.gd"
 InventoryManager="*res://systems/items/InventoryManager.gd"
 ItemEffectApplier="*res://systems/items/ItemEffectApplier.gd"
+EventNotifier="*res://autoloads/EventNotifier.gd"
+RunManager="*res://systems/progression/RunManager.gd"
 
 [display]
 

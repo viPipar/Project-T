@@ -3,48 +3,60 @@ class_name RestLootHandler
 
 # Handles logic for Rest nodes and Loot nodes (including minigame).
 
-enum RestOption {
-	FULL_HEAL,
-	PARTIAL_HEAL_BUFF,
-	TREASURE
-}
+func _get_player(pid: int) -> Node:
+	for p in get_tree().get_nodes_in_group("players"):
+		var p_id = p.get("player_id")
+		if p_id != null and typeof(p_id) == TYPE_INT and p_id == pid:
+			return p
+	return null
 
-func handle_rest_choice(player_id: int, option: RestOption) -> void:
-	var player = null
-	if TurnManager != null and TurnManager.has_method("_get_player_by_id"):
-		player = TurnManager._get_player_by_id(player_id)
+func handle_rest_choice(player_id: int, option: int) -> void:
+	var player = _get_player(player_id)
+	if player == null:
+		print("[RestLootHandler] Player %d not found!" % player_id)
+		return
 		
-	var hc = null
-	var stats = null
-	if player != null:
-		hc = player.get_node_or_null("HealthComponent")
-		stats = player.get_node_or_null("StatsComponent")
+	var hc = player.get_node_or_null("HealthComponent")
+	var stats = player.get_node_or_null("StatsComponent")
 		
 	match option:
-		RestOption.FULL_HEAL:
+		0: # FULL_HEAL
 			print("[RestLootHandler] P%d selected Full Heal." % player_id)
 			if hc != null:
 				hc.heal_to_full() if hc.has_method("heal_to_full") else hc.heal(9999)
-		RestOption.PARTIAL_HEAL_BUFF:
+			EventNotifier.show_message("P%d Rested: Full HP Restored" % player_id, Color.GREEN)
+		1: # PARTIAL_HEAL_BUFF
 			print("[RestLootHandler] P%d selected Partial Heal + Buff." % player_id)
-			if hc != null and stats != null:
-				var max_hp = stats.get_max_hp() if stats.has_method("get_max_hp") else hc.max_hp
+			if hc != null:
+				var max_hp = hc.get("max_hp") if hc.get("max_hp") != null else 20
 				hc.heal(int(max_hp * 0.3))
-			# Stats.apply_buff(player_id, "damage", 1) # TODO: Apply buff via StatsComponent
-		RestOption.TREASURE:
+			if InventoryManager != null:
+				InventoryManager.add_item(player_id, "potion_small")
+			EventNotifier.show_message("P%d Rested: +30%% HP and Potion" % player_id, Color.YELLOW_GREEN)
+		2: # TREASURE
 			print("[RestLootHandler] P%d selected Treasure." % player_id)
-			# Inventory.add_item(player_id, random_rare_item)
+			if InventoryManager != null:
+				var items = ["magic_ring", "berserker_axe"]
+				if ItemRegistry != null and ItemRegistry.get("items") != null:
+					items = ItemRegistry.items.keys()
+				var reward = items[randi() % items.size()]
+				InventoryManager.add_item(player_id, reward)
+				EventNotifier.show_message("P%d Digs up Treasure: %s!" % [player_id, reward], Color.GOLD)
 
 # ── LOOT MINIGAME ────────────────────────────────────────────────────────────
 
-# Mock: 3-Card Monte style game
 func start_loot_minigame() -> void:
 	print("[RestLootHandler] Starting Loot Minigame (3-Card Monte)...")
-	# UI would show 3 chests/cards, shuffle them, and ask player to pick one.
-	# One has Legendary, one has Common, one is empty (or Cursed).
+	EventNotifier.show_message("Loot Minigame Started!", Color.WHITE)
 
 func resolve_loot_minigame(player_id: int, choice_index: int, correct_index: int) -> void:
 	if choice_index == correct_index:
 		print("[RestLootHandler] P%d won the minigame! Legendary Reward!" % player_id)
+		if InventoryManager != null:
+			InventoryManager.add_item(player_id, "berserker_axe")
+		EventNotifier.show_message("Minigame Won! P%d got Legendary Item", Color.GOLD)
 	else:
 		print("[RestLootHandler] P%d lost the minigame! Common Reward." % player_id)
+		if InventoryManager != null:
+			InventoryManager.add_item(player_id, "potion_small")
+		EventNotifier.show_message("Minigame Lost... P%d got Potion", Color.GRAY)

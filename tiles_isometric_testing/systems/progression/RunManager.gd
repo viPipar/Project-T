@@ -1,5 +1,4 @@
 extends Node
-class_name RunManager
 
 # Manages the meta-loop of a Roguelike run.
 # Handles Run Start, Game Over, and transitioning back to a fresh state.
@@ -56,7 +55,10 @@ func end_run(victory: bool) -> void:
 	run_ended.emit(victory)
 	
 	# Transition back to main menu or show summary screen
-	# ...
+	var result_screen = load("res://ui/roguelike/RunResultScreen.gd").new()
+	result_screen.set_state(victory)
+	if get_tree() and get_tree().current_scene:
+		get_tree().current_scene.add_child(result_screen)
 
 func advance_layer() -> void:
 	if not is_run_active:
