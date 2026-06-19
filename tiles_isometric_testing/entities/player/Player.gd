@@ -36,6 +36,7 @@ var anim_sprite: AnimatedSprite2D
 var _facing:  String   = "down"
 var grid_pos: Vector2i = Vector2i.ZERO
 var _cursor:  Node2D   = null
+var selected_ability_id: String = "main_attack"
 # Tidak ada _combat_blocked lokal — InputManager.set_player_blocked() yang handle
 
 const INSECT1_DIR := "res://assets/characters/insect1_placeholder"
@@ -57,6 +58,7 @@ func _ready() -> void:
 
 	# Subscribe ke sinyal blok input dari CombatTestBridge via EventBus
 	EventBus.combat_input_blocked.connect(_on_combat_input_blocked)
+	EventBus.action_wheel_selected.connect(_on_action_wheel_selected)
 
 
 func _process(_delta: float) -> void:
@@ -112,7 +114,7 @@ func _on_confirm() -> void:
 				match shot.result:
 					"hit_entity":
 						# Emit signal supaya CombatTestBridge bisa resolve hit/miss/crit
-						EventBus.attackcam_started.emit(self, occupant, "main_attack")
+						EventBus.attackcam_started.emit(self, occupant, selected_ability_id)
 						if player_id == 1:
 							AttackCam.play(true, false)
 						elif player_id == 2:
@@ -155,6 +157,21 @@ func _on_move_finished(from: Vector2i, to: Vector2i) -> void:
 
 func _on_step_started(from: Vector2i, to: Vector2i) -> void:
 	_update_facing_from_to(from, to)
+
+
+func _on_action_wheel_selected(pid: int, action_name: String) -> void:
+	if pid == player_id:
+		var raw_id = action_name.to_lower().replace(" ", "_")
+		# Map generic UI actions to our .tres physical abilities
+		match raw_id:
+			"attack": raw_id = "main_attack"
+			"skill": raw_id = "slash_flash" # test ability 1
+			"guard": raw_id = "autotomy"    # test ability 2
+			"item": raw_id = "cleave"       # test ability 3
+			"reload": raw_id = "divine_departure" # test ultimate
+		
+		selected_ability_id = raw_id
+		print("[Player P%d] Ability terpilih: %s" % [player_id, selected_ability_id])
 
 
 ## Dipanggil saat combat_input_blocked signal diterima dari EventBus.
