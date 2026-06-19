@@ -47,7 +47,7 @@ var _ctrl_offset:  Vector2        = Vector2.ZERO  # Bézier control-point lift
 
 
 func _ready() -> void:
-	movement_left = base_movement + _get_movement_bonus()
+	reset_movement()
 
 
 # ── Public API ───────────────────────────────────────────────────────────────
@@ -126,6 +126,9 @@ func has_movement() -> bool:
 
 
 func reset_movement() -> void:
+	# base_movement is ALWAYS 6 in the new action economy. 
+	# The stats-based bonus (mov / 5) is already calculated inside _get_movement_bonus()!
+	base_movement = 6
 	movement_left = base_movement + _get_movement_bonus()
 
 

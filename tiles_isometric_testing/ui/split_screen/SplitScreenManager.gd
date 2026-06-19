@@ -131,6 +131,9 @@ func _build_layout() -> void:
 	add_child(_p1_end_label)
 	add_child(_p2_end_label)
 
+	# ── Combat HUD bars (bottom of each viewport half) ───────────────────────
+	_spawn_combat_hud_bars()
+
 
 func _add_player_label(text: String, anchor_left: float, anchor_top: float) -> void:
 	var lbl := Label.new()
@@ -269,6 +272,48 @@ func _set_end_overlay(player_id: int, ended: bool) -> void:
 		_store_end_tween(player_id, tw)
 		tw.tween_property(overlay, "color",     Color(0, 0, 0, 0),    0.25)
 		tw.parallel().tween_property(lbl, "modulate:a", 0.0,           0.25)
+
+
+# ── COMBAT HUD BARS ──────────────────────────────────────────────────────────
+
+func _spawn_combat_hud_bars() -> void:
+	# P1 HUD bar — bottom-left half
+	var hud_p1 := CombatHUDBar.new()
+	hud_p1.name       = "CombatHUD_P1"
+	hud_p1.player_id  = 1
+	hud_p1.anchor_left   = 0.0
+	hud_p1.anchor_right  = 0.5
+	hud_p1.anchor_top    = 1.0
+	hud_p1.anchor_bottom = 1.0
+	hud_p1.offset_top    = -52   # BAR_HEIGHT
+	hud_p1.offset_bottom = 0
+	hud_p1.offset_left   = 0
+	hud_p1.offset_right  = 0
+	add_child(hud_p1)
+
+	# P2 HUD bar — bottom-right half
+	var hud_p2 := CombatHUDBar.new()
+	hud_p2.name       = "CombatHUD_P2"
+	hud_p2.player_id  = 2
+	hud_p2.anchor_left   = 0.5
+	hud_p2.anchor_right  = 1.0
+	hud_p2.anchor_top    = 1.0
+	hud_p2.anchor_bottom = 1.0
+	hud_p2.offset_top    = -52
+	hud_p2.offset_bottom = 0
+	hud_p2.offset_left   = 0
+	hud_p2.offset_right  = 0
+	add_child(hud_p2)
+
+	print("[SplitScreenManager] Combat HUD bars spawned ✅")
+
+
+# ── INVENTORY TOGGLE (TAB KEY) ───────────────────────────────────────────────
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("open_inventory"):
+		EventBus.inventory_toggled.emit()
+		get_viewport().set_input_as_handled()
 
 
 func _kill_end_tween(player_id: int) -> void:

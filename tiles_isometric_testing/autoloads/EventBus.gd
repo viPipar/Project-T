@@ -36,6 +36,14 @@ signal class_changed(entity: Node, class_id: String)
 signal buffs_changed(entity: Node)
 signal stats_changed(entity: Node)
 
+# Phase 5 — Combat HUD overlay
+# Emitted by CombatTestBridge after action economy managers are created.
+# resource_mgr: EnergyChargeManager (P1) or SpellSlotManager (P2)
+signal combat_hud_ready(player_id: int, ap_mgr: Node, mov_mgr: Node, resource_mgr: Node)
+
+# Inventory toggle (Tab key)
+signal inventory_toggled()
+
 # ═══════════════════════════════════════════════════════════
 # Phase 3 — Ability System (Gilang)
 # ═══════════════════════════════════════════════════════════

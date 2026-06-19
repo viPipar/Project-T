@@ -212,15 +212,9 @@ func _build_ui() -> void:
 	item_picker.custom_minimum_size = Vector2(200, 30)
 	items_vbox.add_child(item_picker)
 	
-	var item_list = []
-	if ItemRegistry != null and ItemRegistry.get("items") != null:
-		for key in ItemRegistry.items.keys():
-			item_picker.add_item(key)
-			item_list.append(key)
-	else:
-		item_list = ["iron_sword", "potion_small", "magic_ring", "berserker_axe", "cursed_amulet"]
-		for i in item_list:
-			item_picker.add_item(i)
+	var item_list = StatDataDB.get_item_ids()
+	for key in item_list:
+		item_picker.add_item(key)
 
 	var hbox_btns = HBoxContainer.new()
 	hbox_btns.add_theme_constant_override("separation", 10)

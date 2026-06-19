@@ -73,21 +73,45 @@ func _setup_combat_core() -> void:
 	_hit_resolver.setup(_stat_provider)
 	_crit_resolver.setup(_stat_provider)
 
-	# P1 (Fighter) — DEX=8, INT=10, MOV=6, base 5 Energy Charge
+	# Ambil real stats dari player di world
+	var p1: Node = null
+	var p2: Node = null
+	for p in get_tree().get_nodes_in_group("players"):
+		var pid = p.get("player_id")
+		if pid == 1:
+			p1 = p
+		elif pid == 2:
+			p2 = p
+
+	# Fallback values if not found
+	var p1_dex = 8; var p1_int = 10; var p1_mov = 6
+	var p2_dex = 6; var p2_int = 15; var p2_mov = 4; var p2_att = 10
+
+	if p1 != null:
+		p1_dex = _stat_provider.get_dex(p1)
+		p1_int = _stat_provider.get_int_stat(p1)
+		p1_mov = _stat_provider.get_mov(p1)
+	if p2 != null:
+		p2_dex = _stat_provider.get_dex(p2)
+		p2_int = _stat_provider.get_int_stat(p2)
+		p2_mov = _stat_provider.get_mov(p2)
+		p2_att = _stat_provider.get_att(p2)
+
+	# P1 (Fighter)
 	_p1_ap  = ActionPointManager.new();   add_child(_p1_ap)
 	_p1_mov = MovementPointManager.new(); add_child(_p1_mov)
 	_p1_ec  = EnergyChargeManager.new();  add_child(_p1_ec)
-	_p1_ap.setup(8, 10)
-	_p1_mov.setup(6)
+	_p1_ap.setup(p1_dex, p1_int)
+	_p1_mov.setup(p1_mov)
 	_p1_ec.setup()
 
-	# P2 (Wizard) — DEX=6, INT=15, MOV=4, ATT=10
+	# P2 (Wizard)
 	_p2_ap  = ActionPointManager.new();   add_child(_p2_ap)
 	_p2_mov = MovementPointManager.new(); add_child(_p2_mov)
 	_p2_ss  = SpellSlotManager.new();     add_child(_p2_ss)
-	_p2_ap.setup(6, 15)
-	_p2_mov.setup(4)
-	_p2_ss.setup(10)  # ATT=10 → Lv1: 2+2=4, Lv2: 2+1=3, Lv3: 1+0=1
+	_p2_ap.setup(p2_dex, p2_int)
+	_p2_mov.setup(p2_mov)
+	_p2_ss.setup(p2_att)
 
 	# Mana cross-converter
 	_mana = ManaConverter.new(); add_child(_mana)
@@ -107,7 +131,17 @@ func _setup_combat_core() -> void:
 	# Subscribe ke EventBus untuk sync InputManager
 	EventBus.combat_input_blocked.connect(_on_combat_input_blocked)
 
+	# ── Broadcast ke HUD overlay ─────────────────────────────────────────────
+	# Deferred agar HUD punya waktu untuk _ready() dulu
+	_emit_hud_ready.call_deferred()
+
 	print("[CombatTestBridge] Combat core systems ready ✅")
+
+
+func _emit_hud_ready() -> void:
+	EventBus.combat_hud_ready.emit(1, _p1_ap, _p1_mov, _p1_ec)  # P1 Fighter
+	EventBus.combat_hud_ready.emit(2, _p2_ap, _p2_mov, _p2_ss)  # P2 Wizard
+	print("[CombatTestBridge] combat_hud_ready emitted for P1 & P2 ✅")
 
 
 # ── SIGNAL HOOKS (ke TurnManager yang sudah ada) ──────────────────────────────
@@ -122,8 +156,26 @@ func _hook_signals() -> void:
 
 	# Enemy turn dari TurnManager — kita yang drive AI-nya
 	TurnManager.enemy_turn_started.connect(_on_enemy_turn_started)
+	
+	# Listen to player movement to sync with our MovementPointManager
+	EventBus.player_moved.connect(_on_player_moved)
 
-	print("[CombatTestBridge] Signals terhubung ke TurnManager ✅")
+	print("[CombatTestBridge] Signals terhubung ke TurnManager & EventBus ✅")
+
+
+func _on_player_moved(player: Node, _from_pos: Vector2i, _to_pos: Vector2i) -> void:
+	var _pid_raw: Variant = player.get("player_id")
+	var pid: int = int(_pid_raw) if _pid_raw != null else 1
+	var mc = player.get_node_or_null("MovementComponent")
+	
+	# Sinkronkan nilai movement_left milik player ke HUD MovementPointManager
+	if mc != null:
+		if pid == 1:
+			_p1_mov.current_tiles = mc.movement_left
+			_p1_mov.movement_changed.emit(_p1_mov.current_tiles, _p1_mov.max_tiles)
+		elif pid == 2:
+			_p2_mov.current_tiles = mc.movement_left
+			_p2_mov.movement_changed.emit(_p2_mov.current_tiles, _p2_mov.max_tiles)
 
 
 # ── ATTACK RESOLVE ────────────────────────────────────────────────────────────
@@ -140,6 +192,15 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 	var is_busy := _p1_busy if pid == 1 else _p2_busy
 	if is_busy:
 		print("[COMBAT] ⚠️ P%d — Animasi sedang berjalan, input diblok" % pid)
+		return
+		
+	# Deduksi 1 Action Point untuk serangan
+	var has_ap := false
+	if pid == 1: has_ap = _p1_ap.spend_ap(1)
+	elif pid == 2: has_ap = _p2_ap.spend_ap(1)
+	
+	if not has_ap:
+		print("[COMBAT] ⚠️ P%d — Tidak ada Action Point yang tersisa untuk menyerang!" % pid)
 		return
 
 	# Set busy & blok input hanya untuk player ini
