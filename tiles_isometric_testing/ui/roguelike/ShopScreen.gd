@@ -97,7 +97,8 @@ func _populate_shop() -> void:
 	for i in range(_current_stock.size()):
 		var stock = _current_stock[i]
 		var item_card = Button.new()
-		item_card.custom_minimum_size = Vector2(220, 250)
+		item_card.custom_minimum_size = Vector2(220, 220)
+		item_card.pivot_offset = Vector2(110, 110)
 		item_card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		item_card.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		

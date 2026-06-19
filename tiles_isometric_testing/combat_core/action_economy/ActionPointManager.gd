@@ -45,10 +45,13 @@ func add_bap_bonus(amount: int) -> void:
 	bap_changed.emit(current_bap, max_bap)
 
 
+var infinite_ap: bool = false
+
 # ── SPEND ─────────────────────────────────────────────────────────────────────
 
 ## Coba pakai AP — return true jika berhasil
 func spend_ap(amount: int = 1) -> bool:
+	if infinite_ap: return true
 	if current_ap >= amount:
 		current_ap -= amount
 		ap_changed.emit(current_ap, max_ap)
@@ -56,6 +59,7 @@ func spend_ap(amount: int = 1) -> bool:
 	return false
 
 func spend_bap(amount: int = 1) -> bool:
+	if infinite_ap: return true
 	if current_bap >= amount:
 		current_bap -= amount
 		bap_changed.emit(current_bap, max_bap)
@@ -65,11 +69,11 @@ func spend_bap(amount: int = 1) -> bool:
 
 # ── QUERY (untuk HUD preview skill) ──────────────────────────────────────────
 
-func can_spend_ap(amount: int = 1)  -> bool: return current_ap  >= amount
-func can_spend_bap(amount: int = 1) -> bool: return current_bap >= amount
+func can_spend_ap(amount: int = 1)  -> bool: return infinite_ap or current_ap  >= amount
+func can_spend_bap(amount: int = 1) -> bool: return infinite_ap or current_bap >= amount
 
-func has_any_ap()  -> bool: return current_ap  > 0
-func has_any_bap() -> bool: return current_bap > 0
+func has_any_ap()  -> bool: return infinite_ap or current_ap  > 0
+func has_any_bap() -> bool: return infinite_ap or current_bap > 0
 
 
 # ── RESET (awal giliran) ─────────────────────────────────────────────────────

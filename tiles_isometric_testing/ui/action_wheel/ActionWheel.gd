@@ -361,6 +361,9 @@ func _emit_selected() -> void:
 	action_selected.emit(action["name"], action["action_index"], _page_index, _hovered_slot)
 	if EventBus != null:
 		EventBus.action_wheel_selected.emit(player_id, action["name"])
+		
+	# Instantly close the wheel so the player can use the skill!
+	visible = false
 
 
 func _get_action_data(slot_index: int) -> Dictionary:
