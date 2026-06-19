@@ -99,4 +99,4 @@
 | Rapit | FX | Item Rarity Reveal FX (White/Blue/Gold glow) | Medium | To Do | Rarity Handler (Ilham) | #4 |
 | Rapit | FX | Dice Roll Animation (D20 Spin Overlay) | Low | To Do | RNG (Tapip) | — |
 | Rapit | Input | Pointer/Target Cursor (Tapip & Gilang) | High | To Do | Grid (Candra) | — |
-| Rapit | Input | Input Manager (Tapip: WASD/QE/F/ZXC, Gilang: IJKL/UO/;/M,.) | Critical | To Do | — | — |
+| Rapit | Input | Input Manager (P1: WASD/QE/F/X/R/ZC, P2: IJKL/UO/;/,/P/M.) | Critical | To Do | — | — |
