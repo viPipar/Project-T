@@ -438,9 +438,14 @@ func _build_ui() -> void:
 		self.modulate.a = v
 	)
 	
-	mk_slider.call("Live Stats Opacity", 0.9, 0.1, 1.0, 0.05, func(v: float):
+	mk_slider.call("Live Stats UI Opacity", 0.9, 0.1, 1.0, 0.05, func(v: float):
 		var sd = get_tree().get_root().find_child("StatDebugPanel", true, false)
 		if sd: sd.modulate.a = v
+	)
+	
+	mk_slider.call("Stats BG Opacity", 0.95, 0.1, 1.0, 0.05, func(v: float):
+		var sd = get_tree().get_root().find_child("StatDebugPanel", true, false)
+		if sd and "bg_panel" in sd and sd.bg_panel: sd.bg_panel.modulate.a = v
 	)
 	
 	mk_slider.call("Dice Sandbox Opacity", 0.9, 0.1, 1.0, 0.05, func(v: float):

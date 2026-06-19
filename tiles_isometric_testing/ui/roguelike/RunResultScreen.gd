@@ -9,15 +9,22 @@ var is_victory: bool = false
 func _ready() -> void:
 	layer = 120 # Above even the RoguelikeUIShell
 	
+	var root = Control.new()
+	root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(root)
+	
 	var bg = ColorRect.new()
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	bg.color = Color(0.0, 0.0, 0.0, 0.9)
-	add_child(bg)
+	root.add_child(bg)
+	
+	var center = CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	root.add_child(center)
 	
 	var vbox = VBoxContainer.new()
-	vbox.set_anchors_preset(Control.PRESET_CENTER)
 	vbox.add_theme_constant_override("separation", 20)
-	add_child(vbox)
+	center.add_child(vbox)
 	
 	title_label = Label.new()
 	title_label.add_theme_font_size_override("font_size", 72)

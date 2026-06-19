@@ -5,14 +5,20 @@ var container: VBoxContainer
 func _ready() -> void:
 	layer = 100 # Put it above everything
 	
+	# Create a full-screen wrapper so it's perfectly centered
+	var wrapper = MarginContainer.new()
+	wrapper.set_anchors_preset(Control.PRESET_FULL_RECT)
+	wrapper.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	wrapper.add_theme_constant_override("margin_top", 200)
+	add_child(wrapper)
+	
 	container = VBoxContainer.new()
 	container.add_theme_constant_override("separation", 15)
 	container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	container.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	container.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	
-	# Center it horizontally, put it in the upper-middle vertically
-	container.set_anchors_preset(Control.PRESET_CENTER_TOP)
-	container.offset_top = 200
-	add_child(container)
+	wrapper.add_child(container)
 
 func show_message(text: String, color: Color = Color.WHITE) -> void:
 	var label = Label.new()
