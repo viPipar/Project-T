@@ -34,6 +34,7 @@ signal step_started(from: Vector2i, to: Vector2i)
 @export var base_movement: int = 4
 
 var movement_left: int = 4
+var infinite_moves: bool = false
 
 # Internal travel state
 var _is_moving:    bool           = false
@@ -65,7 +66,10 @@ func move_to(target: Vector2i) -> bool:
 		return false
 
 	var cost := GridManager.get_path_cost(my_pos, target)
-	if cost < 0 or cost > movement_left:
+	var max_range: int = movement_left
+	if infinite_moves: max_range = base_movement + _get_movement_bonus()
+	
+	if cost < 0 or cost > max_range:
 		move_blocked.emit(target)
 		return false
 
@@ -89,13 +93,16 @@ func interact_move_to(entity_tile: Vector2i) -> bool:
 		move_blocked.emit(entity_tile)
 		return false
 
+	var max_range: int = movement_left
+	if infinite_moves: max_range = base_movement + _get_movement_bonus()
+
 	# Pick the neighbour with cheapest path cost, then by tile distance
 	var best_tile := Vector2i(-1, -1)
-	var best_cost := movement_left + 1
+	var best_cost: int = max_range + 1
 
 	for nb in neighbours:
 		var c := GridManager.get_path_cost(my_pos, nb)
-		if c >= 0 and c <= movement_left and c < best_cost:
+		if c >= 0 and c <= max_range and c < best_cost:
 			best_cost = c
 			best_tile = nb
 
@@ -114,6 +121,7 @@ func interact_move_to(entity_tile: Vector2i) -> bool:
 
 
 func has_movement() -> bool:
+	if infinite_moves: return true
 	return movement_left > 0 and not _is_moving
 
 
@@ -125,7 +133,9 @@ func reset_movement() -> void:
 
 
 func get_reachable_tiles() -> Array[Vector2i]:
-	return GridManager.get_reachable_tiles(_owner_grid_pos(), movement_left)
+	var max_range: int = movement_left
+	if infinite_moves: max_range = base_movement + _get_movement_bonus()
+	return GridManager.get_reachable_tiles(_owner_grid_pos(), max_range)
 
 
 # ── Travel Engine ────────────────────────────────────────────────────────────
@@ -139,7 +149,11 @@ func _begin_travel(path: Array[Vector2i], cost: int) -> void:
 		move_blocked.emit(to)
 		return
 	owner.set("grid_pos", to)
-	movement_left -= cost
+	
+	if not infinite_moves:
+		movement_left -= cost
+	else:
+		movement_left = base_movement + _get_movement_bonus()
 
 	_path        = path
 	_path_index  = 0

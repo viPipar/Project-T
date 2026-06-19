@@ -459,7 +459,7 @@ Perubahan:
 - `MockStatProvider` tetap fallback untuk test lama.
 - Hit/miss membaca `ACC`, `Armor`, `Resist` dari stat runtime.
 - Damage masuk ke `HealthComponent`.
-- `EventBus.damage_dealt`, `miss_occurred`, dan `entity_died` tetap dipakai.
+- `EventBus.damage_dealt`, `on_miss`, dan `entity_died` tetap dipakai.
 
 ## Debug Yang Bisa Dicoba
 

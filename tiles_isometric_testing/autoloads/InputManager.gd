@@ -31,6 +31,19 @@ func is_pressed(player_id: int, action: String) -> bool:
 		return false
 	return Input.is_action_pressed("p%d_%s" % [player_id, action])
 
+func _can_accept_end_turn_input(player_id: int) -> bool:
+	if killcam_active or is_in_menu:
+		return false
+	if _player_blocked.get(player_id, false):
+		return false
+	if TurnManager == null:
+		return true
+	if TurnManager.phase != TurnManager.Phase.PLAYERS:
+		return false
+	if TurnManager.is_player_ended(player_id):
+		return true
+	return TurnManager.can_player_act(player_id)
+
 func get_movement_dir(player_id: int) -> Vector2i:
 	if killcam_active or is_in_menu:
 		return Vector2i.ZERO
@@ -86,6 +99,6 @@ func is_confirm_pressed(player_id: int) -> bool:
 	return false
 
 func is_end_turn_pressed(player_id: int) -> bool:
-	if not _can_accept_input(player_id):
+	if not _can_accept_end_turn_input(player_id):
 		return false
 	return Input.is_action_just_pressed("p%d_end_turn" % player_id)

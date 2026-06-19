@@ -99,7 +99,7 @@ func get_turn_display_text() -> String:
 
 func _begin_player_phase() -> void:
 	phase = Phase.PLAYERS
-	_ended_players.clear()
+	_clear_player_end_states()
 	_current_enemy = null
 	_reset_movement_for_team(_players)
 	for p in _players:
@@ -110,6 +110,7 @@ func _begin_player_phase() -> void:
 
 func _begin_enemy_phase() -> void:
 	phase = Phase.ENEMIES
+	_clear_player_end_states()
 	_enemy_queue = _get_enemies()
 	_reset_movement_for_team(_enemy_queue)
 	_emit_turn_state()
@@ -159,6 +160,13 @@ func _all_players_ended() -> bool:
 		if not _ended_players.has(pid):
 			return false
 	return true
+
+
+func _clear_player_end_states() -> void:
+	var ended_ids := _ended_players.keys()
+	_ended_players.clear()
+	for pid in ended_ids:
+		player_end_state_changed.emit(int(pid), false)
 
 
 # --- Helpers ---

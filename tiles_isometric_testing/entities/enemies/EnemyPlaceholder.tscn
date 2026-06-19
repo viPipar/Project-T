@@ -4,9 +4,9 @@
 [ext_resource type="Script" uid="uid://b5e8838ogl3f7" path="res://components/StatsComponent.gd" id="2_stats"]
 [ext_resource type="Script" uid="uid://c6x647xq2wo8i" path="res://components/ClassComponent.gd" id="3_class"]
 [ext_resource type="Texture2D" uid="uid://8h2eh3u353t5" path="res://assets/characters/insect1_placeholder/New Project (87)_00000.png" id="4_tex"]
-[ext_resource type="Script" path="res://components/HealthComponent.gd" id="5_health"]
-[ext_resource type="Script" path="res://components/ConditionComponent.gd" id="6_cond"]
-[ext_resource type="Script" path="res://components/CombatComponent.gd" id="7_combat"]
+[ext_resource type="Script" uid="uid://cmbb03lnpiv3i" path="res://components/HealthComponent.gd" id="5_health"]
+[ext_resource type="Script" uid="uid://5ppdu5jndc7b" path="res://components/ConditionComponent.gd" id="6_cond"]
+[ext_resource type="Script" uid="uid://dehtujp1qplci" path="res://components/CombatComponent.gd" id="7_combat"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_enemy"]
 atlas = ExtResource("4_tex")
@@ -43,8 +43,6 @@ script = ExtResource("6_cond")
 
 [node name="CombatComponent" type="Node" parent="."]
 script = ExtResource("7_combat")
-attack_dice = "1D6"
-attack_range = 1
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 texture_filter = 1

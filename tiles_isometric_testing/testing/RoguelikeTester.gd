@@ -1,6 +1,6 @@
-extends SceneTree
+extends RefCounted
 
-func _init() -> void:
+func run_all_tests() -> void:
 	print("\n==============================================")
 	print("🚀 ROGUELIKE SYSTEM TEST STARTING...")
 	print("==============================================\n")
@@ -13,7 +13,6 @@ func _init() -> void:
 	print("\n==============================================")
 	print("✅ ALL TESTS COMPLETED. Check output above.")
 	print("==============================================\n")
-	quit()
 
 func test_node_graph() -> void:
 	print("--- 🗺️ TESTING NODE GRAPH ---")
@@ -34,7 +33,7 @@ func test_node_graph() -> void:
 
 func test_balancing_and_items() -> void:
 	print("--- ⚔️ TESTING BALANCING & ITEMS ---")
-	var registry = ItemRegistry.new()
+	var registry = ItemRegistry
 	var pool = ItemPoolGenerator.new()
 	pool.init(registry, BalancingData.new())
 	
@@ -56,7 +55,7 @@ func test_shop_and_economy() -> void:
 	print("P1 sending half to P2...")
 	economy.send_half(1, 2)
 	
-	var registry = ItemRegistry.new()
+	var registry = ItemRegistry
 	var pool = ItemPoolGenerator.new()
 	pool.init(registry, BalancingData.new())
 	

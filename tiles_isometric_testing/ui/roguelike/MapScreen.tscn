@@ -1,6 +1,6 @@
-[gd_scene load_steps=2 format=3 uid="uid://roguelike_map_id"]
+[gd_scene load_steps=2 format=3 uid="uid://dsudv7q2lyg1p"]
 
-[ext_resource type="Script" path="res://ui/roguelike/MapScreen.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://bjvallpp2yypy" path="res://ui/roguelike/MapScreen.gd" id="1_script"]
 
 [node name="MapScreen" type="Control"]
 layout_mode = 3
@@ -33,8 +33,6 @@ anchors_preset = 11
 anchor_left = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 0.0
-offset_right = 0.0
 grow_horizontal = 0
 grow_vertical = 2
 

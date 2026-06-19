@@ -139,4 +139,3 @@ func _on_node_clicked(node_id: int, node_type: NodeGraph.NodeType) -> void:
 	else:
 		print("[MapScreen] Node clicked: %s. (UI Switch Logic needed here)" % NodeGraph.NodeType.keys()[node_type])
 		# TODO: Notify RoguelikeUIShell to switch screen based on node_type
-

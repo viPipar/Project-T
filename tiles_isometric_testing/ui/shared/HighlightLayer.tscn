@@ -1,4 +1,4 @@
-[gd_scene load_steps=46 format=3 uid="uid://2dccg0sen86v"]
+[gd_scene load_steps=48 format=3 uid="uid://2dccg0sen86v"]
 
 [ext_resource type="Script" uid="uid://bhb4yh5eti2d" path="res://ui/shared/HighlightLayer.gd" id="1_hlayer"]
 [ext_resource type="Texture2D" uid="uid://btj3vuedgodgx" path="res://assets/tiles/TileHighlightGreen.png" id="2_green"]
@@ -36,6 +36,23 @@
 [ext_resource type="Texture2D" uid="uid://xq1ot8o1mugn" path="res://assets/tiles/panah p2/5.png" id="26_bel0l"]
 [ext_resource type="Texture2D" uid="uid://bpn1k5o4qjae2" path="res://assets/tiles/TileHighlightTransparent.png" id="28_1honq"]
 
+[sub_resource type="SpriteFrames" id="SF_move"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_green")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_blue")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_purple")
+}],
+"loop": true,
+"name": &"move",
+"speed": 5.0
+}]
+
 [sub_resource type="SpriteFrames" id="SF_move_p1"]
 animations = [{
 "frames": [{
@@ -52,23 +69,6 @@ animations = [{
 "frames": [{
 "duration": 1.0,
 "texture": ExtResource("4_blue")
-}],
-"loop": true,
-"name": &"move",
-"speed": 5.0
-}]
-
-[sub_resource type="SpriteFrames" id="SF_move"]
-animations = [{
-"frames": [{
-"duration": 1.0,
-"texture": ExtResource("2_green")
-}, {
-"duration": 1.0,
-"texture": ExtResource("4_blue")
-}, {
-"duration": 1.0,
-"texture": ExtResource("5_purple")
 }],
 "loop": true,
 "name": &"move",

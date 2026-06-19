@@ -259,7 +259,8 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 			print("[COMBAT] ⚔️  HIT! Damage (%s) = %d" % [dmg_formula, dmg_total])
 	else:
 		print("[COMBAT] 💨 MISS!")
-		EventBus.miss_occurred.emit(attacker, target)
+		# TODO (Team): migrated from miss_occurred to on_miss
+		EventBus.on_miss.emit(attacker, target)
 	print("[COMBAT] ────────────────────────────")
 
 	# ── Jalankan animasi overlay (AWAIT — blok sampai selesai) ────────────────
@@ -281,6 +282,8 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 		if is_instance_valid(target):
 			var applied := _apply_damage_to_target(target, dmg_total, attacker)
 			EventBus.damage_dealt.emit(target, applied, "physical", crit)
+			if applied > 0 and is_instance_valid(target):
+				ForcedMovementResolver.knockback_from_attack(attacker, target, 2)
 		else:
 			print("[COMBAT] ⚠️  Target sudah dikalahkan sebelum serangan mendarat!")
 

@@ -70,17 +70,14 @@ func _process(_delta: float) -> void:
 	_apply_facing_flip()
 	
 	# ── END TURN / CANCEL ──────────────────────────────────────────────────────
-	var end_turn_action := "p%d_end_turn" % player_id
-	if Input.is_action_just_pressed(end_turn_action):
+	if InputManager.is_end_turn_pressed(player_id):
 		if TurnManager != null and TurnManager.is_player_ended(player_id):
 			# Player sudah end turn → tekan lagi = CANCEL
-			if TurnManager.phase == TurnManager.Phase.PLAYERS:
-				TurnManager.cancel_end_turn(player_id)
+			TurnManager.cancel_end_turn(player_id)
 		elif not movement._is_moving:
 			# Player belum end turn → end turn normal
-			if InputManager.is_end_turn_pressed(player_id):
-				if TurnManager != null:
-					TurnManager.request_end_turn(player_id)
+			if TurnManager != null:
+				TurnManager.request_end_turn(player_id)
 		return
 
 

@@ -119,9 +119,9 @@ func _test_enemy_phase_manager() -> void:
 		turn_order.append(enemy.entity_name)
 	)
 
-	var phase_done := false
+	var phase_done := [false]
 	enemy_mgr.phase_ended.connect(func():
-		phase_done = true
+		phase_done[0] = true
 	)
 
 	# Jalankan enemy phase
@@ -130,7 +130,7 @@ func _test_enemy_phase_manager() -> void:
 	# Tunggu phase selesai (3 musuh × 0.5s delay = ~1.5s)
 	await get_tree().create_timer(2.5).timeout
 
-	assert(phase_done, "❌ Enemy phase harus sudah selesai dalam 2.5s")
+	assert(phase_done[0], "❌ Enemy phase harus sudah selesai dalam 2.5s")
 	assert(turn_order.size() == 3, "❌ Harus ada 3 giliran enemy, dapat: %d" % turn_order.size())
 
 	# Verifikasi urutan: Skeleton(15) → Goblin(12) → Orc(8)
@@ -143,6 +143,15 @@ func _test_enemy_phase_manager() -> void:
 
 	print("✅ Urutan giliran: %s (DEX descending ✅)" % str(turn_order))
 	print("→ EnemyPhaseManager: SEMUA TEST PASSED ✅\n")
+
+	# Clean up mock enemies (remove dari group secara instan agar tidak mengganggu test berikutnya)
+	e1.remove_from_group("enemies")
+	e2.remove_from_group("enemies")
+	e3.remove_from_group("enemies")
+	e1.queue_free()
+	e2.queue_free()
+	e3.queue_free()
+	enemy_mgr.queue_free()
 
 
 # ── FULL PHASE CYCLE (Phase 3) ────────────────────────────────────────────────
@@ -189,8 +198,8 @@ func _test_full_phase_cycle() -> void:
 	assert(phases_visited.has("ENEMY"), "❌ Harus pernah masuk ENEMY phase")
 	print("✅ Setelah both_players_confirmed → masuk ENEMY phase")
 
-	# Tunggu kembali ke player phase
-	await get_tree().create_timer(1.0).timeout
+	# Tunggu kembali ke player phase (beri waktu ekstra jika ada musuh betulan di main.tscn)
+	await get_tree().create_timer(4.0).timeout
 	assert(handler.get_turn_number() >= 2, "❌ Turn harus sudah increment setelah enemy phase")
 	print("✅ Turn number increment ke %d setelah enemy phase selesai" % handler.get_turn_number())
 

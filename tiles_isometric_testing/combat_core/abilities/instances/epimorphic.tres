@@ -1,0 +1,24 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://tiles_isometric_testing/combat_core/abilities/BaseAbility.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+ability_name = "Epimorphic"
+ability_tag = "self-heal-test"
+ability_type = 0
+element_tag = "physical"
+target_alignment = 2
+ally_targeting_dc = 10
+range_type = "self"
+range_size = 1
+is_projectile = false
+damage_dice = "1D8"
+is_heal = true
+knockback_tiles = 0
+status_effect = ""
+status_duration = 0
+status_stacks = 1
+cost_action = 0
+cost_bonus_action = 1
+cost_mana = 1

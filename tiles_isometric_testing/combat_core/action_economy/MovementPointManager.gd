@@ -32,12 +32,15 @@ func add_movement_bonus(amount: int) -> void:
 	movement_changed.emit(current_tiles, max_tiles)
 
 
+var infinite_moves: bool = false
+
 # ── SPEND ─────────────────────────────────────────────────────────────────────
 
 ## Pakai movement tiles — return true jika berhasil
 func spend_movement(tiles: int) -> bool:
 	if current_tiles >= tiles:
-		current_tiles -= tiles
+		if not infinite_moves:
+			current_tiles -= tiles
 		movement_changed.emit(current_tiles, max_tiles)
 		return true
 	return false

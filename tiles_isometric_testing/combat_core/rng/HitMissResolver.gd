@@ -58,7 +58,8 @@ func resolve(attacker: Node, target: Node, is_magical: bool = false) -> Dictiona
 	if result["hit"]:
 		pass  # EventBus.damage_dealt di-emit oleh sistem damage, bukan di sini
 	else:
-		EventBus.miss_occurred.emit(attacker, target)
+		# TODO (Team): migrated from miss_occurred to on_miss
+		EventBus.on_miss.emit(attacker, target)
 
 	return result
 
