@@ -90,9 +90,9 @@
 | Rapit | HUD | Character Profile Icon | Low | To Do | — | — |
 | Rapit | HUD | HP/Armor Floating Indicator (above targets) | Medium | To Do | Health Mgr (Candra) | — |
 | Rapit | HUD | Blink Indicator (resource consumed on skill preview) | Medium | To Do | HUD Bars | — |
-| Rapit | Radial Menu | Skill Slot Renderer | High | To Do | Ability System (Gilang) | — |
-| Rapit | Radial Menu | Navigation Handler (< / > overflow) | Medium | To Do | Skill Slot Renderer | — |
-| Rapit | Radial Menu | Selection Confirmer | High | To Do | Navigation Handler | — |
+| Rapit | Radial Menu | Skill Slot Renderer | High | Done | Ability System (Gilang) | — |
+| Rapit | Radial Menu | Navigation Handler (Slide-fade carousel, double-tap & hold-to-scroll) | Medium | Done | Skill Slot Renderer | — |
+| Rapit | Radial Menu | Selection Confirmer | High | Done | Navigation Handler | — |
 | Rapit | Combat Text | Damage Number Popup | High | To Do | SignalBus (Gilang) | — |
 | Rapit | Combat Text | Heal Number Popup | High | To Do | SignalBus (Gilang) | — |
 | Rapit | Combat Text | MISS! Label | Medium | To Do | SignalBus (Gilang) | — |
@@ -100,7 +100,7 @@
 | Rapit | FX | Item Rarity Reveal FX (White/Blue/Gold glow) | Medium | To Do | Rarity Handler (Ilham) | #4 |
 | Rapit | FX | Dice Roll Animation (D20 Spin Overlay) | Low | To Do | RNG (Tapip) | — |
 | Rapit | Input | Pointer/Target Cursor (Tapip & Gilang) | High | Done | Grid (Candra) | — |
-| Rapit | Input | Input Manager (P1: WASD/QE/F/X/R/ZC, P2: IJKL/UO/;/,/P/M.) | Critical | To Do | — | — |
+| Rapit | Input | Input Manager (P1: WASD/QE/F/X/R/ZC, P2: IJKL/UO/;/,/P/M.) | Critical | Done | — | — |
 | Rapit (w/ Gilang) | Animation System | Character Sprite/Model State Machine (Idle/Walk/Attack/Hurt/Die) | High | To Do | Ability System, Grid | — |
 
 ## Unassigned / Missing Systems (To Be Organized by Ilham)

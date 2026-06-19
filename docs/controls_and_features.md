@@ -34,10 +34,11 @@ Each player controls their own Action Wheel independently.
 - **Player 2** presses `U` or `O` to open their wheel.
 - *Player 2's Action Wheel is explicitly coded to render empty (no abilities loaded) per your request.*
 
-**Double-Tap Page Flipping**:
-To prevent conflicts with the Q/E/U/O menu toggles, we removed the old Q/E page turning system. Now, players can flip through ability pages by **double-tapping** their left or right movement keys:
-- **Double-tap `A`** (P1) or **`J`** (P2) to flip to the previous page.
-- **Double-tap `D`** (P1) or **`L`** (P2) to flip to the next page.
+**Page Flipping & Hold-to-Scroll**:
+To prevent conflicts with the Q/E/U/O menu toggles, we removed the old Q/E page turning system. Now, players can navigate through ability pages using their left or right movement keys:
+- **Double-tap** `A` (P1) / `J` (P2) to flip to the previous page, or `D` (P1) / `L` (P2) for the next page.
+- **Press and Hold** `A`/`J` or `D`/`L` to automatically scroll through pages smoothly.
+- **Smooth Transitions**: Page flipping now features a dynamic slide-and-fade carousel animation.
 - Single taps will simply hover over the corresponding slot as usual.
 
 **Menu Closing**:

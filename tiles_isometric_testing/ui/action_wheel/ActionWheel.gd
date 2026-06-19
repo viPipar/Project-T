@@ -30,7 +30,7 @@ const LABEL_OFFSETS := [
 	"Test 11",
 ]
 @export var title_text: String = "Action Wheel"
-@export var subtitle_text: String = "WASD pilih arah, Q/E geser wheel, F confirm"
+@export var subtitle_text: String = "WASD arah, Double Tap/Hold A/D geser page, F confirm"
 @export var starts_visible: bool = true
 @export var wraps_pages: bool = true
 @export var blocks_game_input: bool = true
@@ -69,12 +69,15 @@ var _last_tap_time_left: int = 0
 var _last_tap_time_right: int = 0
 const DOUBLE_TAP_THRESHOLD: int = 300 # milliseconds
 
+var _hold_time_left: float = 0.0
+var _hold_time_right: float = 0.0
+const HOLD_DELAY: float = 0.4
+const HOLD_INTERVAL: float = 0.25
+
 @export var _title_label: Label
 @export var _subtitle_label: Label
 @export var _page_label: Label
 @export var _hint_label: Label
-@export var _slot_labels: Array[Label] = []
-@export var _slot_key_labels: Array[Label] = []
 
 
 func _ready() -> void:
@@ -127,6 +130,14 @@ func _process(_delta: float) -> void:
 			_set_hovered_slot(1)
 			_last_tap_time_left = now
 			
+	if _key_state.get("a", false):
+		_hold_time_left += _delta
+		if _hold_time_left >= HOLD_DELAY:
+			_shift_page(-1)
+			_hold_time_left -= HOLD_INTERVAL
+	else:
+		_hold_time_left = 0.0
+			
 	if _consume_action("s", "p%d_move_down" % player_id, hover_down_key):
 		_set_hovered_slot(2)
 		
@@ -138,6 +149,14 @@ func _process(_delta: float) -> void:
 		else:
 			_set_hovered_slot(3)
 			_last_tap_time_right = now
+			
+	if _key_state.get("d", false):
+		_hold_time_right += _delta
+		if _hold_time_right >= HOLD_DELAY:
+			_shift_page(1)
+			_hold_time_right -= HOLD_INTERVAL
+	else:
+		_hold_time_right = 0.0
 			
 	if _consume_key("confirm", confirm_key):
 		_emit_selected()
@@ -171,20 +190,8 @@ func _build_ui() -> void:
 
 	_hint_label = _make_label(13, HORIZONTAL_ALIGNMENT_CENTER)
 	_hint_label.modulate = Color(0.82, 0.86, 0.92, 0.88)
-	_hint_label.text = "Q/E pindah page | Confirm pilih action"
+	_hint_label.text = "Double Tap/Hold Kiri/Kanan pindah page | Confirm pilih action"
 	add_child(_hint_label)
-
-	for slot_index in range(PAGE_SIZE):
-		var key_label := _make_label(14, HORIZONTAL_ALIGNMENT_CENTER)
-		key_label.size = Vector2(92, 18)
-		add_child(key_label)
-		_slot_key_labels.append(key_label)
-
-		var slot_label := _make_label(17, HORIZONTAL_ALIGNMENT_CENTER)
-		slot_label.size = Vector2(132, 46)
-		slot_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		add_child(slot_label)
-		_slot_labels.append(slot_label)
 
 	_center = size * 0.5 + Vector2(0, 18)
 	_position_labels()
@@ -201,11 +208,6 @@ func _position_labels() -> void:
 	_hint_label.position = Vector2(0, size.y - 28)
 	_hint_label.size = Vector2(size.x, 20)
 
-	for slot_index in range(PAGE_SIZE):
-		var anchor: Vector2 = _center + LABEL_OFFSETS[slot_index]
-		_slot_key_labels[slot_index].position = anchor + Vector2(-46, -28)
-		_slot_labels[slot_index].position = anchor + Vector2(-66, -8)
-
 
 func _refresh() -> void:
 	if _title_label == null:
@@ -214,16 +216,6 @@ func _refresh() -> void:
 	_title_label.text = title_text
 	_subtitle_label.text = subtitle_text
 	_page_label.text = "Wheel %d / %d" % [_page_index + 1, _get_page_count()]
-
-	for slot_index in range(PAGE_SIZE):
-		var action := _get_action_data(slot_index)
-		var is_hovered := slot_index == _hovered_slot
-		var has_action := action["valid"] as bool
-
-		_slot_key_labels[slot_index].text = "%s  %s" % [_get_slot_key_label(slot_index), SLOT_DIRECTIONS[slot_index]]
-		_slot_key_labels[slot_index].modulate = Color(0.12, 0.14, 0.19, 1.0) if is_hovered else Color(0.92, 0.95, 0.99, 0.94)
-		_slot_labels[slot_index].text = action["name"] if has_action else "Empty"
-		_slot_labels[slot_index].modulate = Color(0.12, 0.14, 0.19, 1.0) if is_hovered else (Color(1, 1, 1, 1) if has_action else Color(0.58, 0.63, 0.71, 0.92))
 
 	queue_redraw()
 	_emit_hovered()
@@ -236,17 +228,37 @@ func _draw() -> void:
 	var preview_spacing: float = _outer_radius * 2.0 - (_outer_radius * 2.0 * PREVIEW_VISIBLE_RATIO)
 
 	if _is_transitioning():
-		var from_center: Vector2 = _center + Vector2(-_slide_direction * _slide_progress * preview_spacing, 0)
-		var to_center: Vector2 = _center + Vector2(_slide_direction * (1.0 - _slide_progress) * preview_spacing, 0)
-
-		_draw_wheel(_get_preview_page(_page_index - 1), _center + Vector2(-preview_spacing, 0), 0.24, false, -1)
-		_draw_wheel(_get_preview_page(_page_index + 1), _center + Vector2(preview_spacing, 0), 0.24, false, -1)
-		_draw_wheel(_transition_from_page, from_center, 0.92, false, -1)
-		_draw_wheel(_page_index, to_center, 1.0, true, _hovered_slot)
+		var offset_x: float = -_slide_direction * _slide_progress * preview_spacing
+		
+		var old_main_pos: Vector2 = _center + Vector2(offset_x, 0)
+		var old_main_alpha: float = lerp(1.0, 0.30, _slide_progress)
+		
+		var new_main_start_x: float = _slide_direction * preview_spacing
+		var new_main_pos: Vector2 = _center + Vector2(new_main_start_x + offset_x, 0)
+		var new_main_alpha: float = lerp(0.30, 1.0, _slide_progress)
+		
+		var outgoing_preview_start_x: float = -_slide_direction * preview_spacing
+		var outgoing_preview_pos: Vector2 = _center + Vector2(outgoing_preview_start_x + offset_x, 0)
+		var outgoing_preview_alpha: float = lerp(0.30, 0.0, _slide_progress)
+		
+		var incoming_preview_start_x: float = _slide_direction * preview_spacing * 2.0
+		var incoming_preview_pos: Vector2 = _center + Vector2(incoming_preview_start_x + offset_x, 0)
+		var incoming_preview_alpha: float = lerp(0.0, 0.30, _slide_progress)
+		
+		_draw_wheel(_get_preview_page(_transition_from_page - _slide_direction), outgoing_preview_pos, outgoing_preview_alpha, false, -1)
+		_draw_wheel(_get_preview_page(_page_index + _slide_direction), incoming_preview_pos, incoming_preview_alpha, false, -1)
+		_draw_wheel(_transition_from_page, old_main_pos, old_main_alpha, false, -1)
+		_draw_wheel(_page_index, new_main_pos, new_main_alpha, true, _hovered_slot)
+		
+		# Fade text
+		_page_label.self_modulate.a = _slide_progress
 	else:
 		_draw_wheel(_get_preview_page(_page_index - 1), _center + Vector2(-preview_spacing, 0), 0.30, false, -1)
 		_draw_wheel(_get_preview_page(_page_index + 1), _center + Vector2(preview_spacing, 0), 0.30, false, -1)
 		_draw_wheel(_page_index, _center, 1.0, true, _hovered_slot)
+		
+		# Reset text alpha
+		_page_label.self_modulate.a = 1.0
 
 
 func _draw_wheel(page_index: int, wheel_center: Vector2, alpha: float, is_active: bool, hovered_slot: int) -> void:
@@ -272,6 +284,23 @@ func _draw_wheel(page_index: int, wheel_center: Vector2, alpha: float, is_active
 	var page_value := str(page_index + 1)
 	draw_string(get_theme_default_font(), wheel_center + Vector2(-22, -2), page_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(0.79, 0.83, 0.90, 0.92 * alpha))
 	draw_string(get_theme_default_font(), wheel_center + Vector2(-9, 18), page_value, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color(0.98, 0.94, 0.82, alpha))
+
+	# Draw text for each slot
+	var font := get_theme_default_font()
+	for slot_index in range(PAGE_SIZE):
+		var action := _get_action_data_for_page(page_index, slot_index)
+		var has_action := action["valid"] as bool
+		var is_hovered := is_active and slot_index == hovered_slot
+		
+		var anchor: Vector2 = wheel_center + LABEL_OFFSETS[slot_index]
+		
+		var key_text := "%s  %s" % [_get_slot_key_label(slot_index), SLOT_DIRECTIONS[slot_index]]
+		var key_color := Color(0.12, 0.14, 0.19, alpha) if is_hovered else Color(0.92, 0.95, 0.99, 0.94 * alpha)
+		draw_string(font, anchor + Vector2(-46, -14), key_text, HORIZONTAL_ALIGNMENT_CENTER, 92, 14, key_color)
+		
+		var action_text := action["name"] as String if has_action else "Empty"
+		var label_color := Color(0.12, 0.14, 0.19, alpha) if is_hovered else (Color(1, 1, 1, alpha) if has_action else Color(0.58, 0.63, 0.71, 0.92 * alpha))
+		draw_multiline_string(font, anchor + Vector2(-66, 8), action_text, HORIZONTAL_ALIGNMENT_CENTER, 132, 17, -1, label_color)
 
 
 func _draw_slice(wheel_center: Vector2, slot_index: int, is_hovered: bool, has_action: bool, alpha: float) -> void:
