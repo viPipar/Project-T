@@ -82,8 +82,8 @@
 
 | Programmer | System | Task | Priority | Status | Depends On | Ref # |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| Rapit | Split-Screen | Split-Screen Manager (Tapip Left / Gilang Right viewports) | Critical | To Do | — | — |
-| Rapit | Split-Screen | Shared World State Sync | High | To Do | Split-Screen | — |
+| Rapit | Split-Screen | Split-Screen Manager (Tapip Left / Gilang Right viewports) | Critical | Done | — | — |
+| Rapit | Split-Screen | Shared World State Sync | High | Done | Split-Screen | — |
 | Rapit | HUD | HUD — Fighter (Tapip): AP/BAP/Energy/Movement/Inventory | High | To Do | Action Economy (Tapip) | — |
 | Rapit | HUD | HUD — Wizard (Gilang): AP/BAP/Spell Slots Lv1–4/Movement/Inventory | High | To Do | Action Economy (Tapip) | — |
 | Rapit | HUD | Character Profile Icon | Low | To Do | — | — |
@@ -98,5 +98,5 @@
 | Rapit | Combat Text | Element Icon Popup (Fire/Water/Air/Earth) | Medium | To Do | Element Tags (Gilang) | — |
 | Rapit | FX | Item Rarity Reveal FX (White/Blue/Gold glow) | Medium | To Do | Rarity Handler (Ilham) | #4 |
 | Rapit | FX | Dice Roll Animation (D20 Spin Overlay) | Low | To Do | RNG (Tapip) | — |
-| Rapit | Input | Pointer/Target Cursor (Tapip & Gilang) | High | To Do | Grid (Candra) | — |
+| Rapit | Input | Pointer/Target Cursor (Tapip & Gilang) | High | Done | Grid (Candra) | — |
 | Rapit | Input | Input Manager (P1: WASD/QE/F/X/R/ZC, P2: IJKL/UO/;/,/P/M.) | Critical | To Do | — | — |
