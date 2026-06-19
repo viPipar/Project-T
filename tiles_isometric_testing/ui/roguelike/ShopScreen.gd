@@ -2,6 +2,10 @@ extends Control
 
 @onready var grid = $GridContainer
 @onready var reroll_btn = $RerollButton
+var coins_label: Label
+var _current_stock: Array[Dictionary] = []
+
+const REROLL_COST = 100
 
 func _ready() -> void:
 	# Add Neobrutalism to the background
@@ -11,27 +15,112 @@ func _ready() -> void:
 	add_child(bg)
 	move_child(bg, 0)
 	
-	NeobrutalStyle.apply_to_button(reroll_btn, NeobrutalStyle.COLOR_RED)
+	# Add Coin Display
+	coins_label = Label.new()
+	coins_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	coins_label.position = Vector2(-250, 20)
+	coins_label.add_theme_font_size_override("font_size", 36)
+	coins_label.add_theme_color_override("font_color", Color.BLACK)
+	add_child(coins_label)
 	
+	# Add Leave Shop Button
+	var leave_btn = Button.new()
+	leave_btn.text = "🏃 Leave Shop"
+	leave_btn.position = Vector2(20, 20)
+	leave_btn.add_theme_font_size_override("font_size", 24)
+	NeobrutalStyle.apply_to_button(leave_btn, NeobrutalStyle.COLOR_PINK)
+	leave_btn.pressed.connect(func():
+		var current = get_parent()
+		var shell = null
+		while current and current != get_tree().get_root():
+			if "RoguelikeUIShell" in current.name or current.has_method("show_screen"):
+				shell = current
+				break
+			current = current.get_parent()
+		if shell:
+			shell.show_screen("res://ui/roguelike/MapScreen.tscn")
+	)
+	add_child(leave_btn)
+	
+	NeobrutalStyle.apply_to_button(reroll_btn, NeobrutalStyle.COLOR_RED)
+	reroll_btn.text = "Reroll Shop (%d Coins)" % REROLL_COST
+	
+	_refresh_coins_display()
+	if CoinEconomy != null:
+		CoinEconomy.balance_changed.connect(_on_coins_changed)
+	
+	_generate_stock()
 	_populate_shop()
+
+func _refresh_coins_display() -> void:
+	if CoinEconomy != null:
+		coins_label.text = "💰 P1: %d | P2: %d" % [CoinEconomy.get_balance(1), CoinEconomy.get_balance(2)]
+
+func _on_coins_changed(_pid: int, _amt: int) -> void:
+	_refresh_coins_display()
+
+func _generate_stock() -> void:
+	_current_stock.clear()
+	if ItemRegistry == null: return
+	
+	# Generate 7 items
+	for i in range(7):
+		var r = randf()
+		var target_rarity
+		if r < 0.60: target_rarity = ItemRegistry.Rarity.COMMON
+		elif r < 0.90: target_rarity = ItemRegistry.Rarity.RARE
+		else: target_rarity = ItemRegistry.Rarity.LEGENDARY
+		
+		var pool = ItemRegistry.get_items_by_rarity(target_rarity)
+		if pool.size() == 0:
+			pool = ItemRegistry.items.keys() # Fallback
+			
+		var chosen_id = pool[randi() % pool.size()]
+		var item_data = ItemRegistry.get_item(chosen_id)
+		
+		var cost = 50
+		if target_rarity == ItemRegistry.Rarity.RARE: cost = 150
+		if target_rarity == ItemRegistry.Rarity.LEGENDARY: cost = 300
+		
+		_current_stock.append({
+			"id": chosen_id,
+			"data": item_data,
+			"cost": cost,
+			"purchased": false
+		})
 
 func _populate_shop() -> void:
 	# Clear existing
 	for child in grid.get_children():
 		child.queue_free()
 		
-	# Mock 7 Items
-	for i in range(7):
+	for i in range(_current_stock.size()):
+		var stock = _current_stock[i]
 		var item_card = Button.new()
 		item_card.custom_minimum_size = Vector2(250, 350)
 		
-		# Give it a random color
-		var colors = [NeobrutalStyle.COLOR_YELLOW, NeobrutalStyle.COLOR_CYAN, NeobrutalStyle.COLOR_PINK]
-		var color = colors[randi() % colors.size()]
+		if stock.purchased:
+			NeobrutalStyle.apply_to_button(item_card, NeobrutalStyle.COLOR_GRAY)
+			item_card.disabled = true
+			var l = Label.new()
+			l.text = "SOLD OUT"
+			l.set_anchors_preset(Control.PRESET_FULL_RECT)
+			l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			item_card.add_child(l)
+			grid.add_child(item_card)
+			continue
+			
+		# Color based on rarity
+		var color = NeobrutalStyle.COLOR_WHITE
+		if stock.data.rarity == ItemRegistry.Rarity.COMMON: color = NeobrutalStyle.COLOR_CYAN
+		if stock.data.rarity == ItemRegistry.Rarity.RARE: color = NeobrutalStyle.COLOR_PINK
+		if stock.data.rarity == ItemRegistry.Rarity.LEGENDARY: color = NeobrutalStyle.COLOR_YELLOW
+		
 		NeobrutalStyle.apply_to_button(item_card, color)
 		
 		var label = Label.new()
-		label.text = "Item 🗡️\nCost: 50"
+		label.text = "%s\n\nCost: 💰 %d" % [stock.data.name, stock.cost]
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		label.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -42,9 +131,39 @@ func _populate_shop() -> void:
 		grid.add_child(item_card)
 
 func _on_buy_clicked(index: int) -> void:
-	print("Bought item at slot: ", index)
-	# TODO: Hook to StockManager
+	var stock = _current_stock[index]
+	if stock.purchased: return
+	
+	# Try P1 first, then P2 (mocking simple purchase logic, in a real game we'd have explicit P1/P2 buy buttons)
+	var buyer = 0
+	if CoinEconomy != null:
+		if CoinEconomy.get_balance(1) >= stock.cost: buyer = 1
+		elif CoinEconomy.get_balance(2) >= stock.cost: buyer = 2
+	
+	if buyer > 0:
+		if CoinEconomy.deduct_coins(buyer, stock.cost):
+			stock.purchased = true
+			if InventoryManager != null:
+				InventoryManager.add_item(buyer, stock.id)
+			if EventNotifier != null:
+				EventNotifier.show_message("P%d Bought: %s" % [buyer, stock.data.name], Color.GREEN)
+			_populate_shop()
+	else:
+		if EventNotifier != null:
+			EventNotifier.show_message("Not enough coins!", Color.RED)
 
 func _on_reroll_pressed() -> void:
-	print("Rerolled Shop!")
-	_populate_shop()
+	var reroller = 0
+	if CoinEconomy != null:
+		if CoinEconomy.get_balance(1) >= REROLL_COST: reroller = 1
+		elif CoinEconomy.get_balance(2) >= REROLL_COST: reroller = 2
+		
+	if reroller > 0:
+		if CoinEconomy.deduct_coins(reroller, REROLL_COST):
+			if EventNotifier != null:
+				EventNotifier.show_message("Shop Rerolled!", Color.ORANGE)
+			_generate_stock()
+			_populate_shop()
+	else:
+		if EventNotifier != null:
+			EventNotifier.show_message("Need %d Coins to Reroll!" % REROLL_COST, Color.RED)
