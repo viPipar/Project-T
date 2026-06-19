@@ -156,6 +156,26 @@ func _build_ui() -> void:
 			if main.has_method("_apply_debug_visibility"): main.call("_apply_debug_visibility")
 	)
 	toggle_hbox.add_child(btn_grid)
+	
+	# Cheats HBox
+	var cheats_hbox = HBoxContainer.new()
+	cheats_hbox.add_theme_constant_override("separation", 10)
+	info_vbox.add_child(cheats_hbox)
+	
+	var btn_infinite_moves = CheckButton.new()
+	btn_infinite_moves.text = "♾️ Infinite Player Movement"
+	btn_infinite_moves.toggled.connect(func(toggled: bool):
+		var bridge = get_tree().get_root().find_child("CombatTestBridge", true, false)
+		if bridge:
+			if bridge.get("_p1_mov"): bridge.get("_p1_mov").infinite_moves = toggled
+			if bridge.get("_p2_mov"): bridge.get("_p2_mov").infinite_moves = toggled
+		
+		# Apply to actual grid walkers
+		for p in get_tree().get_nodes_in_group("players"):
+			if p.has_node("MovementComponent"):
+				p.get_node("MovementComponent").infinite_moves = toggled
+	)
+	cheats_hbox.add_child(btn_infinite_moves)
 
 	# --- TAB 2: Combat Stats ---
 	var tab_stats = MarginContainer.new()
