@@ -9,7 +9,7 @@
 class_name EnemyStatTooltip
 extends Node2D
 
-const OFFSET_Y := -140.0
+const OFFSET_Y := -280.0
 
 var _bg_panel    : ColorRect
 var _name_label  : Label
@@ -35,40 +35,40 @@ func _build_ui() -> void:
 	_bg_panel.color = Color(0, 0, 0, 0) # TRANSPARENT SAJA
 	_bg_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_bg_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	_bg_panel.offset_left   = -80
-	_bg_panel.offset_right  =  80
-	_bg_panel.offset_top    = -35
-	_bg_panel.offset_bottom =  35
+	_bg_panel.offset_left   = -120
+	_bg_panel.offset_right  =  120
+	_bg_panel.offset_top    = -50
+	_bg_panel.offset_bottom =  50
 	add_child(_bg_panel)
 
 	# 2. Enemy Name (Baris Atas)
-	_name_label = _make_label("", 18, Color(0.9, 0.9, 0.95))
-	_name_label.position = Vector2(-80, -35)
-	_name_label.size = Vector2(160, 25)
+	_name_label = _make_label("", 28, Color(0.9, 0.9, 0.95))
+	_name_label.position = Vector2(0, 0)
+	_name_label.size = Vector2(240, 40)
 	_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_bg_panel.add_child(_name_label)
 
 	# 3. HP Row (Baris Bawah Kiri)
-	var hp_icon = _make_label("♥", 22, Color(1.0, 0.3, 0.3))
-	hp_icon.position = Vector2(15, 35)
-	hp_icon.size = Vector2(30, 30)
+	var hp_icon = _make_label("♥", 34, Color(1.0, 0.3, 0.3))
+	hp_icon.position = Vector2(20, 50)
+	hp_icon.size = Vector2(40, 40)
 	_bg_panel.add_child(hp_icon)
 
-	_hp_label = _make_label("0", 20, Color.WHITE)
-	_hp_label.position = Vector2(40, 35)
-	_hp_label.size = Vector2(40, 30)
+	_hp_label = _make_label("0", 30, Color.WHITE)
+	_hp_label.position = Vector2(60, 50)
+	_hp_label.size = Vector2(50, 40)
 	_hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	_bg_panel.add_child(_hp_label)
 
 	# 4. Armor Row (Baris Bawah Kanan)
-	var armor_icon = _make_label("🛡", 20, Color(0.6, 0.65, 0.8))
-	armor_icon.position = Vector2(85, 35)
-	armor_icon.size = Vector2(30, 30)
+	var armor_icon = _make_label("🛡", 30, Color(0.6, 0.65, 0.8))
+	armor_icon.position = Vector2(130, 50)
+	armor_icon.size = Vector2(40, 40)
 	_bg_panel.add_child(armor_icon)
 
-	_armor_label = _make_label("0", 20, Color.WHITE)
-	_armor_label.position = Vector2(110, 35)
-	_armor_label.size = Vector2(40, 30)
+	_armor_label = _make_label("0", 30, Color.WHITE)
+	_armor_label.position = Vector2(170, 50)
+	_armor_label.size = Vector2(50, 40)
 	_armor_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	_bg_panel.add_child(_armor_label)
 
@@ -79,7 +79,7 @@ func _make_label(txt: String, f_size: int, f_color: Color) -> Label:
 	l.add_theme_font_size_override("font_size", f_size)
 	l.add_theme_color_override("font_color", f_color)
 	l.add_theme_color_override("font_outline_color", Color(0,0,0,1))
-	l.add_theme_constant_override("outline_size", 6)
+	l.add_theme_constant_override("outline_size", 8)
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	l.autowrap_mode = TextServer.AUTOWRAP_OFF
 	return l
