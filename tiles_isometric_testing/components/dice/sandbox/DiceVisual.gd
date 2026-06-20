@@ -36,6 +36,17 @@ func _ready() -> void:
 	# Perkecil ukuran keseluruhan dadu (karena asetnya terlalu besar)
 	self.scale = Vector2(0.6, 0.6)
 	
+	# --- PERBAIKAN TEKS / LABEL ---
+	# Set ukuran kotak label cukup besar agar teks muat
+	number_label.size = Vector2(100, 60)
+	# Set pivot ke tengah label agar animasi pop-up meledak dari tengah, bukan dari ujung kiri atas
+	number_label.pivot_offset = Vector2(50, 30)
+	# Posisikan label agar pusatnya (50,30) berada di (0, 15).
+	# Offset Y = 15 ditambahkan karena wajah segitiga tengah D20 posisinya agak ke bawah dari origin
+	number_label.position = Vector2(-50, -30 + 15)
+	# Perbesar ukuran font-nya agar lebih proporsional dengan D20
+	number_label.add_theme_font_size_override("font_size", 42)
+	
 	# Ambil data ukuran layar dan posisi tengahnya
 	_viewport_rect = get_viewport_rect()
 	_central_pos = _viewport_rect.get_center()
