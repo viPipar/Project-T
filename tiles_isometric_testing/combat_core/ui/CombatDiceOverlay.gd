@@ -9,6 +9,11 @@ signal sequence_finished
 var player_id: int = 1
 var _is_playing: bool = false
 
+# ── Prompt system ─────────────────────────────────────────────────────────────
+signal _prompt_confirmed
+var _prompt_label   : Label
+var _waiting_input  : bool = false
+
 # ── UI Nodes ──────────────────────────────────────────────────────────────────
 var _root        : Control
 var _dim_bg      : ColorRect
@@ -25,7 +30,8 @@ var _result_lbl  : Label     # "HIT" / "MISS" / "CRITICAL"
 
 const PANEL_W := 300.0
 const PANEL_H := 190.0
-var _panel_y := 265.0 # Centered vertically
+# Pindah ke atas layar (dari 265 tengah → 30 atas)
+var _panel_y := 30.0
 
 
 # ── LIFECYCLE ─────────────────────────────────────────────────────────────────
@@ -60,8 +66,8 @@ func _build_ui() -> void:
 	_dim_bg = ColorRect.new()
 	_dim_bg.color = Color(0, 0, 0, 0)
 	_dim_bg.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
-	_dim_bg.offset_top = _panel_y - 20
-	_dim_bg.offset_bottom = _panel_y + PANEL_H + 20
+	_dim_bg.offset_top    = _panel_y - 10
+	_dim_bg.offset_bottom = _panel_y + PANEL_H + 10
 	_root.add_child(_dim_bg)
 
 	# ── DicePanel ─────────────────────────────────────────────────────────────
@@ -140,6 +146,21 @@ func _build_ui() -> void:
 	_result_lbl.modulate.a = 0
 	_root.add_child(_result_lbl)
 
+	# ── Prompt label — tengah half-screen player ──────────────────────────────
+	_prompt_label = _lbl("", 20, Color(1.0, 1.0, 1.0))
+	_prompt_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1.0))
+	_prompt_label.add_theme_constant_override("outline_size", 6)
+	_prompt_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_prompt_label.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+	_prompt_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	_prompt_label.offset_left   = -200
+	_prompt_label.offset_right  =  200
+	_prompt_label.offset_top    =  -50
+	_prompt_label.offset_bottom =   50
+	_prompt_label.modulate.a = 0
+	_prompt_label.visible = false
+	_root.add_child(_prompt_label)
+
 
 func _lbl(text: String, size: int, color: Color) -> Label:
 	var l := Label.new()
@@ -149,6 +170,52 @@ func _lbl(text: String, size: int, color: Color) -> Label:
 	l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
 	l.add_theme_constant_override("outline_size", 4)
 	return l
+
+
+# ── INPUT — hanya saat menunggu konfirmasi player ─────────────────────────────
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not _waiting_input or not _is_playing:
+		return
+	var confirm_action := "p1_confirm" if player_id == 1 else "p2_confirm"
+	if event.is_action_pressed(confirm_action):
+		_waiting_input = false
+		_prompt_confirmed.emit()
+		get_viewport().set_input_as_handled()
+
+
+# ── PROMPT SYSTEM ─────────────────────────────────────────────────────────────
+
+func show_roll_prompt(roll_index: int) -> void:
+	# roll_index 1 = hit/miss, 2 = damage
+	var key_str   := "F" if player_id == 1 else ";"
+	var roll_type := "Hit / Miss Roll" if roll_index == 1 else "Damage Roll"
+
+	# Teks dengan blink-pulse latar gelap semi-transparan
+	_prompt_label.text    = "[  Press %s to Roll Dice — P%d  ]\n%s" % [key_str, player_id, roll_type]
+	_prompt_label.visible = true
+	_prompt_label.modulate.a = 0.0
+
+	# Fade in
+	var tw_in := create_tween()
+	tw_in.tween_property(_prompt_label, "modulate:a", 1.0, 0.25)
+	await tw_in.finished
+
+	# Animasi pulse agar terasa hidup
+	var tw_pulse := create_tween().set_loops()
+	tw_pulse.tween_property(_prompt_label, "modulate:a", 0.55, 0.55).set_trans(Tween.TRANS_SINE)
+	tw_pulse.tween_property(_prompt_label, "modulate:a", 1.0,  0.55).set_trans(Tween.TRANS_SINE)
+
+	# Tunggu input player
+	_waiting_input = true
+	await _prompt_confirmed
+
+	# Stop pulse + fade out
+	tw_pulse.kill()
+	var tw_out := create_tween()
+	tw_out.tween_property(_prompt_label, "modulate:a", 0.0, 0.15)
+	await tw_out.finished
+	_prompt_label.visible = false
 
 
 # ── PUBLIC API ────────────────────────────────────────────────────────────────
@@ -181,45 +248,48 @@ func play_attack_sequence(
 	var tgt_name: String = str(_tgt_raw) if _tgt_raw != null else target.name
 	_title_label.text = "%s  →  %s" % [att_name, tgt_name]
 
-	# ── Phase 1: Slide panel masuk ─────────────────────────────────────────────
+	# ── Phase 1: Slide panel masuk (cepat) ────────────────────────────────────
 	var cx := (vp_size.x - PANEL_W) * 0.5
 	_dice_panel.position = Vector2(_offscreen_x(vp_size, false), _panel_y)
 
 	var tw_dim := create_tween()
-	tw_dim.tween_property(_dim_bg, "color", Color(0, 0, 0, 0.5), 0.4)
+	tw_dim.tween_property(_dim_bg, "color", Color(0, 0, 0, 0.5), 0.25)
 
 	var tw_in := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
-	tw_in.tween_property(_dice_panel, "position:x", cx, 0.5)
+	tw_in.tween_property(_dice_panel, "position:x", cx, 0.3)
 	await tw_in.finished
 
 	var target_pos := _dice_panel.global_position + Vector2(72, PANEL_H * 0.52)
 
-	# ── Phase 2: Roll D20 (animasi diperlambat) ─────────────────────────────
+	# ── Prompt 1: Tunggu player tekan konfirm untuk D20 ──────────────────────
+	await show_roll_prompt(1)
+
+	# ── Phase 2: Roll D20 (cepat — 1.2 detik) ────────────────────────────────
 	if _dice_visual.has_method("start_roll"):
-		_dice_visual.start_roll(raw_d20, "d20", 2.5, target_pos, player_id)
+		_dice_visual.start_roll(raw_d20, "d20", 1.2, target_pos, player_id)
 		if _dice_visual.has_signal("roll_finished"):
 			await _dice_visual.roll_finished
 		else:
-			await get_tree().create_timer(2.6).timeout
+			await get_tree().create_timer(1.3).timeout
 	else:
-		await get_tree().create_timer(1.2).timeout
+		await get_tree().create_timer(0.8).timeout
 
-	# ── Phase 3: Modifier muncul (lebih smooth, lebih lambat) ──────────────
+	# ── Phase 3: Modifier muncul ──────────────────────────────────────────────
 	_mod_label.text = "+%d" % modifier if modifier >= 0 else str(modifier)
 	var tw_mod := create_tween().set_ease(Tween.EASE_OUT)
-	tw_mod.tween_property(_mod_label, "modulate:a", 1.0, 0.45)
-	tw_mod.parallel().tween_property(_mod_label, "scale", Vector2(1.15, 1.15), 0.2)
-	tw_mod.tween_property(_mod_label, "scale", Vector2(1.0, 1.0), 0.25)
-	await get_tree().create_timer(0.7).timeout
+	tw_mod.tween_property(_mod_label, "modulate:a", 1.0, 0.3)
+	tw_mod.parallel().tween_property(_mod_label, "scale", Vector2(1.15, 1.15), 0.15)
+	tw_mod.tween_property(_mod_label, "scale", Vector2(1.0, 1.0), 0.15)
+	await get_tree().create_timer(0.4).timeout
 
 	# ── Phase 4: Total muncul ─────────────────────────────────────────────────
 	_total_label.text = "= %d" % total_hit
 	var tw_tot := create_tween().set_ease(Tween.EASE_OUT)
-	tw_tot.tween_property(_total_label, "modulate:a", 1.0, 0.4)
-	tw_tot.parallel().tween_property(_mod_label, "modulate:a", 0.0, 0.35)
-	await get_tree().create_timer(0.6).timeout
+	tw_tot.tween_property(_total_label, "modulate:a", 1.0, 0.25)
+	tw_tot.parallel().tween_property(_mod_label, "modulate:a", 0.0, 0.2)
+	await get_tree().create_timer(0.35).timeout
 
-	# ── Phase 5: VS row slide masuk ───────────────────────────────────────────
+	# ── Phase 5: VS row slide masuk ──────────────────────────────────────────
 	_roll_disp.text = str(total_hit)
 	_ac_disp.text   = "AC %d" % threshold
 	var acy := _panel_y + PANEL_H * 0.5 - 25.0
@@ -228,9 +298,9 @@ func play_attack_sequence(
 
 	var vcx := (vp_size.x - 280.0) * 0.5
 	var tw_vs := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
-	tw_vs.tween_property(_vs_row, "position:x", vcx, 0.45)
+	tw_vs.tween_property(_vs_row, "position:x", vcx, 0.3)
 	await tw_vs.finished
-	await get_tree().create_timer(0.45).timeout
+	await get_tree().create_timer(0.25).timeout
 
 	# ── Phase 6: Result text ──────────────────────────────────────────────────
 	var col    : Color
@@ -251,44 +321,47 @@ func play_attack_sequence(
 	_result_lbl.text = result
 	_result_lbl.add_theme_color_override("font_color", col)
 	var tw_res := create_tween().set_ease(Tween.EASE_OUT)
-	tw_res.tween_property(_result_lbl, "modulate:a", 1.0, 0.35)
-	tw_res.parallel().tween_property(_result_lbl, "scale", Vector2(1.2, 1.2), 0.25)
-	tw_res.tween_property(_result_lbl, "scale", Vector2(1.0, 1.0), 0.3)
-	await get_tree().create_timer(1.4).timeout
+	tw_res.tween_property(_result_lbl, "modulate:a", 1.0, 0.25)
+	tw_res.parallel().tween_property(_result_lbl, "scale", Vector2(1.2, 1.2), 0.2)
+	tw_res.tween_property(_result_lbl, "scale", Vector2(1.0, 1.0), 0.2)
+	await get_tree().create_timer(0.8).timeout
 
-	# ── Phase 7: Damage roll ─────────────────────────────────────────────────
+	# ── Phase 7: Damage roll ──────────────────────────────────────────────────
 	if is_hit and dmg_rolls.size() > 0:
 		var tw_hide := create_tween().set_ease(Tween.EASE_IN)
-		tw_hide.tween_property(_vs_row,      "modulate:a", 0.0, 0.3)
-		tw_hide.parallel().tween_property(_result_lbl, "modulate:a", 0.0, 0.3)
+		tw_hide.tween_property(_vs_row,      "modulate:a", 0.0, 0.2)
+		tw_hide.parallel().tween_property(_result_lbl, "modulate:a", 0.0, 0.2)
 		_mod_label.modulate.a   = 0
 		_total_label.modulate.a = 0
-		await get_tree().create_timer(0.35).timeout
+		await get_tree().create_timer(0.25).timeout
+
+		# ── Prompt 2: Tunggu player tekan konfirm untuk damage ────────────────
+		await show_roll_prompt(2)
 
 		for i in range(dmg_rolls.size()):
 			_title_label.text = "Damage %d/%d  —  %s" % [i + 1, dmg_rolls.size(), dmg_formula]
 			if _dice_visual.has_method("start_roll"):
-				_dice_visual.start_roll(dmg_rolls[i], _formula_dice(dmg_formula), 2.0, target_pos, player_id)
+				_dice_visual.start_roll(dmg_rolls[i], _formula_dice(dmg_formula), 1.2, target_pos, player_id)
 				if _dice_visual.has_signal("roll_finished"):
 					await _dice_visual.roll_finished
 				else:
-					await get_tree().create_timer(2.1).timeout
-			await get_tree().create_timer(0.4).timeout
+					await get_tree().create_timer(1.3).timeout
+			await get_tree().create_timer(0.25).timeout
 
 		_total_label.text = "%d damage" % dmg_total
 		_total_label.add_theme_color_override("font_color", Color(1.0, 0.62, 0.2))
 		var tw_dmg := create_tween().set_ease(Tween.EASE_OUT)
-		tw_dmg.tween_property(_total_label, "modulate:a", 1.0, 0.4)
-		await get_tree().create_timer(1.8).timeout
+		tw_dmg.tween_property(_total_label, "modulate:a", 1.0, 0.3)
+		await get_tree().create_timer(1.0).timeout
 
 	# ── Phase 8: Slide keluar ─────────────────────────────────────────────────
 	var vp2    := _get_vp_size()
 	var tw_out := create_tween().set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_CUBIC)
-	tw_out.tween_property(_dice_panel,  "position:x",  _offscreen_x(vp2, false), 0.45)
-	tw_out.parallel().tween_property(_dim_bg,       "color",       Color(0, 0, 0, 0),    0.4)
-	tw_out.parallel().tween_property(_vs_row,       "modulate:a",  0.0,                  0.3)
-	tw_out.parallel().tween_property(_result_lbl,   "modulate:a",  0.0,                  0.3)
-	tw_out.parallel().tween_property(_total_label,  "modulate:a",  0.0,                  0.3)
+	tw_out.tween_property(_dice_panel,  "position:x",  _offscreen_x(vp2, false), 0.3)
+	tw_out.parallel().tween_property(_dim_bg,       "color",       Color(0, 0, 0, 0),    0.25)
+	tw_out.parallel().tween_property(_vs_row,       "modulate:a",  0.0,                  0.2)
+	tw_out.parallel().tween_property(_result_lbl,   "modulate:a",  0.0,                  0.2)
+	tw_out.parallel().tween_property(_total_label,  "modulate:a",  0.0,                  0.2)
 	await tw_out.finished
 
 	visible = false
@@ -320,6 +393,9 @@ func _reset_state() -> void:
 	_result_lbl.modulate.a  = 0
 	_result_lbl.scale       = Vector2.ONE
 	_vs_row.modulate.a      = 0
+	_prompt_label.modulate.a = 0
+	_prompt_label.visible    = false
+	_waiting_input           = false
 	_total_label.remove_theme_color_override("font_color")
 	_roll_disp.remove_theme_color_override("font_color")
 	_ac_disp.remove_theme_color_override("font_color")

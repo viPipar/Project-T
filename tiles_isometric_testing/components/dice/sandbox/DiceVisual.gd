@@ -35,7 +35,7 @@ func _ready() -> void:
 	_viewport_rect = get_viewport_rect()
 	_central_pos = _viewport_rect.get_center()
 
-func start_roll(result: int, dice_type: String = "custom", roll_duration: float = 2.5, target_pos: Vector2 = Vector2.ZERO, p_id: int = 0) -> void:
+func start_roll(result: int, dice_type: String = "custom", roll_duration: float = 1.2, target_pos: Vector2 = Vector2.ZERO, p_id: int = 0) -> void:
 	_final_result = result
 	number_label.hide()
 	dice_sprite.visible = true
@@ -86,8 +86,8 @@ func start_roll(result: int, dice_type: String = "custom", roll_duration: float 
 	
 	# Hitung waktu per gerakan chaos agar totalnya pas sesuai roll_duration
 	# (Kita sisakan 30% waktu untuk Fase Kembali ke Rumah)
-	var chaos_duration = roll_duration * 0.7
-	var bounce_count = 3 # Jumlah memantul di pinggir
+	var chaos_duration = roll_duration * 0.65
+	var bounce_count = 2 # Jumlah memantul di pinggir
 	var time_per_bounce = chaos_duration / (bounce_count + 1)
 	
 	# Fase 1: Gerakan Lempar Pertama ke salah satu ujung layar (sesuai player_id)

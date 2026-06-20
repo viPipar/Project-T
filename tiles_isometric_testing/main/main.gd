@@ -104,6 +104,9 @@ func _ready() -> void:
 
 	TurnManager.start_battle()
 
+	# ── Floating Text Manager (damage/heal/miss popups) ───────────────────────
+	_spawn_floating_text_manager()
+
 	# ── Stat Debug Panel ─────────────────────────────────────────────────────
 	_spawn_stat_debug_panel()
 
@@ -163,6 +166,19 @@ func _spawn_stat_debug_panel() -> void:
 		add_child(_stat_debug_panel)
 	_stat_debug_panel.visible = false
 	print("[Main] StatDebugPanel siap — tekan F1 untuk toggle ✅")
+
+
+func _spawn_floating_text_manager() -> void:
+	var ftm_script := load("res://ui/shared/FloatingTextManager.gd")
+	if ftm_script == null:
+		push_warning("[Main] FloatingTextManager.gd tidak ditemukan!")
+		return
+	var ftm := Node.new()
+	ftm.name = "FloatingTextManager"
+	ftm.set_script(ftm_script)
+	add_child(ftm)
+	print("[Main] FloatingTextManager siap — damage popups aktif ✅")
+
 
 
 func _spawn_action_wheel_test_overlay() -> void:
