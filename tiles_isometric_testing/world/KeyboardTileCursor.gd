@@ -76,10 +76,10 @@ func _notify_entity_hover(new_tile: Vector2i) -> void:
 	if new_entity == _last_hovered_entity:
 		return
 	
-	if _last_hovered_entity != null and _last_hovered_entity.has_method("remove_hover_player"):
+	if is_instance_valid(_last_hovered_entity) and _last_hovered_entity.has_method("remove_hover_player"):
 		_last_hovered_entity.remove_hover_player(player_id)
 		
-	if new_entity != null and new_entity.has_method("add_hover_player"):
+	if new_entity != null and is_instance_valid(new_entity) and new_entity.has_method("add_hover_player"):
 		new_entity.add_hover_player(player_id)
 		
 	_last_hovered_entity = new_entity

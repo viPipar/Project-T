@@ -151,16 +151,24 @@ func move_entity(from: Vector2i, to: Vector2i, entity: Node) -> bool:
 	return true
 
 
-## Kembalikan Node entity di tile, atau null.
 func get_entity_at(pos: Vector2i) -> Node:
 	var slot = _entities.get(pos, null)
-	return slot.node if slot else null
+	if slot:
+		if is_instance_valid(slot.node):
+			return slot.node
+		else:
+			unregister_entity(pos)
+	return null
 
 
-## Kembalikan EntityType di tile, atau -1 jika kosong.
 func get_entity_type(pos: Vector2i) -> int:
 	var slot = _entities.get(pos, null)
-	return slot.type if slot else -1
+	if slot:
+		if is_instance_valid(slot.node):
+			return slot.type
+		else:
+			unregister_entity(pos)
+	return -1
 
 
 func has_entity_at(pos: Vector2i) -> bool:
