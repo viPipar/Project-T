@@ -1,5 +1,5 @@
 extends Node
-class_name ItemPoolGenerator
+class_name EventDropGenerator
 
 # Deterministic pool generator based on battle difficulty
 # Normal Battles: 80% Common, 20% Rare.

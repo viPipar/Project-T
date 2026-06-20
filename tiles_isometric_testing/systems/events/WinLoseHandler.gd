@@ -15,8 +15,8 @@ func handle_win(battle_type: String) -> void:
 	elif battle_key == "1": battle_key = "elite"
 	elif battle_key == "0": battle_key = "normal"
 	
-	rewards.append(ItemPoolGenerator.generate_drop(battle_key))
-	rewards.append(ItemPoolGenerator.generate_drop(battle_key))
+	rewards.append(EventDropGenerator.generate_drop(battle_key))
+	rewards.append(EventDropGenerator.generate_drop(battle_key))
 	
 	if InventoryManager != null:
 		InventoryManager.add_item(1, rewards[0])
