@@ -1,6 +1,8 @@
 extends Node
 class_name WinLoseHandler
 
+const EventDropGenerator = preload("res://systems/events/ItemPoolGenerator.gd")
+
 # Handles post-battle win/lose states and rewards.
 
 func handle_win(battle_type: String) -> void:
