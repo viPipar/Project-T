@@ -80,6 +80,7 @@ func _process(_delta: float) -> void:
 	if Input.is_action_just_pressed("p%d_cancel" % player_id):
 		if _state == PlayerState.TARGETING:
 			_exit_targeting()
+			EventBus.resource_blink_requested.emit(player_id, "stop_all")
 			return
 
 	# ── END TURN ──────────────────────────────────────────────────────────────
@@ -211,6 +212,20 @@ func _on_action_wheel_selected(pid: int, action_name: String) -> void:
 
 	# Enter targeting mode — show grid, hide wheel
 	_enter_targeting()
+	_emit_blink_for_ability(_loaded_ability)
+
+
+func _emit_blink_for_ability(ability: BaseAbility) -> void:
+	if ability == null: return
+	if ability.cost_action > 0:
+		EventBus.resource_blink_requested.emit(player_id, "ap")
+	if ability.cost_bonus_action > 0:
+		EventBus.resource_blink_requested.emit(player_id, "bap")
+	if ability.cost_mana > 0:
+		var res := "energy_charge" if player_id == 1 else "spell_slot"
+		EventBus.resource_blink_requested.emit(player_id, res)
+	# User wants movement to blink as well during targeting
+	EventBus.resource_blink_requested.emit(player_id, "movement")
 
 
 ## Enter TARGETING state: show highlighted tiles, let cursor pick a target.
@@ -237,6 +252,7 @@ func _exit_targeting() -> void:
 	if MovementRangeManager != null and MovementRangeManager.has_method("_refresh_player"):
 		MovementRangeManager._refresh_player(self)
 		
+	EventBus.resource_blink_requested.emit(player_id, "stop_all")
 	print("[Player P%d] Targeting CANCELLED" % player_id)
 
 
@@ -265,6 +281,7 @@ func _on_targeting_confirm() -> void:
 	# Fire the ability
 	_update_facing_from_to(grid_pos, target_tile)
 	EventBus.attackcam_started.emit(self, occupant, selected_ability_id)
+	EventBus.resource_blink_requested.emit(player_id, "stop_all")
 	if player_id == 1:
 		AttackCam.play(true, false)
 	elif player_id == 2:

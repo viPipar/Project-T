@@ -20,6 +20,7 @@ var _last_valid_tile: Vector2i = Vector2i(-1, -1)
 var _player_cache: Node = null
 # Referensi ke PlayerCamera2D — di-set oleh main.gd setelah split-screen setup
 var camera_ref: Camera2D = null
+var _last_hovered_entity: Node = null
 
 
 func _ready() -> void:
@@ -62,11 +63,26 @@ func _update_hovered_tile() -> void:
 		hovered_tile = target
 		if hovered_tile.x >= 0:
 			hovered_tile_changed.emit(hovered_tile)
+			_notify_entity_hover(hovered_tile)
 
 	_tile_valid = hovered_tile.x >= 0
 	if _tile_valid:
 		z_index = IsoUtils.get_depth(hovered_tile) + 2
 		_last_valid_tile = hovered_tile
+
+
+func _notify_entity_hover(new_tile: Vector2i) -> void:
+	var new_entity := GridManager.get_entity_at(new_tile)
+	if new_entity == _last_hovered_entity:
+		return
+	
+	if _last_hovered_entity != null and _last_hovered_entity.has_method("remove_hover_player"):
+		_last_hovered_entity.remove_hover_player(player_id)
+		
+	if new_entity != null and new_entity.has_method("add_hover_player"):
+		new_entity.add_hover_player(player_id)
+		
+	_last_hovered_entity = new_entity
 
 
 func _get_tile_under_point(point: Vector2) -> Vector2i:

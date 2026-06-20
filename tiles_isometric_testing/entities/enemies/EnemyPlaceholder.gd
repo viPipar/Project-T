@@ -28,6 +28,7 @@ var grid_pos: Vector2i = Vector2i.ZERO
 var current_hp: int = 30
 var is_alive: bool = true
 var _death_started: bool = false
+var _hovering_players: Dictionary = {} # int -> bool
 
 const INSECT_DIR := "res://assets/characters/insect1_placeholder"
 
@@ -38,6 +39,15 @@ func _ready() -> void:
 	_setup_health()
 	_setup_sprite()
 	_apply_idle_frames()
+	
+	# Spawn tooltip
+	var tooltip_script = load("res://ui/shared/EnemyStatTooltip.gd")
+	if tooltip_script:
+		var tooltip = Node2D.new()
+		tooltip.set_script(tooltip_script)
+		tooltip.name = "EnemyStatTooltip"
+		add_child(tooltip)
+		
 	if sprite != null:
 		sprite.play("idle_down")
 	if start_grid_pos.x >= 0 and start_grid_pos.y >= 0:
@@ -116,6 +126,10 @@ func _on_hp_changed(new_hp: int, new_max_hp: int) -> void:
 	current_hp = new_hp
 	max_hp = new_max_hp
 	is_alive = current_hp > 0
+	
+	var tooltip = get_node_or_null("EnemyStatTooltip")
+	if tooltip != null and tooltip.has_method("update_hp"):
+		tooltip.update_hp(current_hp)
 
 
 func _on_health_damaged(amount: int) -> void:
@@ -132,6 +146,11 @@ func _die(killer: Node = null, emit_bus: bool = true) -> void:
 	_death_started = true
 	is_alive = false
 	current_hp = 0
+	
+	var tooltip = get_node_or_null("EnemyStatTooltip")
+	if tooltip != null and tooltip.has_method("hide_tooltip"):
+		tooltip.hide_tooltip()
+		
 	print("[%s] Kalah." % enemy_name)
 	if emit_bus and EventBus != null:
 		EventBus.entity_died.emit(self, killer)
@@ -142,6 +161,37 @@ func _die(killer: Node = null, emit_bus: bool = true) -> void:
 	remove_from_group("enemies")
 	await get_tree().create_timer(0.8).timeout
 	queue_free()
+
+
+# -----------------------------------------------------------------------------
+# Tooltip Hover Logic
+# -----------------------------------------------------------------------------
+
+func add_hover_player(pid: int) -> void:
+	_hovering_players[pid] = true
+	_update_tooltip_visibility()
+
+
+func remove_hover_player(pid: int) -> void:
+	if _hovering_players.has(pid):
+		_hovering_players.erase(pid)
+	_update_tooltip_visibility()
+
+
+func _update_tooltip_visibility() -> void:
+	var tooltip = get_node_or_null("EnemyStatTooltip")
+	if tooltip == null: return
+	
+	if _hovering_players.is_empty():
+		tooltip.hide_tooltip()
+	else:
+		var layer_mask := 0
+		if _hovering_players.has(1): layer_mask |= 2 # P1
+		if _hovering_players.has(2): layer_mask |= 4 # P2
+		
+		var armor := 0
+		if stats != null: armor = stats.get_armor()
+		tooltip.show_for(enemy_name, current_hp, max_hp, armor, layer_mask)
 
 
 # -----------------------------------------------------------------------------

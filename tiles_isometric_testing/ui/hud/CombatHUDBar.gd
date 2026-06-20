@@ -29,6 +29,9 @@ var _ss_max:     Array[int] = [0, 0, 0, 0]
 var _pulse_timers: Dictionary = {}
 const PULSE_DURATION := 0.45
 
+var _blink_keys: Dictionary = {}
+var _blink_phase: float = 0.0
+
 # ── Layout constants ─────────────────────────────────────────────────────────
 const LABEL_FONT_SIZE := 20
 const SMALL_FONT_SIZE := 12
@@ -47,6 +50,11 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	EventBus.combat_hud_ready.connect(_on_combat_hud_ready)
 	EventBus.inventory_toggled.connect(_on_inventory_toggled)
+	
+	if EventBus.has_signal("resource_blink_requested"):
+		EventBus.resource_blink_requested.connect(_on_resource_blink_requested)
+	if EventBus.has_signal("attackcam_started"):
+		EventBus.attackcam_started.connect(func(_a, _b, _c): _blink_keys.clear())
 
 
 func _on_combat_hud_ready(pid: int, ap_mgr: Node, mov_mgr: Node, resource_mgr: Node) -> void:
@@ -116,6 +124,17 @@ func _on_inventory_toggled() -> void:
 		print("inventory kebuka")
 
 
+func _on_resource_blink_requested(pid: int, res_type: String) -> void:
+	if pid != player_id: return
+	match res_type:
+		"stop_all":      _blink_keys.clear()
+		"ap":            _blink_keys["ap"] = true
+		"bap":           _blink_keys["bap"] = true
+		"energy_charge": _blink_keys["ec"] = true
+		"spell_slot":    _blink_keys["ss"] = true
+		"movement":      _blink_keys["mov"] = true
+
+
 # ── Pulse animation ─────────────────────────────────────────────────────────
 
 func _start_pulse(key: String) -> void:
@@ -136,8 +155,16 @@ func _process(delta: float) -> void:
 			any_active = true
 	for key: String in keys_to_remove:
 		_pulse_timers.erase(key)
-	if any_active or not keys_to_remove.is_empty():
+		
+	_blink_phase = fmod(_blink_phase + delta * 4.0, TAU)
+	
+	if any_active or not keys_to_remove.is_empty() or not _blink_keys.is_empty():
 		queue_redraw()
+
+
+func _get_blink_alpha(key: String) -> float:
+	if not _blink_keys.has(key): return 0.0
+	return sin(_blink_phase) * 0.5 + 0.5
 
 
 # ── Drawing ──────────────────────────────────────────────────────────────────
@@ -207,6 +234,11 @@ func _draw_ap_box(rect: Rect2) -> void:
 	if pulse > 0.0:
 		draw_arc(center, r + 2, 0, TAU, 16, Color(color, pulse * 0.7), 2.0)
 		
+	var blink := _get_blink_alpha("ap")
+	if blink > 0.01:
+		draw_rect(rect, Color(color, blink * 0.8), false, 2.0)
+		draw_rect(rect, Color(color, blink * 0.15), true)
+		
 	_draw_text_and_label(rect, str(_ap), "Action\nPoint", 30)
 
 
@@ -225,6 +257,11 @@ func _draw_bap_box(rect: Rect2) -> void:
 	var pulse := _get_pulse_alpha("bap")
 	if pulse > 0.0:
 		draw_polyline(PackedVector2Array([pts[0], pts[1], pts[2], pts[0]]), Color(color, pulse * 0.7), 2.0)
+		
+	var blink := _get_blink_alpha("bap")
+	if blink > 0.01:
+		draw_rect(rect, Color(color, blink * 0.8), false, 2.0)
+		draw_rect(rect, Color(color, blink * 0.15), true)
 		
 	_draw_text_and_label(rect, str(_bap), "Bonus\nAction\nPoint", 30)
 
@@ -248,6 +285,11 @@ func _draw_mov_box(rect: Rect2) -> void:
 	var pulse := _get_pulse_alpha("mov")
 	if pulse > 0.0:
 		draw_circle(center, half + 2, Color(1,1,1, pulse * 0.4))
+		
+	var blink := _get_blink_alpha("mov")
+	if blink > 0.01:
+		draw_rect(rect, Color(Color.WHITE, blink * 0.8), false, 2.0)
+		draw_rect(rect, Color(Color.WHITE, blink * 0.15), true)
 		
 	var val_text := "%.1f" % (_mov_current * 5.0)
 	_draw_text_and_label(rect, val_text, "Movement", 24)
@@ -273,6 +315,11 @@ func _draw_ec_box(rect: Rect2) -> void:
 	if pulse > 0.0:
 		draw_circle(center, half + 2, Color(color, pulse * 0.5))
 		
+	var blink := _get_blink_alpha("ec")
+	if blink > 0.01:
+		draw_rect(rect, Color(color, blink * 0.8), false, 2.0)
+		draw_rect(rect, Color(color, blink * 0.15), true)
+		
 	_draw_text_and_label(rect, str(_ec_current), "Energy\nCharge", 30)
 
 
@@ -290,5 +337,10 @@ func _draw_ss_box(rect: Rect2) -> void:
 	# Blue squares stacked slightly
 	draw_rect(Rect2(center.x - half, center.y - half, half*1.5, half*1.5), color)
 	draw_rect(Rect2(center.x - half + 4, center.y - half + 4, half*1.5, half*1.5), Color(0.3, 0.5, 1.0))
+	
+	var blink := _get_blink_alpha("ss")
+	if blink > 0.01:
+		draw_rect(rect, Color(COLOR_SS_BLUE, blink * 0.8), false, 2.0)
+		draw_rect(rect, Color(COLOR_SS_BLUE, blink * 0.15), true)
 	
 	_draw_text_and_label(rect, str(total_slots), "Spell\nSlots", 30)
