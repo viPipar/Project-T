@@ -16,40 +16,54 @@ var _final_result: int = 0
 var _viewport_rect: Rect2 # Untuk menyimpan ukuran layar
 var _central_pos: Vector2 # Posisi tengah layar tempat mendarat
 
-# Kamus untuk memetakan nama ke file PNG
-var dice_texture_map: Dictionary = {
-	"d4": preload(SPRITE_FOLDER_PATH + "06_large_dice.png"),
-	"d6": preload(SPRITE_FOLDER_PATH + "05_large_dice.png"),
-	"d8": preload(SPRITE_FOLDER_PATH + "04_large_dice.png"),
-	"d10": preload(SPRITE_FOLDER_PATH + "03_large_dice.png"),
-	"d12": preload(SPRITE_FOLDER_PATH + "02_large_dice.png"),
-	"d20": preload(SPRITE_FOLDER_PATH + "01_large_dice.png"),
-	"custom": preload(SPRITE_FOLDER_PATH + "00_large_dice.png")
-}
+# --- VARIABEL BARU ---
+var _is_rolling: bool = false
+var _roll_timer: float = 0.0
+var _roll_frame_idx: int = 0
+
+# Kamus/List Asset D20
+var d20_static: Texture2D = preload("res://assets/dice/d20/d20_static.png")
+var d20_rolls: Array[Texture2D] = [
+	preload("res://assets/dice/d20/d20_roll1.png"),
+	preload("res://assets/dice/d20/d20_roll2.png"),
+	preload("res://assets/dice/d20/d20_roll3.png")
+]
 
 func _ready() -> void:
 	# Sembunyikan angka dan sprite saat awal
 	number_label.hide()
 	dice_sprite.visible = false
+	# Perkecil ukuran keseluruhan dadu (karena asetnya terlalu besar)
+	self.scale = Vector2(0.6, 0.6)
+	
 	# Ambil data ukuran layar dan posisi tengahnya
 	_viewport_rect = get_viewport_rect()
 	_central_pos = _viewport_rect.get_center()
 
-func start_roll(result: int, dice_type: String = "custom", roll_duration: float = 1.2, target_pos: Vector2 = Vector2.ZERO, p_id: int = 0) -> void:
+func _process(delta: float) -> void:
+	if _is_rolling:
+		_roll_timer += delta
+		# Ganti frame setiap 0.05 detik untuk efek blur
+		if _roll_timer > 0.05:
+			_roll_timer = 0.0
+			_roll_frame_idx = (_roll_frame_idx + 1) % d20_rolls.size()
+			dice_sprite.texture = d20_rolls[_roll_frame_idx]
+
+
+func start_roll(result: int, dice_type: String = "custom", roll_duration: float = 1.8, target_pos: Vector2 = Vector2.ZERO, p_id: int = 0) -> void:
 	_final_result = result
 	number_label.hide()
 	dice_sprite.visible = true
 	
-	# --- PASANG GAMBAR SESUAI TIPE DADU ---
-	if dice_texture_map.has(dice_type):
-		dice_sprite.texture = dice_texture_map[dice_type]
-	else:
-		dice_sprite.texture = dice_texture_map["custom"]
+	# Mulai efek blur
+	_is_rolling = true
+	_roll_timer = 0.0
+	_roll_frame_idx = 0
+	dice_sprite.texture = d20_rolls[0]
 		
 	# --- RESET POSISI DAN ROTASI AWAL ---
 	dice_sprite.rotation = 0
-	# Dadu muncul agak besar sedikit lalu mengecil (efek dilempar ke kamera)
-	dice_sprite.scale = Vector2(1.5, 1.5)
+	dice_sprite.scale = Vector2(0.5, 0.5) # Mulai dari kecil
 	
 	_viewport_rect = get_viewport_rect()
 	var screen_w := _viewport_rect.size.x
@@ -61,104 +75,82 @@ func start_roll(result: int, dice_type: String = "custom", roll_duration: float 
 	else:
 		_central_pos = _viewport_rect.get_center()
 	
-	# Set posisi awal dadu (P1 muncul dari kiri, P2 muncul dari kanan, default/0 muncul dari kiri)
+	# Set posisi awal dadu (P1 dari kiri jauh, P2 dari kanan jauh)
+	var start_y = _central_pos.y + 100 # Agak ke bawah sedikit agar melengkung ke atas
 	if p_id == 2:
-		global_position = Vector2(screen_w + 150, randf_range(screen_h * 0.2, screen_h * 0.8))
+		global_position = Vector2(screen_w + 150, start_y)
 	else:
-		global_position = Vector2(-150, randf_range(screen_h * 0.2, screen_h * 0.8))
+		global_position = Vector2(-150, start_y)
 	
-	# --- BUAT TWEEN MASTER UNTUK GERAKAN CHAOS (Flying & Bouncing) ---
+	# --- TWEEN TERARAH (Directed Trajectory) ---
 	var tween = create_tween()
-	# Jalankan putaran dan pergerakan secara PARALEL/BERSAMAAN
 	tween.set_parallel(true)
 	
-	# 1. Animasi Putar (Spin): Muter sangat kencang selama terbang
-	tween.tween_property(dice_sprite, "rotation", 10 * TAU, roll_duration)\
-		.set_trans(Tween.TRANS_LINEAR)
-		
-	# 2. Animasi Mengecil (Zoom Out): Dari besar ke ukuran normal mendarat
-	tween.tween_property(dice_sprite, "scale", Vector2(1.0, 1.0), roll_duration)\
+	# 1. Animasi Terbang (Position): Melengkung ke target
+	tween.tween_property(self, "global_position", _central_pos, roll_duration)\
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		
-	# ─── BUAT TWEEN CHAIN KHUSUS UNTUK PERGERAKAN (SEQUENTIAL) ───
-	# Kita buat Tween kedua yang tidak paralel agar gerakan memantulnya urutan
-	var move_tween = create_tween()
+	# 2. Animasi Memantul (Scale): Besar - Kecil - Besar - Normal (Multiple Bounces)
+	var scale_tween = create_tween()
+	var t1 = roll_duration * 0.35
+	var t2 = roll_duration * 0.30
+	var t3 = roll_duration * 0.20
+	var t4 = roll_duration * 0.15
 	
-	# Hitung waktu per gerakan chaos agar totalnya pas sesuai roll_duration
-	# (Kita sisakan 30% waktu untuk Fase Kembali ke Rumah)
-	var chaos_duration = roll_duration * 0.65
-	var bounce_count = 2 # Jumlah memantul di pinggir
-	var time_per_bounce = chaos_duration / (bounce_count + 1)
-	
-	# Fase 1: Gerakan Lempar Pertama ke salah satu ujung layar (sesuai player_id)
-	move_tween.tween_property(self, "global_position", _get_player_random_point(p_id), time_per_bounce)\
+	# Pantulan 1 (Paling tinggi)
+	scale_tween.tween_property(dice_sprite, "scale", Vector2(2.2, 2.2), t1)\
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	scale_tween.tween_property(dice_sprite, "scale", Vector2(0.7, 0.7), t2)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	# Pantulan 2 (Sedang)
+	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.3, 1.3), t3)\
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	# Mendarat
+	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.0, 1.0), t4)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		
+	# 3. Animasi Putaran (Rotation)
+	tween.tween_property(dice_sprite, "rotation", 4 * TAU, roll_duration)\
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		
-	# Fase 2: Memantul-mantul random di ujung layar (sesuai player_id)
-	for i in range(bounce_count):
-		move_tween.tween_property(self, "global_position", _get_player_random_point(p_id, true), time_per_bounce)\
-			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
-			
-	# Fase 3: Kembali ke Rumah (Kembali ke Tengah Layar)
-	# Gunakan TRANS_BACK agar ada efek mendarat memantul dikit di tengah
-	move_tween.tween_property(self, "global_position", _central_pos, roll_duration * 0.3)\
-		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	
-	# 4. Kalau semua gerakan sudah selesai mendarat di tengah, panggil show_result
-	move_tween.tween_callback(show_result)
+	# 4. Selesai
+	# Kita tunggu tween posisi utama selesai, lalu panggil show_result
+	tween.chain().tween_callback(show_result)
 
-# Fungsi pembantu untuk mencari koordinat random di dalam setengah layar player
-func _get_player_random_point(p_id: int, use_edges: bool = false) -> Vector2:
-	_viewport_rect = get_viewport_rect()
-	var screen_w := _viewport_rect.size.x
-	var screen_h := _viewport_rect.size.y
-	
-	var padding = 80.0 # Agar dadu tidak terlalu mepet ke ujung
-	
-	# Batasi wilayah x berdasarkan player_id
-	var x_min: float
-	var x_max: float
-	if p_id == 1:
-		x_min = padding
-		x_max = (screen_w * 0.5) - padding
-	elif p_id == 2:
-		x_min = (screen_w * 0.5) + padding
-		x_max = screen_w - padding
-	else: # Fullscreen (p_id == 0 atau lainnya)
-		x_min = padding
-		x_max = screen_w - padding
-		
-	var y_min = padding
-	var y_max = screen_h - padding
-	
-	if use_edges:
-		# Cari titik di pinggiran area aman (efek mantul di ujung)
-		var edge_area = 100.0 # Lebar area pinggiran
-		var x: float
-		var y: float
-		
-		# Pilih acak: mau mantul di kiri/kanan atau atas/bawah
-		if randf() > 0.5: # Mantul di kiri/kanan
-			x = x_min + (randf() * edge_area) if randf() > 0.5 else x_max - (randf() * edge_area)
-			y = randf_range(y_min, y_max)
-		else: # Mantul di atas/bawah
-			x = randf_range(x_min, x_max)
-			y = y_min + (randf() * edge_area) if randf() > 0.5 else y_max - (randf() * edge_area)
-		return Vector2(x, y)
-	else:
-		# Cari titik benar-benar random di seluruh area aman
-		return Vector2(randf_range(x_min, x_max), randf_range(y_min, y_max))
+
 
 func show_result() -> void:
-	# Tampilkan angka mendarat di tengah
+	# Matikan efek blur dan ubah ke frame static
+	_is_rolling = false
+	dice_sprite.texture = d20_static
+	dice_sprite.rotation = 0
+	
+	# Tampilkan angka
 	number_label.text = str(_final_result)
 	number_label.show()
 	
-	# Efek pop-up teks seperti biasa
-	number_label.scale = Vector2(0.2, 0.2)
-	var text_tween = create_tween()
-	text_tween.tween_property(number_label, "scale", Vector2(1.0, 1.0), 0.3)\
+	# --- EFEK JUICY REVEAL ---
+	var base_scale = Vector2(0.6, 0.6) # Ukuran dadu normal yang sudah kita set di _ready
+	var pop_scale = Vector2(1.2, 1.2)  # Ukuran saat meledak besar (Zoom In)
+	
+	self.scale = base_scale
+	number_label.scale = Vector2(1.0, 1.0) # Reset scale angka
+	
+	var reveal_tween = create_tween()
+	
+	# 1. Diam sejenak (Suspense / Anticipation) selama 0.15 detik
+	reveal_tween.tween_interval(0.15)
+	
+	# 2. POP membesar dengan tajam (Zoom in dramatis)
+	reveal_tween.tween_property(self, "scale", pop_scale, 0.15)\
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		
+	# 3. Membal / Kembali ke ukuran semula dengan ayunan (Elastic/Back)
+	reveal_tween.tween_property(self, "scale", base_scale, 0.4)\
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	
-	# Kasih tau sistem kalau dadu udah beres mendarat
-	roll_finished.emit(_final_result)
+	# 4. Beri jeda sedikit lagi agar pemain bisa membaca hasilnya sebelum combat lanjut
+	reveal_tween.tween_interval(0.2)
+	
+	# 5. Emit sinyal roll selesai setelah semua drama selesai
+	reveal_tween.tween_callback(func(): roll_finished.emit(_final_result))
