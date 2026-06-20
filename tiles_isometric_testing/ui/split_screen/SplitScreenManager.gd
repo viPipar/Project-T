@@ -20,6 +20,9 @@ var _cam_p1                : PlayerCamera2D
 var _cam_p2                : PlayerCamera2D
 var _world_node            : Node2D
 
+var _f3_hud_p1: Control
+var _f3_hud_p2: Control
+
 # ── End-turn overlay per player ───────────────────────────────────────────────
 var _p1_end_overlay : ColorRect = null
 var _p2_end_overlay : ColorRect = null
@@ -135,6 +138,41 @@ func _build_layout() -> void:
 
 	# ── Combat HUD bars (bottom of each viewport half) ───────────────────────
 	_spawn_combat_hud_bars()
+	
+	# ── F3 Debug HUDs ────────────────────────────────────────────────────────
+	_spawn_f3_huds()
+
+
+func _spawn_f3_huds() -> void:
+	var hud_scene = load("res://ui/debug/PlayerDebugHUD.gd")
+	if hud_scene:
+		_f3_hud_p1 = MarginContainer.new()
+		_f3_hud_p1.set_script(hud_scene)
+		_f3_hud_p1.set("player_id", 1)
+		_f3_hud_p1.name = "F3DebugHUD_P1"
+		_f3_hud_p1.anchor_left = 1.0
+		_f3_hud_p1.anchor_right = 1.0
+		_f3_hud_p1.anchor_top = 0.0
+		_f3_hud_p1.anchor_bottom = 0.0
+		_f3_hud_p1.offset_left = -220
+		_f3_hud_p1.offset_right = 0
+		_f3_hud_p1.offset_top = 0
+		_f3_hud_p1.offset_bottom = 150
+		_p1_viewport_container.add_child(_f3_hud_p1)
+		
+		_f3_hud_p2 = MarginContainer.new()
+		_f3_hud_p2.set_script(hud_scene)
+		_f3_hud_p2.set("player_id", 2)
+		_f3_hud_p2.name = "F3DebugHUD_P2"
+		_f3_hud_p2.anchor_left = 1.0
+		_f3_hud_p2.anchor_right = 1.0
+		_f3_hud_p2.anchor_top = 0.0
+		_f3_hud_p2.anchor_bottom = 0.0
+		_f3_hud_p2.offset_left = -220
+		_f3_hud_p2.offset_right = 0
+		_f3_hud_p2.offset_top = 0
+		_f3_hud_p2.offset_bottom = 150
+		_p2_viewport_container.add_child(_f3_hud_p2)
 
 
 func _add_player_label(text: String, anchor_left: float, anchor_top: float) -> void:

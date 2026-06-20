@@ -176,6 +176,16 @@ func _build_ui() -> void:
 	)
 	toggle_hbox.add_child(btn_grid)
 	
+	var btn_f3 = Button.new()
+	btn_f3.text = " 📊 Toggle F3 Debug HUD "
+	btn_f3.add_theme_stylebox_override("normal", btn_style_toggle)
+	btn_f3.pressed.connect(func():
+		var main = get_tree().current_scene
+		if main:
+			main.set("_show_f3_debug", not main.get("_show_f3_debug"))
+	)
+	toggle_hbox.add_child(btn_f3)
+	
 	# Cheats HBox
 	var cheats_hbox = HBoxContainer.new()
 	cheats_hbox.add_theme_constant_override("separation", 10)

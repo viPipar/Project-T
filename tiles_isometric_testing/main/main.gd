@@ -22,6 +22,7 @@ extends Node2D
 var _show_debug_panel:  bool = false
 var _show_dice_sandbox: bool = false
 var _show_debug_grid:   bool = false
+var _show_f3_debug:     bool = true
 var _split_screen: SplitScreenManager = null
 var _stat_debug_panel: StatDebugPanel = null  # Debug stat manipulator (F1)
 var roguelike_ui_shell: CanvasLayer = null
@@ -216,7 +217,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_F2:
 				_show_dice_sandbox = not _show_dice_sandbox
 			KEY_F3:
-				_show_debug_grid = not _show_debug_grid
+				_show_f3_debug = not _show_f3_debug
+				_apply_debug_visibility()
 			KEY_F4:
 				if _stat_debug_panel != null:
 					_stat_debug_panel.visible = not _stat_debug_panel.visible
