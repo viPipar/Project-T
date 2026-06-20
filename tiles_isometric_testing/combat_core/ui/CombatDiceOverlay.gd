@@ -75,21 +75,15 @@ func _build_ui() -> void:
 	_dice_panel.size = Vector2(PANEL_W, PANEL_H)
 	_root.add_child(_dice_panel)
 
-	# Background gelap solid, tanpa border aneh
+	# Background dibikin transparan agar tidak mengganggu/menutupi layar
 	var pbg := StyleBoxFlat.new()
-	pbg.bg_color        = Color(0.06, 0.04, 0.14, 0.96)
-	pbg.set_corner_radius_all(8)
+	pbg.bg_color        = Color(0.0, 0.0, 0.0, 0.0) 
 	var pbg_panel := PanelContainer.new()
 	pbg_panel.size = Vector2(PANEL_W, PANEL_H)
 	pbg_panel.add_theme_stylebox_override("panel", pbg)
 	_dice_panel.add_child(pbg_panel)
 
-	# Aksen garis tipis di atas (bukan border kotak)
-	var accent := ColorRect.new()
-	accent.color = Color(0.55, 0.25, 0.95, 0.85)
-	accent.size  = Vector2(PANEL_W, 2)
-	accent.position = Vector2(0, 0)
-	_dice_panel.add_child(accent)
+	# (Garis aksen neon ungu dihapus agar lebih clean)
 
 	# DiceVisual — di kiri panel
 	var dv_scene := load("res://components/dice/sandbox/DiceVisual.tscn") as PackedScene
@@ -253,7 +247,7 @@ func play_attack_sequence(
 	_dice_panel.position = Vector2(_offscreen_x(vp_size, false), _panel_y)
 
 	var tw_dim := create_tween()
-	tw_dim.tween_property(_dim_bg, "color", Color(0, 0, 0, 0.5), 0.25)
+	tw_dim.tween_property(_dim_bg, "color", Color(0, 0, 0, 0.2), 0.25)
 
 	var tw_in := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 	tw_in.tween_property(_dice_panel, "position:x", cx, 0.3)
@@ -264,67 +258,137 @@ func play_attack_sequence(
 	# ── Prompt 1: Tunggu player tekan konfirm untuk D20 ──────────────────────
 	await show_roll_prompt(1)
 
-	# ── Phase 2: Roll D20 (cepat — 1.2 detik) ────────────────────────────────
+	# ── Phase 2: Roll D20 (2.6 detik sesuai setting DiceVisual) ─────────────
 	if _dice_visual.has_method("start_roll"):
-		_dice_visual.start_roll(raw_d20, "d20", 1.2, target_pos, player_id)
+		_dice_visual.start_roll(raw_d20, "d20", 2.6, target_pos, player_id)
 		if _dice_visual.has_signal("roll_finished"):
 			await _dice_visual.roll_finished
 		else:
-			await get_tree().create_timer(1.3).timeout
+			await get_tree().create_timer(2.7).timeout
 	else:
 		await get_tree().create_timer(0.8).timeout
 
-	# ── Phase 3: Modifier muncul ──────────────────────────────────────────────
-	_mod_label.text = "+%d" % modifier if modifier >= 0 else str(modifier)
-	var tw_mod := create_tween().set_ease(Tween.EASE_OUT)
-	tw_mod.tween_property(_mod_label, "modulate:a", 1.0, 0.3)
-	tw_mod.parallel().tween_property(_mod_label, "scale", Vector2(1.15, 1.15), 0.15)
-	tw_mod.tween_property(_mod_label, "scale", Vector2(1.0, 1.0), 0.15)
-	await get_tree().create_timer(0.4).timeout
+	# ── Phase 3: Modifier Absorb (Antrian Modifier Tunggal) ───────────────────
+	if modifier != 0:
+		_mod_label.text = "+%d" % modifier if modifier >= 0 else str(modifier)
+		_mod_label.position = Vector2(180, -20) # Muncul agak di atas kanan dadu
+		_mod_label.modulate.a = 0.0
+		_mod_label.scale = Vector2(1.5, 1.5)
+		
+		# Muncul dan diam sebentar (Anticipation)
+		var tw_mod := create_tween()
+		tw_mod.tween_property(_mod_label, "modulate:a", 1.0, 0.2)
+		tw_mod.parallel().tween_property(_mod_label, "scale", Vector2(1.0, 1.0), 0.2)\
+			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw_mod.tween_interval(0.3) # Tunggu terbaca
+		
+		# Charge (Lelesatkan) menabrak dadu
+		tw_mod.tween_property(_mod_label, "position", _dice_visual.position, 0.2)\
+			.set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_IN)
+		
+		await tw_mod.finished
+		
+		# Benturan! Modifier terserap ke dadu
+		_mod_label.modulate.a = 0.0
+		
+		if _dice_visual.has_node("NumberLabel"):
+			_dice_visual.get_node("NumberLabel").text = str(total_hit)
+			
+		# Animasi membal (Scale Bounce) pada dadu karena menyerap angka
+		var absorb_tw := create_tween()
+		absorb_tw.tween_property(_dice_visual, "scale", Vector2(0.9, 0.9), 0.1)\
+			.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		absorb_tw.tween_property(_dice_visual, "scale", Vector2(0.6, 0.6), 0.3)\
+			.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+		
+		await absorb_tw.finished
+	else:
+		if _dice_visual.has_node("NumberLabel"):
+			_dice_visual.get_node("NumberLabel").text = str(total_hit)
 
-	# ── Phase 4: Total muncul ─────────────────────────────────────────────────
-	_total_label.text = "= %d" % total_hit
-	var tw_tot := create_tween().set_ease(Tween.EASE_OUT)
-	tw_tot.tween_property(_total_label, "modulate:a", 1.0, 0.25)
-	tw_tot.parallel().tween_property(_mod_label, "modulate:a", 0.0, 0.2)
-	await get_tree().create_timer(0.35).timeout
+	# ── Phase 4: (Dilewati, total sudah masuk ke dadu) ────────────────────────
+	_total_label.modulate.a = 0.0
 
-	# ── Phase 5: VS row slide masuk ──────────────────────────────────────────
+	# ── Phase 5: THE CLASH (Roll VS Armor Class) ──────────────────────────────
 	_roll_disp.text = str(total_hit)
 	_ac_disp.text   = "AC %d" % threshold
+	_vs_label.modulate.a = 0.0 # Sembunyikan teks 'vs' polos
+	
 	var acy := _panel_y + PANEL_H * 0.5 - 25.0
-	_vs_row.position = Vector2(_offscreen_x(vp_size, true), acy)
-	_vs_row.modulate.a = 1.0
-
 	var vcx := (vp_size.x - 280.0) * 0.5
-	var tw_vs := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
-	tw_vs.tween_property(_vs_row, "position:x", vcx, 0.3)
-	await tw_vs.finished
-	await get_tree().create_timer(0.25).timeout
+	_vs_row.position = Vector2(vcx, acy)
+	_vs_row.modulate.a = 1.0
+	
+	# Set start position (Kiri jauh untuk Dadu, Kanan jauh untuk AC)
+	var center_roll = 80.0
+	var center_ac   = 140.0
+	
+	_roll_disp.position = Vector2(center_roll - 300, 6)
+	_ac_disp.position   = Vector2(center_ac + 300, 6)
+	_roll_disp.rotation = 0
+	_ac_disp.rotation   = 0
+	_roll_disp.scale    = Vector2.ONE
+	_ac_disp.scale      = Vector2.ONE
+	
+	# The Charge (Melesat ke tengah)
+	var tw_charge := create_tween().set_parallel(true)
+	tw_charge.tween_property(_roll_disp, "position:x", center_roll, 0.25)\
+		.set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_IN)
+	tw_charge.tween_property(_ac_disp, "position:x", center_ac, 0.25)\
+		.set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_IN)
+		
+	await tw_charge.finished
+	
+	# BENTURAN! (Partikel dan Screen Shake)
+	_spawn_clash_particles(_vs_row.global_position + Vector2(130, 25))
+	
+	var tw_shake = create_tween()
+	tw_shake.tween_property(_vs_row, "position:y", acy - 10, 0.05)
+	tw_shake.tween_property(_vs_row, "position:y", acy + 8, 0.05)
+	tw_shake.tween_property(_vs_row, "position:y", acy - 5, 0.05)
+	tw_shake.tween_property(_vs_row, "position:y", acy, 0.05)
 
-	# ── Phase 6: Result text ──────────────────────────────────────────────────
+	# ── Phase 6: Result Resolution ────────────────────────────────────────────
 	var col    : Color
 	var result : String
-	if is_crit:
-		col    = Color(1.0, 0.88, 0.1)
-		result = "CRITICAL"
-		_roll_disp.add_theme_color_override("font_color", col)
-	elif is_hit:
-		col    = Color(0.25, 1.0, 0.45)
-		result = "HIT"
+	var winner_lbl : Label
+	var loser_lbl : Label
+	
+	if is_crit or is_hit:
+		col    = Color(1.0, 0.88, 0.1) if is_crit else Color(0.25, 1.0, 0.45)
+		result = "CRITICAL!" if is_crit else "HIT!"
+		winner_lbl = _roll_disp
+		loser_lbl  = _ac_disp
 		_roll_disp.add_theme_color_override("font_color", col)
 	else:
 		col    = Color(0.85, 0.25, 0.25)
-		result = "MISS"
+		result = "MISS!"
+		winner_lbl = _ac_disp
+		loser_lbl  = _roll_disp
 		_ac_disp.add_theme_color_override("font_color", col)
 
+	# Animasi Kalah (Terlempar ke bawah)
+	var tw_lose = create_tween().set_parallel(true)
+	tw_lose.tween_property(loser_lbl, "position:y", 150.0, 0.4)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw_lose.tween_property(loser_lbl, "rotation", randf_range(-1.5, 1.5), 0.4)
+	tw_lose.tween_property(loser_lbl, "modulate:a", 0.0, 0.3).set_delay(0.1)
+	
+	# Animasi Menang (Membesar & Triumphant)
+	var tw_win = create_tween().set_parallel(true)
+	tw_win.tween_property(winner_lbl, "scale", Vector2(1.5, 1.5), 0.15)\
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw_win.tween_property(winner_lbl, "rotation", 0.1 if is_hit else -0.1, 0.15)
+	
+	# Muncul Teks Result Besar
 	_result_lbl.text = result
 	_result_lbl.add_theme_color_override("font_color", col)
 	var tw_res := create_tween().set_ease(Tween.EASE_OUT)
 	tw_res.tween_property(_result_lbl, "modulate:a", 1.0, 0.25)
 	tw_res.parallel().tween_property(_result_lbl, "scale", Vector2(1.2, 1.2), 0.2)
 	tw_res.tween_property(_result_lbl, "scale", Vector2(1.0, 1.0), 0.2)
-	await get_tree().create_timer(0.8).timeout
+	
+	await get_tree().create_timer(1.2).timeout
 
 	# ── Phase 7: Damage roll ──────────────────────────────────────────────────
 	if is_hit and dmg_rolls.size() > 0:
@@ -339,14 +403,20 @@ func play_attack_sequence(
 		await show_roll_prompt(2)
 
 		for i in range(dmg_rolls.size()):
+			# Semakin banyak jumlah roll, animasi berikutnya akan semakin ngebut!
+			# i=0 -> 2.6s | i=1 -> 1.69s | i=2 -> ~1.1s | dst... (minimum 0.6s)
+			var current_duration = max(0.6, 2.6 * pow(0.65, i))
+			
 			_title_label.text = "Damage %d/%d  —  %s" % [i + 1, dmg_rolls.size(), dmg_formula]
 			if _dice_visual.has_method("start_roll"):
-				_dice_visual.start_roll(dmg_rolls[i], _formula_dice(dmg_formula), 1.2, target_pos, player_id)
+				_dice_visual.start_roll(dmg_rolls[i], _formula_dice(dmg_formula), current_duration, target_pos, player_id)
 				if _dice_visual.has_signal("roll_finished"):
 					await _dice_visual.roll_finished
 				else:
-					await get_tree().create_timer(1.3).timeout
-			await get_tree().create_timer(0.25).timeout
+					await get_tree().create_timer(current_duration + 0.1).timeout
+			
+			var pause = max(0.05, 0.25 * pow(0.65, i))
+			await get_tree().create_timer(pause).timeout
 
 		_total_label.text = "%d damage" % dmg_total
 		_total_label.add_theme_color_override("font_color", Color(1.0, 0.62, 0.2))
@@ -397,11 +467,36 @@ func _reset_state() -> void:
 	_prompt_label.visible    = false
 	_waiting_input           = false
 	_total_label.remove_theme_color_override("font_color")
+	
 	_roll_disp.remove_theme_color_override("font_color")
+	_roll_disp.modulate.a = 1.0
+	
 	_ac_disp.remove_theme_color_override("font_color")
+	_ac_disp.modulate.a = 1.0
 
 
 func _formula_dice(formula: String) -> String:
 	var low := formula.to_lower()
 	var idx := low.find("d")
 	return "d" + low.substr(idx + 1) if idx >= 0 else "d6"
+
+func _spawn_clash_particles(spawn_pos: Vector2) -> void:
+	for i in range(12):
+		var p = ColorRect.new()
+		p.color = Color(1.0, 1.0, 1.0, 0.8)
+		p.size = Vector2(8, 8)
+		p.rotation = randf() * TAU
+		p.global_position = spawn_pos
+		add_child(p)
+		
+		var tw = create_tween().set_parallel(true)
+		var angle = randf() * TAU
+		var dist = randf_range(40.0, 100.0)
+		var target_p = spawn_pos + Vector2(cos(angle), sin(angle)) * dist
+		
+		tw.tween_property(p, "global_position", target_p, 0.35)\
+			.set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+		tw.tween_property(p, "scale", Vector2.ZERO, 0.35)\
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.tween_property(p, "rotation", p.rotation + randf_range(-3, 3), 0.35)
+		tw.chain().tween_callback(p.queue_free)

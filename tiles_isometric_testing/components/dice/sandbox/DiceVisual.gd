@@ -20,6 +20,7 @@ var _central_pos: Vector2 # Posisi tengah layar tempat mendarat
 var _is_rolling: bool = false
 var _roll_timer: float = 0.0
 var _roll_frame_idx: int = 0
+var _current_roll_duration: float = 2.6
 
 # Kamus/List Asset D20
 var d20_static: Texture2D = preload("res://assets/dice/d20/d20_static.png")
@@ -61,7 +62,7 @@ func _process(delta: float) -> void:
 			dice_sprite.texture = d20_rolls[_roll_frame_idx]
 
 
-func start_roll(result: int, dice_type: String = "custom", roll_duration: float = 1.8, target_pos: Vector2 = Vector2.ZERO, p_id: int = 0) -> void:
+func start_roll(result: int, dice_type: String = "custom", roll_duration: float = 2.6, target_pos: Vector2 = Vector2.ZERO, p_id: int = 0) -> void:
 	_final_result = result
 	number_label.hide()
 	dice_sprite.visible = true
@@ -75,6 +76,8 @@ func start_roll(result: int, dice_type: String = "custom", roll_duration: float 
 	# --- RESET POSISI DAN ROTASI AWAL ---
 	dice_sprite.rotation = 0
 	dice_sprite.scale = Vector2(0.5, 0.5) # Mulai dari kecil
+	self.scale = Vector2(0.6, 0.6) # Pastikan base scale reset jika terpotong
+	_current_roll_duration = roll_duration
 	
 	_viewport_rect = get_viewport_rect()
 	var screen_w := _viewport_rect.size.x
@@ -101,23 +104,41 @@ func start_roll(result: int, dice_type: String = "custom", roll_duration: float 
 	tween.tween_property(self, "global_position", _central_pos, roll_duration)\
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		
-	# 2. Animasi Memantul (Scale): Besar - Kecil - Besar - Normal (Multiple Bounces)
+	# 2. Animasi Memantul (Scale): 4 Kali Pantulan (Lebih banyak)
 	var scale_tween = create_tween()
-	var t1 = roll_duration * 0.35
-	var t2 = roll_duration * 0.30
-	var t3 = roll_duration * 0.20
-	var t4 = roll_duration * 0.15
+	
+	# Distribusi waktu berdasarkan persentase roll_duration (Total 100%)
+	var b1_up = roll_duration * 0.20
+	var b1_dn = roll_duration * 0.18
+	var b2_up = roll_duration * 0.16
+	var b2_dn = roll_duration * 0.14
+	var b3_up = roll_duration * 0.10
+	var b3_dn = roll_duration * 0.10
+	var b4_up = roll_duration * 0.06
+	var b4_dn = roll_duration * 0.06
 	
 	# Pantulan 1 (Paling tinggi)
-	scale_tween.tween_property(dice_sprite, "scale", Vector2(2.2, 2.2), t1)\
+	scale_tween.tween_property(dice_sprite, "scale", Vector2(2.5, 2.5), b1_up)\
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	scale_tween.tween_property(dice_sprite, "scale", Vector2(0.7, 0.7), t2)\
+	scale_tween.tween_property(dice_sprite, "scale", Vector2(0.5, 0.5), b1_dn)\
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	# Pantulan 2 (Sedang)
-	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.3, 1.3), t3)\
+		
+	# Pantulan 2 
+	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.8, 1.8), b2_up)\
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	# Mendarat
-	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.0, 1.0), t4)\
+	scale_tween.tween_property(dice_sprite, "scale", Vector2(0.7, 0.7), b2_dn)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		
+	# Pantulan 3
+	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.4, 1.4), b3_up)\
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	scale_tween.tween_property(dice_sprite, "scale", Vector2(0.85, 0.85), b3_dn)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		
+	# Pantulan 4 (Mendarat)
+	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.15, 1.15), b4_up)\
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.0, 1.0), b4_dn)\
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 		
 	# 3. Animasi Putaran (Rotation)
@@ -149,19 +170,22 @@ func show_result() -> void:
 	
 	var reveal_tween = create_tween()
 	
-	# 1. Diam sejenak (Suspense / Anticipation) selama 0.15 detik
-	reveal_tween.tween_interval(0.15)
+	# Ambil rasio percepatan agar animasi pop-up (reveal) juga ngebut seiring durasi roll
+	var spd_mult = clamp(_current_roll_duration / 2.6, 0.15, 1.0)
+	
+	# 1. Diam sejenak (Suspense / Anticipation)
+	reveal_tween.tween_interval(0.15 * spd_mult)
 	
 	# 2. POP membesar dengan tajam (Zoom in dramatis)
-	reveal_tween.tween_property(self, "scale", pop_scale, 0.15)\
+	reveal_tween.tween_property(self, "scale", pop_scale, 0.15 * spd_mult)\
 		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 		
 	# 3. Membal / Kembali ke ukuran semula dengan ayunan (Elastic/Back)
-	reveal_tween.tween_property(self, "scale", base_scale, 0.4)\
+	reveal_tween.tween_property(self, "scale", base_scale, 0.4 * spd_mult)\
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	
 	# 4. Beri jeda sedikit lagi agar pemain bisa membaca hasilnya sebelum combat lanjut
-	reveal_tween.tween_interval(0.2)
+	reveal_tween.tween_interval(0.2 * spd_mult)
 	
 	# 5. Emit sinyal roll selesai setelah semua drama selesai
 	reveal_tween.tween_callback(func(): roll_finished.emit(_final_result))
