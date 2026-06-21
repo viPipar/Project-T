@@ -30,6 +30,17 @@ var d20_rolls: Array[Texture2D] = [
 	preload("res://assets/dice/d20/d20_roll3.png")
 ]
 
+# Kamus/List Asset D12
+var d12_static: Texture2D = preload("res://assets/dice/d12/d12_static.png")
+var d12_rolls: Array[Texture2D] = [
+	preload("res://assets/dice/d12/d12_roll1.png"),
+	preload("res://assets/dice/d12/d12_roll2.png"),
+	preload("res://assets/dice/d12/d12_roll3.png")
+]
+
+var _current_rolls: Array[Texture2D] = d20_rolls
+var _current_static: Texture2D = d20_static
+
 func _ready() -> void:
 	# Sembunyikan angka dan sprite saat awal
 	number_label.hide()
@@ -58,8 +69,9 @@ func _process(delta: float) -> void:
 		# Ganti frame setiap 0.05 detik untuk efek blur
 		if _roll_timer > 0.05:
 			_roll_timer = 0.0
-			_roll_frame_idx = (_roll_frame_idx + 1) % d20_rolls.size()
-			dice_sprite.texture = d20_rolls[_roll_frame_idx]
+			if _current_rolls.size() > 0:
+				_roll_frame_idx = (_roll_frame_idx + 1) % _current_rolls.size()
+				dice_sprite.texture = _current_rolls[_roll_frame_idx]
 
 
 func start_roll(result: int, dice_type: String = "custom", roll_duration: float = 2.6, target_pos: Vector2 = Vector2.ZERO, p_id: int = 0) -> void:
@@ -67,11 +79,19 @@ func start_roll(result: int, dice_type: String = "custom", roll_duration: float 
 	number_label.hide()
 	dice_sprite.visible = true
 	
+	# --- PILIH TIPE DADU ---
+	if dice_type == "d12":
+		_current_rolls = d12_rolls
+		_current_static = d12_static
+	else:
+		_current_rolls = d20_rolls
+		_current_static = d20_static
+	
 	# Mulai efek blur
 	_is_rolling = true
 	_roll_timer = 0.0
 	_roll_frame_idx = 0
-	dice_sprite.texture = d20_rolls[0]
+	dice_sprite.texture = _current_rolls[0]
 		
 	# --- RESET POSISI DAN ROTASI AWAL ---
 	dice_sprite.rotation = 0
@@ -154,7 +174,7 @@ func start_roll(result: int, dice_type: String = "custom", roll_duration: float 
 func show_result() -> void:
 	# Matikan efek blur dan ubah ke frame static
 	_is_rolling = false
-	dice_sprite.texture = d20_static
+	dice_sprite.texture = _current_static
 	dice_sprite.rotation = 0
 	
 	# Tampilkan angka

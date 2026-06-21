@@ -282,7 +282,7 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 
 	# ── Siapkan data damage (diroll di sini, tapi diapply SETELAH animasi) ────
 	var dmg_formula := base_dice
-	var dmg_rolls   : Array[int] = []
+	var dmg_rolls   : Array = []
 	var dmg_total   : int = 0
 	
 	var stat_comp = attacker.get_node_or_null("StatsComponent") as StatsComponent
@@ -297,6 +297,7 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 	if hit:
 		# Roll detail: ambil Array tiap dadu agar bisa divisualisasikan satu per satu
 		var base_detail := _dice_roller.roll_detailed(base_dice)
+		# Gunakan assign atau biarkan untyped karena return dari base_detail untyped
 		dmg_rolls = base_detail["rolls"]
 		dmg_total = base_detail["total"] + dmg_mod
 
