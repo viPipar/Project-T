@@ -186,6 +186,33 @@ func _build_ui() -> void:
 	)
 	toggle_hbox.add_child(btn_f3)
 	
+	# Map Selection HBox
+	var map_hbox = HBoxContainer.new()
+	map_hbox.add_theme_constant_override("separation", 10)
+	info_vbox.add_child(map_hbox)
+	
+	var map_lbl = Label.new()
+	map_lbl.text = "Load Map ID:"
+	map_hbox.add_child(map_lbl)
+	
+	var map_spin = SpinBox.new()
+	map_spin.min_value = 1
+	map_spin.max_value = 99
+	if GridManager != null:
+		map_spin.value = GridManager.current_map_id
+	map_hbox.add_child(map_spin)
+	
+	var btn_load_map = Button.new()
+	btn_load_map.text = " Reload Scene with Map "
+	btn_load_map.add_theme_stylebox_override("normal", btn_style_toggle)
+	btn_load_map.pressed.connect(func():
+		if GridManager != null:
+			GridManager.current_map_id = int(map_spin.value)
+		get_tree().reload_current_scene()
+	)
+	map_hbox.add_child(btn_load_map)
+	
+	
 	# Cheats HBox
 	var cheats_hbox = HBoxContainer.new()
 	cheats_hbox.add_theme_constant_override("separation", 10)
@@ -289,12 +316,9 @@ func _build_ui() -> void:
 	btn_map.text = "🗺️ Open Roguelite Map Generator"
 	btn_map.add_theme_color_override("font_color", Color.AQUA)
 	btn_map.pressed.connect(func():
-		var shell_scene = load("res://ui/roguelike/RoguelikeUIShell.tscn")
-		if shell_scene:
-			var shell_inst = shell_scene.instantiate()
-			get_tree().current_scene.add_child(shell_inst)
-			shell_inst.show_screen("res://ui/roguelike/MapScreen.tscn")
-			self.visible = false # hide debug menu
+		# Map sekarang adalah scene mandiri, bukan overlay
+		get_tree().change_scene_to_file("res://ui/roguelike/RoguelikeUIShell.tscn")
+		self.visible = false # hide debug menu
 	)
 	ev_vbox.add_child(btn_map)
 	

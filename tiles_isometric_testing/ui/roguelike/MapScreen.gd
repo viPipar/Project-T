@@ -17,7 +17,7 @@ func _ready() -> void:
 	btn_close.add_theme_font_size_override("font_size", 24)
 	btn_close.position = Vector2(20, 20)
 	btn_close.pressed.connect(func():
-		# Walk up the tree to find the shell, bypassing any dynamic renaming issues
+		print("[MapScreen] Closing map, returning to combat...")
 		var current = get_parent()
 		var found_shell = null
 		while current and current != get_tree().get_root():
@@ -26,15 +26,13 @@ func _ready() -> void:
 				break
 			current = current.get_parent()
 			
-		if found_shell:
+		if found_shell and found_shell.get_parent() != get_tree().root:
+			var main_node = found_shell.get_parent()
+			if main_node and main_node.has_node("DebugMapLayer"):
+				main_node.get_node("DebugMapLayer").visible = true
 			found_shell.queue_free()
 		else:
-			queue_free()
-			
-		# Restore Debug Menu
-		var debug_panel = get_tree().get_root().find_child("DebugPanel", true, false)
-		if debug_panel:
-			debug_panel.visible = true
+			get_tree().change_scene_to_file("res://main/main.tscn")
 	)
 	add_child(btn_close)
 	
@@ -74,13 +72,57 @@ func _ready() -> void:
 	)
 	add_child(btn_force_loot)
 
-	var graph = NodeGraph.new()
-	graph.generate()
+	# --- UI Debug Seed (Pojok Kanan Atas) ---
+	var seed_container = HBoxContainer.new()
+	# Resolusi window ternyata 1280x720, 1500 ada di luar layar! Kita pindah ke 950, 60
+	seed_container.position = Vector2(950, 60)
 	
-	path_handler = PathHandler.new()
-	path_handler.init(graph)
+	var seed_input = LineEdit.new()
+	seed_input.placeholder_text = "Enter Seed"
+	seed_input.custom_minimum_size = Vector2(200, 0)
+	seed_input.add_theme_font_size_override("font_size", 24)
 	
-	# Precalculate positions so both maps look identical
+	# Beri seed awal secara random agar setiap run berbeda kalau tidak diatur
+	var random_seed = "MAP_" + str(randi() % 10000)
+	seed_input.text = random_seed
+	
+	var btn_reload = Button.new()
+	btn_reload.text = "🔄 Reload Map"
+	btn_reload.add_theme_font_size_override("font_size", 24)
+	
+	seed_container.add_child(seed_input)
+	seed_container.add_child(btn_reload)
+	add_child(seed_container)
+	
+	btn_reload.pressed.connect(func():
+		RunManager.start_or_reload_run(seed_input.text)
+		reload_ui_from_run_manager()
+	)
+	
+	# Render awal
+	if RunManager.node_graph == null:
+		RunManager.start_or_reload_run(random_seed)
+		seed_input.text = random_seed
+	else:
+		seed_input.text = RunManager.current_seed
+		
+	reload_ui_from_run_manager()
+
+func reload_ui_from_run_manager() -> void:
+	# 1. Bersihkan UI map yang lama (untuk Reload)
+	for child in map_content_p1.get_children():
+		child.queue_free()
+	for child in map_content_p2.get_children():
+		child.queue_free()
+		
+	node_buttons_p1.clear()
+	node_buttons_p2.clear()
+	
+	# 3. Baca Graph dari RunManager
+	var graph = RunManager.node_graph
+	path_handler = RunManager.path_handler
+	
+	# 4. Kalkulasi Posisi
 	var node_positions: Dictionary = {}
 	var layer_height = 200
 	var current_y = 1800
@@ -96,6 +138,7 @@ func _ready() -> void:
 			node_positions[layer[i].id] = Vector2(center_x + jitter_x, current_y + jitter_y)
 		current_y -= layer_height
 		
+	# 5. Render UI
 	_generate_map_ui(map_content_p1, graph, node_positions, node_buttons_p1)
 	_generate_map_ui(map_content_p2, graph, node_positions, node_buttons_p2)
 	
@@ -188,17 +231,8 @@ func _on_node_clicked(node_id: int, node_type: NodeGraph.NodeType) -> void:
 	
 	if node_type in [NodeGraph.NodeType.BATTLE, NodeGraph.NodeType.ELITE, NodeGraph.NodeType.BOSS]:
 		print("[MapScreen] Initiating combat for node type: ", node_type)
-		# Freeze map screen
-		set_process_input(false)
-		set_process_unhandled_input(false)
-		mouse_filter = Control.MOUSE_FILTER_IGNORE
-		# Disable all buttons
-		for dict in [node_buttons_p1, node_buttons_p2]:
-			for key in dict:
-				dict[key].disabled = true
-				
-		if EventBus != null:
-			EventBus.start_combat.emit(node_type)
+		# Berpindah ke Scene Pertarungan secara penuh
+		get_tree().change_scene_to_file("res://main/main.tscn")
 	elif node_type == NodeGraph.NodeType.SHOP:
 		print("[MapScreen] Entering SHOP node!")
 		var current = get_parent()

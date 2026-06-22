@@ -29,24 +29,61 @@ var roguelike_ui_shell: CanvasLayer = null
 var _action_wheel_test_overlay: Control = null
 
 func _ready() -> void:
+	# Bersihkan memory/state sisa dari scene sebelumnya
+	if TurnManager != null and TurnManager.has_method("clear_state"):
+		TurnManager.clear_state()
+	if GridManager != null and GridManager.has_method("clear_state"):
+		GridManager.clear_state()
+		
 	var cursor_scene := preload("res://world/SelectionCursor.tscn")
-	
-	# Instantiate Roguelike UI early
-	var shell_scene = load("res://ui/roguelike/RoguelikeUIShell.tscn")
-	if shell_scene:
-		roguelike_ui_shell = shell_scene.instantiate()
-		add_child(roguelike_ui_shell)
+	# (Dihapus: MapScreen kini dipanggil secara penuh lewat RunManager/Scene terpisah, bukan overlay)
 
-	GridManager.load_walls_for_map(1) # manggil mapping
+	# --- Tombol Debug Return to Map ---
+	var debug_map_layer = CanvasLayer.new()
+	debug_map_layer.name = "DebugMapLayer"
+	debug_map_layer.layer = 128
+	var btn_return_map = Button.new()
+	btn_return_map.text = "🔙 Return to Map"
+	btn_return_map.add_theme_font_size_override("font_size", 24)
+	btn_return_map.position = Vector2(20, 150)
+	btn_return_map.mouse_filter = Control.MOUSE_FILTER_STOP
+	btn_return_map.pressed.connect(func():
+		if has_node("RoguelikeUIShell"): return
+		var shell_scene = load("res://ui/roguelike/RoguelikeUIShell.tscn")
+		var shell_node = shell_scene.instantiate()
+		shell_node.name = "RoguelikeUIShell"
+		add_child(shell_node)
+		shell_node.visible = true
+		shell_node.show_screen("res://ui/roguelike/MapScreen.tscn")
+		debug_map_layer.visible = false
+	)
+	debug_map_layer.add_child(btn_return_map)
+	add_child(debug_map_layer)
+
+	# ── Load Component-Based Map ──────────────────────────────────────────────
+	var map_id = GridManager.current_map_id if GridManager.current_map_id > 0 else 1
+	var map_path = "res://world/maps/Map_%d.tscn" % map_id
+	
+	if ResourceLoader.exists(map_path):
+		var map_scene = load(map_path)
+		var map_node = map_scene.instantiate()
+		# Taruh di urutan pertama agar dirender di bawah karakter
+		world.add_child(map_node)
+		world.move_child(map_node, 0)
+	else:
+		push_error("[Main] Map scene tidak ditemukan di %s!" % map_path)
 
 	# ── Setup Split-Screen ────────────────────────────────────────────────────
 	_setup_split_screen()
 
 	# ── Spawn Player 1 ────────────────────────────────────────────────────────
-	var p1: Node = _spawn_player_from_json("aria", "Aria", 1, Vector2i(5, 7))
+	var p1_pos = _get_valid_spawn_pos(Vector2i(5, 7))
+	var p1: Node = _spawn_player_from_json("aria", "Aria", 1, p1_pos)
 
 	# ── Spawn Player 2 ────────────────────────────────────────────────────────
-	var p2: Node = _spawn_player_from_json("kael", "Kael", 2, Vector2i(7, 7))
+	var p2_pos = _get_valid_spawn_pos(Vector2i(7, 7))
+	var p2: Node = _spawn_player_from_json("kael", "Kael", 2, p2_pos)
+
 
 	var p1_class := p1.get_node_or_null("ClassComponent") as ClassComponent
 	if p1_class != null:
@@ -283,3 +320,18 @@ func _apply_debug_visibility() -> void:
 	var autoload_debug := get_node_or_null("/root/DebugGrid")
 	if autoload_debug != null:
 		autoload_debug.visible = _show_debug_grid
+
+func _get_valid_spawn_pos(desired: Vector2i) -> Vector2i:
+	if GridManager.is_walkable(desired):
+		return desired
+	
+	# Spiral search for the nearest walkable tile
+	for r in range(1, 10):
+		for dx in range(-r, r + 1):
+			for dy in range(-r, r + 1):
+				# Only check the perimeter of the radius
+				if abs(dx) == r or abs(dy) == r:
+					var p = desired + Vector2i(dx, dy)
+					if GridManager.is_walkable(p):
+						return p
+	return desired

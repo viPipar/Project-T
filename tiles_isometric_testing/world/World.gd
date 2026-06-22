@@ -1,6 +1,5 @@
 extends Node2D
 
-@onready var tile_map: TileMapLayer = $TileMapLayer
 @onready var entities: Node2D       = $Entities
 # Camera2D bisa dihapus oleh SplitScreenManager — gunakan get_node_or_null di _ready()
 var camera: Camera2D = null

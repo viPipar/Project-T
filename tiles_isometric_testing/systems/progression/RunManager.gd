@@ -14,8 +14,25 @@ var max_depth: int = 3 # Let's say 3 floors/layers per run
 # References to other systems that need resetting
 # (Will be populated once other systems are implemented)
 # var inventory_manager
-# var node_graph
 # var coin_economy
+var node_graph: NodeGraph
+var path_handler: PathHandler
+var current_seed: String
+
+func start_or_reload_run(seed_text: String) -> void:
+	current_seed = seed_text
+	var seed_num = seed_text.hash() if seed_text != "" else randi()
+	seed(seed_num)
+	print("[RunManager] Generating Map with seed: ", seed_text, " (Hash: ", seed_num, ")")
+	
+	node_graph = NodeGraph.new()
+	node_graph.generate()
+	
+	path_handler = PathHandler.new()
+	path_handler.init(node_graph)
+	
+	is_run_active = true
+	current_depth = 1
 
 func _ready() -> void:
 	# Add self to autoloads conceptually, or instantiate in main scene

@@ -157,7 +157,8 @@ func _on_confirm() -> void:
 						print("Nothing in the way — projectile flies through")
 				# TODO: co-op / pass turn
 	elif not walkable:
-		movement.interact_move_to(target)
+		# Tile is a wall/obstacle — do NOT move there
+		movement.move_blocked.emit(target)
 	else:
 		movement.move_to(target)
 

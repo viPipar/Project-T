@@ -8,14 +8,18 @@ var current_screen: Control = null
 var dual_cursor: DualCursorUI = null
 
 func _ready() -> void:
-	# Hide by default
-	visible = false
-	
 	_setup_dual_cursor()
 	
 	# We should hook to CoinEconomy to update wallets, but for now just mock
 	_update_wallets()
 	_apply_neobrutalism()
+	
+	# Jika ini dipanggil sebagai Scene mandiri (bukan di-overlay), otomatis munculkan
+	if get_parent() == get_tree().root:
+		visible = true
+		show_screen("res://ui/roguelike/MapScreen.tscn")
+	else:
+		visible = false
 
 func _setup_dual_cursor() -> void:
 	dual_cursor = DualCursorUI.new()

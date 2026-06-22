@@ -38,6 +38,9 @@ func _process(_delta: float) -> void:
 	var fps = Engine.get_frames_per_second()
 	var text = "[b][color=#55ff55]P%d Debug (F3)[/color][/b]\n" % player_id
 	text += "FPS: %d\n" % fps
+	if GridManager != null:
+		text += "Current Map: %d\n" % GridManager.current_map_id
+	
 	
 	# 1. Player Stats
 	var player_node = null

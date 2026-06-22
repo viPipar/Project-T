@@ -31,6 +31,10 @@ extends Node
 # ── Tipe Entity ───────────────────────────────────────────────────────────────
 enum EntityType { PLAYER, NPC, ENEMY }
 
+# ── Map State & Signals ────────────────────────────────────────────────────────
+signal map_changed(map_id: int)
+var current_map_id: int = 2
+
 # ── State Internal ────────────────────────────────────────────────────────────
 var grid_size: Vector2i = Vector2i(16, 16)
 
@@ -48,11 +52,18 @@ var _astar: AStarGrid2D
 
 # ── Lifecycle ─────────────────────────────────────────────────────────────────
 
+func clear_state() -> void:
+	_walkable.clear()
+	_entities.clear()
+	_items.clear()
+	setup_grid(grid_size.x, grid_size.y)
+
 func _ready() -> void:
 	setup_grid(grid_size.x, grid_size.y)
 
 
 func setup_grid(width: int, height: int) -> void:
+	push_warning("[GridManager] setup_grid called: " + str(width) + "x" + str(height))
 	grid_size = Vector2i(width, height)
 	_walkable.clear()
 	_entities.clear()
@@ -80,14 +91,6 @@ func setup_walls(coords_list: Array[Vector2i]) -> void:
 	_astar.update()
 	print("[GridManager] %d wall dipasang." % coords_list.size())
 
-
-## Load wall dari MapData berdasarkan map_id.
-func load_walls_for_map(map_id: int) -> void:
-	var walls: Array[Vector2i] = MapData.get_walls(map_id)
-	if walls.is_empty():
-		print("[GridManager] Map %d tidak punya wall atau tidak ditemukan." % map_id)
-		return
-	setup_walls(walls)
 
 
 ## Set satu tile walkable atau tidak (wall).

@@ -23,6 +23,16 @@ var _current_enemy: Node = null
 
 var _started: bool = false
 
+func clear_state() -> void:
+	turn_number = 1
+	phase = Phase.PLAYERS
+	_players.clear()
+	_player_ids.clear()
+	_ended_players.clear()
+	_enemy_queue.clear()
+	_current_enemy = null
+	_started = false
+
 
 func register_player(player: Node) -> void:
 	if player == null:

@@ -1,0 +1,10 @@
+Opened successfully!
+TOTAL CELLS: 1899
+Cell (3, 6) -> Source: 1, Atlas: (0, 3), Blocked: false
+Cell (4, 6) -> Source: 1, Atlas: (2, 6), Blocked: true
+Cell (5, 6) -> Source: 1, Atlas: (0, 3), Blocked: false
+Cell (6, 6) -> Source: 1, Atlas: (0, 3), Blocked: false
+Cell (3, 5) -> Source: 1, Atlas: (0, 3), Blocked: false
+Cell (4, 5) -> Source: 1, Atlas: (0, 3), Blocked: false
+Cell (5, 5) -> Source: 1, Atlas: (5, 8), Blocked: false
+Cell (6, 5) -> Source: 1, Atlas: (0, 3), Blocked: false
