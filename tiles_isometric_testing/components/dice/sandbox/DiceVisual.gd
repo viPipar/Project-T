@@ -22,24 +22,29 @@ var _roll_timer: float = 0.0
 var _roll_frame_idx: int = 0
 var _current_roll_duration: float = 2.6
 
-# Kamus/List Asset D20
-var d20_static: Texture2D = preload("res://assets/dice/d20/d20_static.png")
-var d20_rolls: Array[Texture2D] = [
-	preload("res://assets/dice/d20/d20_roll1.png"),
-	preload("res://assets/dice/d20/d20_roll2.png"),
-	preload("res://assets/dice/d20/d20_roll3.png")
-]
+# Cache Asset Dadu
+var _dice_cache_static: Dictionary = {}
+var _dice_cache_rolls: Dictionary = {}
 
-# Kamus/List Asset D12
-var d12_static: Texture2D = preload("res://assets/dice/d12/d12_static.png")
-var d12_rolls: Array[Texture2D] = [
-	preload("res://assets/dice/d12/d12_roll1.png"),
-	preload("res://assets/dice/d12/d12_roll2.png"),
-	preload("res://assets/dice/d12/d12_roll3.png")
-]
+var _current_rolls: Array[Texture2D] = []
+var _current_static: Texture2D = null
 
-var _current_rolls: Array[Texture2D] = d20_rolls
-var _current_static: Texture2D = d20_static
+func _get_dice_static(type: String) -> Texture2D:
+	if not _dice_cache_static.has(type):
+		var path = "res://assets/dice/%s/%s_static.png" % [type, type]
+		if not ResourceLoader.exists(path): type = "d20"; path = "res://assets/dice/d20/d20_static.png"
+		_dice_cache_static[type] = load(path)
+	return _dice_cache_static[type]
+
+func _get_dice_rolls(type: String) -> Array[Texture2D]:
+	if not _dice_cache_rolls.has(type):
+		var arr: Array[Texture2D] = []
+		if not ResourceLoader.exists("res://assets/dice/%s/%s_roll_1.png" % [type, type]): type = "d20"
+		arr.append(load("res://assets/dice/%s/%s_roll_1.png" % [type, type]))
+		arr.append(load("res://assets/dice/%s/%s_roll_2.png" % [type, type]))
+		arr.append(load("res://assets/dice/%s/%s_roll_3.png" % [type, type]))
+		_dice_cache_rolls[type] = arr
+	return _dice_cache_rolls[type]
 
 func _ready() -> void:
 	# Sembunyikan angka dan sprite saat awal
@@ -80,18 +85,18 @@ func start_roll(result: int, dice_type: String = "custom", roll_duration: float 
 	dice_sprite.visible = true
 	
 	# --- PILIH TIPE DADU ---
-	if dice_type == "d12":
-		_current_rolls = d12_rolls
-		_current_static = d12_static
-	else:
-		_current_rolls = d20_rolls
-		_current_static = d20_static
+	if dice_type == "custom" or dice_type == "":
+		dice_type = "d20"
+	
+	_current_rolls = _get_dice_rolls(dice_type)
+	_current_static = _get_dice_static(dice_type)
 	
 	# Mulai efek blur
 	_is_rolling = true
 	_roll_timer = 0.0
 	_roll_frame_idx = 0
-	dice_sprite.texture = _current_rolls[0]
+	if _current_rolls.size() > 0:
+		dice_sprite.texture = _current_rolls[0]
 		
 	# --- RESET POSISI DAN ROTASI AWAL ---
 	dice_sprite.rotation = 0
@@ -161,9 +166,9 @@ func start_roll(result: int, dice_type: String = "custom", roll_duration: float 
 	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.0, 1.0), b4_dn)\
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 		
-	# 3. Animasi Putaran (Rotation)
-	tween.tween_property(dice_sprite, "rotation", 4 * TAU, roll_duration)\
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	# 3. Animasi Putaran (Rotation) - Dinonaktifkan sesuai permintaan
+	# tween.tween_property(dice_sprite, "rotation", 4 * TAU, roll_duration)\
+	# 	.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		
 	# 4. Selesai
 	# Kita tunggu tween posisi utama selesai, lalu panggil show_result
@@ -209,3 +214,5 @@ func show_result() -> void:
 	
 	# 5. Emit sinyal roll selesai setelah semua drama selesai
 	reveal_tween.tween_callback(func(): roll_finished.emit(_final_result))
+
+

@@ -478,7 +478,13 @@ func _reset_state() -> void:
 func _formula_dice(formula: String) -> String:
 	var low := formula.to_lower()
 	var idx := low.find("d")
-	return "d" + low.substr(idx + 1) if idx >= 0 else "d6"
+	if idx < 0: return "d6"
+	var sub := low.substr(idx + 1)
+	var num_str := ""
+	for i in range(sub.length()):
+		if sub[i].is_valid_int(): num_str += sub[i]
+		else: break
+	return "d" + num_str
 
 func _spawn_clash_particles(spawn_pos: Vector2) -> void:
 	for i in range(12):
@@ -500,3 +506,4 @@ func _spawn_clash_particles(spawn_pos: Vector2) -> void:
 			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		tw.tween_property(p, "rotation", p.rotation + randf_range(-3, 3), 0.35)
 		tw.chain().tween_callback(p.queue_free)
+

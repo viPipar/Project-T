@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://2st3lw6keyn"
-path="res://.godot/imported/d20_roll1.png-a31aeb8c6c128719bc0af47faf6980d7.ctex"
+uid="uid://qj2kvdsbg0pk"
+path="res://.godot/imported/d4_roll_2.png-d111bcbb16e4b230907c9e85e9d913cc.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/dice/d20/d20_roll1.png"
-dest_files=["res://.godot/imported/d20_roll1.png-a31aeb8c6c128719bc0af47faf6980d7.ctex"]
+source_file="res://assets/dice/d4/d4_roll_2.png"
+dest_files=["res://.godot/imported/d4_roll_2.png-d111bcbb16e4b230907c9e85e9d913cc.ctex"]
 
 [params]
 
