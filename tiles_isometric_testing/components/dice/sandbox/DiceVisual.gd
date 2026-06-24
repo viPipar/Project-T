@@ -21,6 +21,8 @@ var _is_rolling: bool = false
 var _roll_timer: float = 0.0
 var _roll_frame_idx: int = 0
 var _current_roll_duration: float = 2.6
+var _outcome: String = "hit"
+var _player_id: int = 0
 
 # Cache Asset Dadu
 var _dice_cache_static: Dictionary = {}
@@ -47,6 +49,7 @@ func _get_dice_rolls(type: String) -> Array[Texture2D]:
 	return _dice_cache_rolls[type]
 
 func _ready() -> void:
+
 	# Sembunyikan angka dan sprite saat awal
 	number_label.hide()
 	dice_sprite.visible = false
@@ -55,6 +58,10 @@ func _ready() -> void:
 	
 	# --- PERBAIKAN TEKS / LABEL ---
 	# Set ukuran kotak label cukup besar agar teks muat
+	var custom_font = load("res://assets/ui_assets/MedievalSharp-Regular.ttf")
+	if custom_font:
+		number_label.add_theme_font_override("font", custom_font)
+
 	number_label.size = Vector2(100, 60)
 	# Set pivot ke tengah label agar animasi pop-up meledak dari tengah, bukan dari ujung kiri atas
 	number_label.pivot_offset = Vector2(50, 30)
@@ -62,7 +69,8 @@ func _ready() -> void:
 	# Offset Y = 15 ditambahkan karena wajah segitiga tengah D20 posisinya agak ke bawah dari origin
 	number_label.position = Vector2(-50, -30 + 15)
 	# Perbesar ukuran font-nya agar lebih proporsional dengan D20
-	number_label.add_theme_font_size_override("font_size", 42)
+	number_label.add_theme_font_size_override("font_size", 48)
+	number_label.add_theme_constant_override("outline_size", 2)
 	
 	# Ambil data ukuran layar dan posisi tengahnya
 	_viewport_rect = get_viewport_rect()
@@ -79,9 +87,13 @@ func _process(delta: float) -> void:
 				dice_sprite.texture = _current_rolls[_roll_frame_idx]
 
 
-func start_roll(result: int, dice_type: String = "custom", roll_duration: float = 2.6, target_pos: Vector2 = Vector2.ZERO, p_id: int = 0) -> void:
+func start_roll(result: int, dice_type: String = "custom", roll_duration: float = 2.6, target_pos: Vector2 = Vector2.ZERO, p_id: int = 0, outcome: String = "hit") -> void:
 	_final_result = result
+	_outcome = outcome
+	_player_id = p_id
+	
 	number_label.hide()
+	
 	dice_sprite.visible = true
 	
 	# --- PILIH TIPE DADU ---
@@ -147,24 +159,28 @@ func start_roll(result: int, dice_type: String = "custom", roll_duration: float 
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	scale_tween.tween_property(dice_sprite, "scale", Vector2(0.5, 0.5), b1_dn)\
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	scale_tween.tween_callback(func(): _spawn_ripple(1.0))
 		
 	# Pantulan 2 
 	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.8, 1.8), b2_up)\
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	scale_tween.tween_property(dice_sprite, "scale", Vector2(0.7, 0.7), b2_dn)\
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	scale_tween.tween_callback(func(): _spawn_ripple(0.75))
 		
 	# Pantulan 3
 	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.4, 1.4), b3_up)\
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	scale_tween.tween_property(dice_sprite, "scale", Vector2(0.85, 0.85), b3_dn)\
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	scale_tween.tween_callback(func(): _spawn_ripple(0.5))
 		
 	# Pantulan 4 (Mendarat)
 	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.15, 1.15), b4_up)\
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.0, 1.0), b4_dn)\
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	scale_tween.tween_callback(func(): _spawn_ripple(0.3))
 		
 	# 3. Animasi Putaran (Rotation) - Dinonaktifkan sesuai permintaan
 	# tween.tween_property(dice_sprite, "rotation", 4 * TAU, roll_duration)\
@@ -181,38 +197,116 @@ func show_result() -> void:
 	_is_rolling = false
 	dice_sprite.texture = _current_static
 	dice_sprite.rotation = 0
+	dice_sprite.modulate = Color.WHITE
 	
 	# Tampilkan angka
 	number_label.text = str(_final_result)
 	number_label.show()
 	
-	# --- EFEK JUICY REVEAL ---
-	var base_scale = Vector2(0.6, 0.6) # Ukuran dadu normal yang sudah kita set di _ready
-	var pop_scale = Vector2(1.2, 1.2)  # Ukuran saat meledak besar (Zoom In)
-	
+	# --- OUTCOME VARIANTS ---
+	var base_scale = Vector2(0.6, 0.6) # Ukuran dadu normal
 	self.scale = base_scale
 	number_label.scale = Vector2(1.0, 1.0) # Reset scale angka
-	
 	var reveal_tween = create_tween()
-	
-	# Ambil rasio percepatan agar animasi pop-up (reveal) juga ngebut seiring durasi roll
 	var spd_mult = clamp(_current_roll_duration / 2.6, 0.15, 1.0)
 	
-	# 1. Diam sejenak (Suspense / Anticipation)
-	reveal_tween.tween_interval(0.15 * spd_mult)
-	
-	# 2. POP membesar dengan tajam (Zoom in dramatis)
-	reveal_tween.tween_property(self, "scale", pop_scale, 0.15 * spd_mult)\
-		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	if _outcome == "crit":
+		# Freeze frame briefly
+		reveal_tween.tween_interval(0.1)
+		# Punch to 1.4 -> 1.0
+		reveal_tween.tween_property(self, "scale", Vector2(1.4, 1.4), 0.35 * spd_mult).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+		# Number style: bright gold, dark red stroke
+		number_label.add_theme_color_override("font_color", Color("#FFD700"))
+		number_label.add_theme_color_override("font_outline_color", Color("#8B0000"))
+		number_label.add_theme_constant_override("outline_size", 3)
+		# Glow flash
+		dice_sprite.modulate = Color(1, 1, 0.5, 1)
+		var glow_tw = create_tween()
+		glow_tw.tween_property(dice_sprite, "modulate", Color.WHITE, 0.3)
 		
-	# 3. Membal / Kembali ke ukuran semula dengan ayunan (Elastic/Back)
-	reveal_tween.tween_property(self, "scale", base_scale, 0.4 * spd_mult)\
-		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		# Screen shake via camera
+		_apply_camera_shake(_player_id, 0.2, 6.0)
+		
+	elif _outcome == "miss":
+		# Screen shake horizontal only
+		_apply_camera_shake(_player_id, 0.18, 4.0, true)
+		# Modulate reddish then back
+		dice_sprite.modulate = Color(0.8, 0.4, 0.4, 1)
+		var glow_tw = create_tween()
+		glow_tw.tween_property(dice_sprite, "modulate", Color.WHITE, 0.3)
+		# Muted grey-purple text, no stroke
+		number_label.add_theme_color_override("font_color", Color("#9A8FCC"))
+		number_label.add_theme_constant_override("outline_size", 0)
+		# Slight shrink
+		reveal_tween.tween_property(self, "scale", Vector2(0.92, 0.92), 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		reveal_tween.tween_property(self, "scale", base_scale, 0.15)
+		
+	else: # normal hit
+		# Scale punch 1.15 -> 1.0
+		reveal_tween.tween_property(self, "scale", Vector2(1.15, 1.15), 0.1 * spd_mult).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		reveal_tween.tween_property(self, "scale", base_scale, 0.1 * spd_mult)
+		# Warm parchment text, dark ink stroke
+		number_label.add_theme_color_override("font_color", Color("#F5EAD8"))
+		number_label.add_theme_color_override("font_outline_color", Color("#1A1030"))
+		number_label.add_theme_constant_override("outline_size", 2)
 	
-	# 4. Beri jeda sedikit lagi agar pemain bisa membaca hasilnya sebelum combat lanjut
 	reveal_tween.tween_interval(0.2 * spd_mult)
-	
-	# 5. Emit sinyal roll selesai setelah semua drama selesai
 	reveal_tween.tween_callback(func(): roll_finished.emit(_final_result))
+
+func _apply_camera_shake(p_id: int, duration: float, amp: float, horizontal_only: bool = false) -> void:
+	if not get_tree() or not get_tree().current_scene: return
+	var main = get_tree().current_scene
+	if main.has_node("SplitScreenManager"):
+		var ssm = main.get_node("SplitScreenManager")
+		if ssm.has_method("shake_camera"):
+			ssm.shake_camera(p_id, duration, amp, horizontal_only)
+	elif main.has_node("World/Camera2D"):
+		var cam = main.get_node("World/Camera2D")
+		if cam.has_method("shake"):
+			cam.shake(duration, amp, horizontal_only)
+
+
+
+
+
+
+func _spawn_ripple(size_mult: float = 1.0) -> void:
+	var ripple = Sprite2D.new()
+	var grad_tex = GradientTexture2D.new()
+	grad_tex.fill = GradientTexture2D.FILL_RADIAL
+	grad_tex.fill_from = Vector2(0.5, 0.5)
+	grad_tex.fill_to = Vector2(1.0, 0.5)
+	
+	var grad = Gradient.new()
+	# Setup gradient for a ring (transparent center, solid edge, transparent outer)
+	grad.set_color(0, Color(1, 1, 1, 0))
+	grad.set_offset(0, 0.0)
+	
+	grad.add_point(0.75, Color(1, 1, 1, 0))
+	grad.add_point(0.85, Color(1, 1, 1, 0.75)) # Outer border ring
+	
+	grad.set_color(1, Color(1, 1, 1, 0))
+	grad.set_offset(1, 1.0)
+	
+	grad_tex.gradient = grad
+	grad_tex.width = 500
+	grad_tex.height = 500
+	
+	ripple.texture = grad_tex
+	ripple.z_index = -1 # Gambar di bawah dadu
+	
+	add_child(ripple)
+	# Posisi di bawah dadu
+	ripple.position = dice_sprite.position + Vector2(0, 30)
+	ripple.scale = Vector2(0.3, 0.3) # Bulat penuh
+	
+	var tw = create_tween()
+	tw.set_parallel(true)
+	# Expand the ring
+	tw.tween_property(ripple, "scale", Vector2(2.0 * size_mult, 2.0 * size_mult), 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	# Fade out
+	tw.tween_property(ripple, "modulate:a", 0.0, 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.chain().tween_callback(ripple.queue_free)
+
 
 

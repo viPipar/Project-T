@@ -41,6 +41,7 @@ func _ready() -> void:
 func _on_damage_dealt(target: Node, amount: int, _dmg_type: String, is_crit: bool) -> void:
 	if not is_instance_valid(target) or amount <= 0:
 		return
+	_apply_hit_impact(target, is_crit)
 
 	# Offset ke atas sprite, sedikit random agar tidak tumpuk
 	var base_pos : Vector2 = target.global_position + Vector2(0, -48)
@@ -51,6 +52,7 @@ func _on_damage_dealt(target: Node, amount: int, _dmg_type: String, is_crit: boo
 func _on_miss(_attacker: Node, target: Node) -> void:
 	if not is_instance_valid(target):
 		return
+	_apply_miss_impact(target)
 	var base_pos : Vector2 = target.global_position + Vector2(0, -48)
 	_spawn_miss(base_pos)
 
@@ -97,3 +99,48 @@ func _spawn_generic(text: String, _color: Color, world_pos: Vector2) -> void:
 		return
 	var amount := text.to_int() if text.is_valid_int() else 0
 	_spawn_number(amount, "damage", world_pos)
+
+# --- HIT IMPACT VISUALS ---
+
+func _get_target_sprite(target: Node) -> CanvasItem:
+	if target.get("anim_sprite"): return target.get("anim_sprite")
+	if target.get("sprite"): return target.get("sprite")
+	if target.has_node("AnimatedSprite2D"): return target.get_node("AnimatedSprite2D")
+	if target.has_node("Sprite2D"): return target.get_node("Sprite2D")
+	if target is CanvasItem: return target
+	return null
+
+func _apply_hit_impact(target: Node, is_crit: bool) -> void:
+	var sprite = _get_target_sprite(target)
+	if not sprite: return
+	
+	# Hit Flash Shader
+	var flash_mat = ShaderMaterial.new()
+	flash_mat.shader = load("res://assets/shaders/hit_flash.gdshader")
+	flash_mat.set_shader_parameter("flash_color", Color.WHITE)
+	flash_mat.set_shader_parameter("flash_modifier", 1.0)
+	sprite.material = flash_mat
+	
+	var hold_time = 0.05 if is_crit else 0.02
+	var tw = create_tween()
+	tw.tween_interval(hold_time)
+	tw.tween_property(flash_mat, "shader_parameter/flash_modifier", 0.0, 0.1)
+	tw.tween_callback(func(): sprite.material = null)
+	
+	# Knockback Wiggle
+	var start_pos = sprite.position
+	var knock_dir = -1 if randf() < 0.5 else 1
+	var offset_x = randf_range(4.0, 6.0) * knock_dir
+	
+	var wiggle_tw = create_tween()
+	wiggle_tw.tween_property(sprite, "position:x", start_pos.x + offset_x, 0.05).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	wiggle_tw.tween_property(sprite, "position:x", start_pos.x, 0.10).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+func _apply_miss_impact(target: Node) -> void:
+	var sprite = _get_target_sprite(target)
+	if not sprite: return
+	var start_scale = sprite.scale
+	var tw = create_tween()
+	tw.tween_property(sprite, "scale", start_scale * Vector2(1.04, 1.04), 0.06).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(sprite, "scale", start_scale, 0.06).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+

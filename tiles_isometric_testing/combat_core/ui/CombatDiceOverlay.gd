@@ -156,9 +156,13 @@ func _build_ui() -> void:
 	_root.add_child(_prompt_label)
 
 
+var _custom_font = preload("res://assets/ui_assets/Bangers-Regular.ttf")
+
 func _lbl(text: String, size: int, color: Color) -> Label:
 	var l := Label.new()
 	l.text = text
+	if _custom_font:
+		l.add_theme_font_override("font", _custom_font)
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", color)
 	l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
@@ -259,8 +263,12 @@ func play_attack_sequence(
 	await show_roll_prompt(1)
 
 	# ── Phase 2: Roll D20 (2.6 detik sesuai setting DiceVisual) ─────────────
+	var outcome := "hit"
+	if is_crit: outcome = "crit"
+	elif not is_hit: outcome = "miss"
+
 	if _dice_visual.has_method("start_roll"):
-		_dice_visual.start_roll(raw_d20, "d20", 2.6, target_pos, player_id)
+		_dice_visual.start_roll(raw_d20, "d20", 2.6, target_pos, player_id, outcome)
 		if _dice_visual.has_signal("roll_finished"):
 			await _dice_visual.roll_finished
 		else:
@@ -506,4 +514,3 @@ func _spawn_clash_particles(spawn_pos: Vector2) -> void:
 			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		tw.tween_property(p, "rotation", p.rotation + randf_range(-3, 3), 0.35)
 		tw.chain().tween_callback(p.queue_free)
-

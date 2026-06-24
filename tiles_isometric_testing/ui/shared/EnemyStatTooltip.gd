@@ -18,6 +18,9 @@ var _armor_label : Label
 
 var _is_visible  : bool = false
 var _target_layer: int  = 0
+var _current_hp: int = 0
+var _max_hp: int = 0
+var _pulse_tw: Tween
 
 
 func _ready() -> void:
@@ -114,12 +117,32 @@ func hide_tooltip() -> void:
 
 ## Dipanggil saat HP berubah secara real-time
 func update_hp(hp: int) -> void:
+	var is_heal = hp > _current_hp
+	_current_hp = hp
 	_hp_label.text = str(hp)
-	# Animasi kedip kecil saat HP update
 	if _is_visible:
+		if _pulse_tw: _pulse_tw.kill(); _hp_label.modulate = Color.WHITE; _hp_label.scale = Vector2.ONE
 		var tw = create_tween()
-		tw.tween_property(_hp_label, "modulate", Color(1,0,0,1), 0.1)
-		tw.tween_property(_hp_label, "modulate", Color.WHITE, 0.1)
+		if is_heal:
+			_hp_label.add_theme_color_override("font_color", Color("#4DDD88"))
+			tw.tween_property(_hp_label, "scale", Vector2(1.4, 1.4), 0.15).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			tw.tween_property(_hp_label, "scale", Vector2.ONE, 0.2)
+			tw.tween_callback(func(): _hp_label.add_theme_color_override("font_color", Color.WHITE))
+		else:
+			tw.tween_property(_hp_label, "modulate", Color(1,0,0,1), 0.1)
+			tw.tween_property(_hp_label, "modulate", Color.WHITE, 0.1)
+		tw.tween_callback(_check_pulse)
+	else:
+		_check_pulse()
+
+func _check_pulse() -> void:
+	if _pulse_tw: _pulse_tw.kill()
+	_hp_label.modulate = Color.WHITE
+	_hp_label.scale = Vector2.ONE
+	if _max_hp > 0 and _current_hp <= _max_hp * 0.25 and _current_hp > 0:
+		_pulse_tw = create_tween().set_loops()
+		_pulse_tw.tween_property(_hp_label, "modulate", Color(1.0, 0.3, 0.3, 1.0), 0.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		_pulse_tw.tween_property(_hp_label, "modulate", Color.WHITE, 0.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 
 # ── Animations ───────────────────────────────────────────────────────────────
