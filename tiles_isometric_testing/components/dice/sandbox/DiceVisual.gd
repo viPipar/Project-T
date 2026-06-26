@@ -31,6 +31,8 @@ var _dice_cache_rolls: Dictionary = {}
 var _current_rolls: Array[Texture2D] = []
 var _current_static: Texture2D = null
 
+var _orbital_particles: Array[Dictionary] = []
+
 func _get_dice_static(type: String) -> Texture2D:
 	if not _dice_cache_static.has(type):
 		var path = "res://assets/dice/%s/%s_static.png" % [type, type]
@@ -86,8 +88,71 @@ func _process(delta: float) -> void:
 				_roll_frame_idx = (_roll_frame_idx + 1) % _current_rolls.size()
 				dice_sprite.texture = _current_rolls[_roll_frame_idx]
 
+	# Update orbital particles secara manual agar tidak bug di tween_method Godot 4
+	for i in range(_orbital_particles.size() - 1, -1, -1):
+		var data = _orbital_particles[i]
+		if not is_instance_valid(data.node):
+			_orbital_particles.remove_at(i)
+			continue
+			
+		data.time += delta
+		var t = clamp(data.time / data.dur, 0.0, 1.0)
+		
+		# Smoothstep untuk pacing putaran yang juicy (cepat -> lambat melayang -> cepat)
+		var angle_t = t * t * (3.0 - 2.0 * t)
+		var current_ang = lerp(data.start_ang, data.end_ang, angle_t)
+		
+		var r_mult = 0.0
+		if t < 0.3:
+			# Meledak memutar ke luar (Ease Out)
+			var nt = t / 0.3
+			r_mult = 1.0 - pow(1.0 - nt, 3.0)
+		elif t <= 0.75:
+			# Hang time
+			r_mult = 1.0
+		else:
+			# Tersedot ke tengah kilat (Ease In)
+			var nt = (t - 0.75) / 0.25
+			r_mult = 1.0 - pow(nt, 3.0)
+			
+		var current_pos = data.center + Vector2(cos(current_ang) * data.rx * r_mult, sin(current_ang) * data.ry * r_mult)
+		data.node.global_position = current_pos
+		
+		# Rotasi memanjang (stretching) menunjuk ke arah velocity
+		var vel = current_pos - data.last_pos
+		if vel.length_squared() > 0.01:
+			data.node.rotation = vel.angle()
+		elif t < 0.05:
+			# Rotasi awal jika belum bergerak
+			data.node.rotation = data.start_ang + (PI/2.0 if data.end_ang > data.start_ang else -PI/2.0)
+			
+		data.last_pos = current_pos
+		
+		# Opacity Fading (Juicy trail fade)
+		if t < 0.1:
+			data.node.modulate.a = t / 0.1
+		elif t > 0.8:
+			data.node.modulate.a = 1.0 - ((t - 0.8) / 0.2)
+		else:
+			data.node.modulate.a = 1.0
+		
+		if data.time >= data.dur:
+			if is_instance_valid(data.node):
+				data.node.queue_free()
+			_orbital_particles.remove_at(i)
+
 
 func start_roll(result: int, dice_type: String = "custom", roll_duration: float = 2.6, target_pos: Vector2 = Vector2.ZERO, p_id: int = 0, outcome: String = "hit") -> void:
+	# Bersihkan partikel dari roll sebelumnya
+	for data in _orbital_particles:
+		if is_instance_valid(data.node):
+			data.node.queue_free()
+	_orbital_particles.clear()
+	
+	for child in get_children():
+		if child.is_in_group("landing_vfx"):
+			child.queue_free()
+			
 	_final_result = result
 	_outcome = outcome
 	_player_id = p_id
@@ -203,6 +268,9 @@ func show_result() -> void:
 	number_label.text = str(_final_result)
 	number_label.show()
 	
+	# Trigger landing VFX
+	_play_landing_vfx(_outcome)
+	
 	# --- OUTCOME VARIANTS ---
 	var base_scale = Vector2(0.6, 0.6) # Ukuran dadu normal
 	self.scale = base_scale
@@ -235,8 +303,9 @@ func show_result() -> void:
 		var glow_tw = create_tween()
 		glow_tw.tween_property(dice_sprite, "modulate", Color.WHITE, 0.3)
 		# Muted grey-purple text, no stroke
-		number_label.add_theme_color_override("font_color", Color("#9A8FCC"))
-		number_label.add_theme_constant_override("outline_size", 0)
+		number_label.add_theme_color_override("font_color", Color("#F5EAD8"))
+		number_label.add_theme_color_override("font_outline_color", Color("#1A1030"))
+		number_label.add_theme_constant_override("outline_size", 2)
 		# Slight shrink
 		reveal_tween.tween_property(self, "scale", Vector2(0.92, 0.92), 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		reveal_tween.tween_property(self, "scale", base_scale, 0.15)
@@ -250,7 +319,8 @@ func show_result() -> void:
 		number_label.add_theme_color_override("font_outline_color", Color("#1A1030"))
 		number_label.add_theme_constant_override("outline_size", 2)
 	
-	reveal_tween.tween_interval(0.2 * spd_mult)
+	# Beri jeda secukupnya agar orbit sempat menyedot ke tengah (1 detik)
+	reveal_tween.tween_interval(1.0 * spd_mult)
 	reveal_tween.tween_callback(func(): roll_finished.emit(_final_result))
 
 func _apply_camera_shake(p_id: int, duration: float, amp: float, horizontal_only: bool = false) -> void:
@@ -294,10 +364,12 @@ func _spawn_ripple(size_mult: float = 1.0) -> void:
 	
 	ripple.texture = grad_tex
 	ripple.z_index = -1 # Gambar di bawah dadu
+	ripple.add_to_group("landing_vfx")
+	ripple.top_level = true
 	
 	add_child(ripple)
-	# Posisi di bawah dadu
-	ripple.position = dice_sprite.position + Vector2(0, 30)
+	# Posisi di bawah dadu menggunakan global_position agar tidak ikut terscale
+	ripple.global_position = dice_sprite.global_position + Vector2(0, 30)
 	ripple.scale = Vector2(0.3, 0.3) # Bulat penuh
 	
 	var tw = create_tween()
@@ -308,5 +380,180 @@ func _spawn_ripple(size_mult: float = 1.0) -> void:
 	tw.tween_property(ripple, "modulate:a", 0.0, 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tw.chain().tween_callback(ripple.queue_free)
 
+# --- VFX LANDING (BG3 STYLE) ---
 
+func _get_vfx_colors(outcome: String) -> Dictionary:
+	if outcome == "crit":
+		return {"main": Color("#FFD700"), "sec": Color("#FFFFAA")}
+	elif outcome == "miss":
+		return {"main": Color("#9A8FCC"), "sec": Color("#6A5F9C")}
+	else: # hit
+		return {"main": Color("#F5C842"), "sec": Color("#F5A242")}
 
+func _play_landing_vfx(outcome: String) -> void:
+	# Gunakan global_position agar partikel tidak terpengaruh scale bouncing dadu
+	var center = dice_sprite.global_position
+	_spawn_impact_burst(outcome, center)
+	_spawn_orbital_swirl(outcome, center)
+	
+	# Delay for dust
+	get_tree().create_timer(0.05).timeout.connect(func(): _spawn_ground_dust(center))
+	
+	if outcome == "crit":
+		_white_flash()
+		_spawn_ripple(2.5) # Extra large ring for critical
+
+func _white_flash() -> void:
+	var flash = ColorRect.new()
+	flash.color = Color.WHITE
+	flash.size = Vector2(3000, 3000)
+	flash.position = -flash.size / 2.0
+	flash.z_index = 100
+	flash.add_to_group("landing_vfx")
+	add_child(flash)
+	
+	var tw = create_tween()
+	tw.tween_property(flash, "modulate:a", 0.0, 0.4).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+	tw.chain().tween_callback(flash.queue_free)
+
+var _shared_circle_tex: GradientTexture2D = null
+
+func _get_circle_texture() -> GradientTexture2D:
+	if _shared_circle_tex == null:
+		var grad_tex = GradientTexture2D.new()
+		grad_tex.fill = GradientTexture2D.FILL_RADIAL
+		grad_tex.fill_from = Vector2(0.5, 0.5)
+		grad_tex.fill_to = Vector2(1.0, 0.5)
+		var grad = Gradient.new()
+		grad.set_color(0, Color.WHITE)
+		grad.set_offset(0, 0.0)
+		grad.add_point(0.85, Color.WHITE)
+		grad.add_point(0.9, Color(1, 1, 1, 0))
+		grad.set_color(1, Color(1, 1, 1, 0))
+		grad.set_offset(1, 1.0)
+		grad_tex.gradient = grad
+		grad_tex.width = 16
+		grad_tex.height = 16
+		_shared_circle_tex = grad_tex
+	return _shared_circle_tex
+
+func _spawn_impact_burst(outcome: String, center: Vector2) -> void:
+	var colors = _get_vfx_colors(outcome)
+	var count = 10
+	var dist_min = 40.0
+	var dist_max = 100.0
+	var dur = 0.4
+	
+	if outcome == "crit":
+		count = 24
+		dist_max = 180.0
+		dur = 0.6
+	elif outcome == "miss":
+		count = 6
+		dist_max = 80.0
+	
+	for i in range(count):
+		var p = Sprite2D.new()
+		p.texture = _get_circle_texture()
+		p.modulate = colors.main if randf() > 0.3 else Color.WHITE
+		# Kurangi sedikit agar tidak menutupi wisp
+		var s = randf_range(0.4, 0.9)
+		p.scale = Vector2(s, s)
+		p.top_level = true
+		p.global_position = center
+		p.z_index = 10
+		p.add_to_group("landing_vfx")
+		add_child(p)
+		
+		var angle = randf() * TAU
+		var dist = randf_range(dist_min, dist_max)
+		var target_pos = center + Vector2(cos(angle), sin(angle)) * dist
+		
+		var tw = create_tween().set_parallel(true)
+		tw.tween_property(p, "global_position", target_pos, dur).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+		tw.tween_property(p, "scale", Vector2.ZERO, dur).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tw.chain().tween_callback(p.queue_free)
+
+func _spawn_orbital_swirl(outcome: String, center: Vector2) -> void:
+	var colors = _get_vfx_colors(outcome)
+	var count = 15 # Lebih sedikit agar tidak terlalu ramai, tapi diperbagus bentuknya
+	var dur = 1.0
+	if outcome == "crit":
+		count = 25
+		dur = 1.2
+	elif outcome == "miss":
+		count = 8
+		dur = 0.8
+		
+	for i in range(count):
+		var p = Sprite2D.new()
+		p.texture = _get_circle_texture()
+		p.modulate = colors.sec if randf() > 0.5 else Color.WHITE
+		
+		# Wisp Stretching: Skala X jauh lebih panjang dari Y untuk efek motion blur/jejak cahaya
+		var s_x = randf_range(1.0, 2.5)
+		var s_y = randf_range(0.15, 0.35)
+		p.scale = Vector2(s_x, s_y)
+		
+		p.top_level = true
+		p.z_index = 5
+		p.global_position = center 
+		p.add_to_group("landing_vfx")
+		add_child(p)
+		
+		var start_angle = randf() * TAU
+		
+		# Putaran lebih lambat (tidak terburu-buru) agar hang-time terlihat elegan
+		var rotations = randf_range(0.75, 1.5)
+		var angle_diff = TAU * rotations
+		if randf() > 0.5:
+			angle_diff = -angle_diff 
+			
+		var end_angle = start_angle + angle_diff
+		
+		var dist_mult = randf_range(0.6, 1.5)
+		var rx = randf_range(50.0, 80.0) * dist_mult 
+		var ry = randf_range(25.0, 50.0) * dist_mult
+		
+		if outcome == "crit":
+			rx = randf_range(60.0, 100.0) * dist_mult
+			ry = randf_range(35.0, 65.0) * dist_mult
+			
+		_orbital_particles.append({
+			"node": p,
+			"time": 0.0,
+			"dur": dur,
+			"start_ang": start_angle,
+			"end_ang": end_angle,
+			"rx": rx,
+			"ry": ry,
+			"center": center,
+			"last_pos": center
+		})
+		
+		# Note: Tween scale kita buang karena kita fade-out dan fade-in alpha-nya via _process.
+		# Membiarkan scale wisp tetap panjang hingga tersedot habis!
+
+func _spawn_ground_dust(center: Vector2) -> void:
+	var count = 8
+	for i in range(count):
+		var p = Sprite2D.new()
+		p.texture = _get_circle_texture()
+		p.modulate = Color(0.8, 0.8, 0.8, 0.6)
+		var s = randf_range(0.2, 0.4)
+		p.scale = Vector2(s, s)
+		p.top_level = true
+		p.global_position = center + Vector2(0, 25)
+		p.z_index = -2
+		p.add_to_group("landing_vfx")
+		add_child(p)
+		
+		var target_x = p.global_position.x + randf_range(-70.0, 70.0)
+		var target_y = p.global_position.y + randf_range(0.0, 20.0)
+		var dur = 0.3 + randf() * 0.2
+		
+		var tw = create_tween().set_parallel(true)
+		tw.tween_property(p, "global_position:x", target_x, dur).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.tween_property(p, "global_position:y", target_y, dur).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.tween_property(p, "modulate:a", 0.0, dur)
+		tw.chain().tween_callback(p.queue_free)
