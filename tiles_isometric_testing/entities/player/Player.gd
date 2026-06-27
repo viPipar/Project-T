@@ -481,8 +481,42 @@ func play_attack(ability_id: String) -> void:
 		
 		# Await the animation finishing
 		await anim_sprite.animation_finished
-		_is_acting = false
 		
+		# Jangan diblok di sini! Biarkan CombatTestBridge langsung apply damage.
+		# Sisa getaran / follow-through dilakukan di background (async)
+		_play_recovery_async(anim_name)
+		
+		# Return sekarang agar damage langsung masuk tepat saat animasi serang kelar!
+		return
+
+func _play_recovery_async(anim_name: String) -> void:
+	if anim_sprite == null or anim_sprite.sprite_frames == null:
+		_is_acting = false
+		_play_facing_anim()
+		return
+
+	# ── GABUNGAN JUICY IMPACT (Strain Loop + Heavy Hold) ──────────
+	# Mensimulasikan momentum berlebih dan recovery dari heavy attack
+	var total_frames := anim_sprite.sprite_frames.get_frame_count(anim_name)
+	if total_frames >= 2:
+		var last_f := total_frames - 1
+		var prev_f := total_frames - 2
+		
+		# 1. Strain Loop (Bergetar cepat menahan senjata)
+		for i in range(2):
+			anim_sprite.frame = prev_f
+			await get_tree().create_timer(0.06, false).timeout
+			anim_sprite.frame = last_f
+			await get_tree().create_timer(0.09, false).timeout
+		
+		# 2. Heavy Hold (Tahan posisi akhir sebelum relaks)
+		await get_tree().create_timer(0.12, false).timeout
+	else:
+		# Fallback jika cuma 1 frame (Heavy Hold saja)
+		await get_tree().create_timer(0.20, false).timeout
+	# ─────────────────────────────────────────────────────────────
+
+	_is_acting = false
 	# Reset back to facing idle
 	_play_facing_anim()
 
