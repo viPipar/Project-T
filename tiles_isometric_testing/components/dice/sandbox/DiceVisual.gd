@@ -383,12 +383,22 @@ func _spawn_ripple(size_mult: float = 1.0) -> void:
 # --- VFX LANDING (BG3 STYLE) ---
 
 func _get_vfx_colors(outcome: String) -> Dictionary:
-	if outcome == "crit":
-		return {"main": Color("#FFD700"), "sec": Color("#FFFFAA")}
-	elif outcome == "miss":
-		return {"main": Color("#9A8FCC"), "sec": Color("#6A5F9C")}
-	else: # hit
-		return {"main": Color("#F5C842"), "sec": Color("#F5A242")}
+	if _player_id == 2:
+		# Player 2: Putih dan Kuning Suci
+		if outcome == "crit":
+			return {"main": Color("#FFFFFF"), "sec": Color("#FFEA00")} # Putih murni, Kuning terang
+		elif outcome == "miss":
+			return {"main": Color("#D6D6D6"), "sec": Color("#FDFD96")} # Abu-abu terang, Kuning pastel
+		else: # hit
+			return {"main": Color("#FFFFFF"), "sec": Color("#FFD700")} # Putih, Emas/Kuning Suci
+	else:
+		# Player 1: Merah Vermilion/Gelap dan Hitam
+		if outcome == "crit":
+			return {"main": Color("#FF3C28"), "sec": Color("#8B0000")} # Vermilion menyala, Merah Gelap
+		elif outcome == "miss":
+			return {"main": Color("#1A1A1A"), "sec": Color("#000000")} # Abu-abu sangat gelap, Hitam
+		else: # hit
+			return {"main": Color("#E34234"), "sec": Color("#111111")} # Vermilion, Hitam pekat
 
 func _play_landing_vfx(outcome: String) -> void:
 	# Gunakan global_position agar partikel tidak terpengaruh scale bouncing dadu
@@ -397,7 +407,7 @@ func _play_landing_vfx(outcome: String) -> void:
 	_spawn_orbital_swirl(outcome, center)
 	
 	# Delay for dust
-	get_tree().create_timer(0.05).timeout.connect(func(): _spawn_ground_dust(center))
+	get_tree().create_timer(0.05).timeout.connect(func(): _spawn_ground_dust(outcome, center))
 	
 	if outcome == "crit":
 		_white_flash()
@@ -455,7 +465,7 @@ func _spawn_impact_burst(outcome: String, center: Vector2) -> void:
 	for i in range(count):
 		var p = Sprite2D.new()
 		p.texture = _get_circle_texture()
-		p.modulate = colors.main if randf() > 0.3 else Color.WHITE
+		p.modulate = colors.main if randf() > 0.3 else colors.sec
 		# Kurangi sedikit agar tidak menutupi wisp
 		var s = randf_range(0.4, 0.9)
 		p.scale = Vector2(s, s)
@@ -488,7 +498,7 @@ func _spawn_orbital_swirl(outcome: String, center: Vector2) -> void:
 	for i in range(count):
 		var p = Sprite2D.new()
 		p.texture = _get_circle_texture()
-		p.modulate = colors.sec if randf() > 0.5 else Color.WHITE
+		p.modulate = colors.sec if randf() > 0.5 else colors.main
 		
 		# Wisp Stretching: Skala X jauh lebih panjang dari Y untuk efek motion blur/jejak cahaya
 		var s_x = randf_range(1.0, 2.5)
@@ -534,12 +544,14 @@ func _spawn_orbital_swirl(outcome: String, center: Vector2) -> void:
 		# Note: Tween scale kita buang karena kita fade-out dan fade-in alpha-nya via _process.
 		# Membiarkan scale wisp tetap panjang hingga tersedot habis!
 
-func _spawn_ground_dust(center: Vector2) -> void:
+func _spawn_ground_dust(outcome: String, center: Vector2) -> void:
+	var colors = _get_vfx_colors(outcome)
 	var count = 8
 	for i in range(count):
 		var p = Sprite2D.new()
 		p.texture = _get_circle_texture()
-		p.modulate = Color(0.8, 0.8, 0.8, 0.6)
+		p.modulate = colors.main if randf() > 0.5 else colors.sec
+		p.modulate.a = 0.6
 		var s = randf_range(0.2, 0.4)
 		p.scale = Vector2(s, s)
 		p.top_level = true

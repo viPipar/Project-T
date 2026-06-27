@@ -32,6 +32,7 @@ extends CharacterBody2D
 @onready var cond:       ConditionComponent = $ConditionComponent
 
 var anim_sprite: AnimatedSprite2D
+var _is_acting: bool = false
 
 var _facing:  String   = "down"
 var grid_pos: Vector2i = Vector2i.ZERO
@@ -39,6 +40,7 @@ var _cursor:  Node2D   = null
 var selected_ability_id: String = "main_attack"
 var _loaded_ability: BaseAbility = null
 var _targeting_tiles: Array[Vector2i] = []
+var _haki_aura: Node2D = null
 
 enum PlayerState { IDLE, TARGETING }
 var _state: PlayerState = PlayerState.IDLE
@@ -53,7 +55,7 @@ const INSECT2_DIR := "res://assets/characters/insect2_placeholder"
 func _ready() -> void:
 	add_to_group("players")
 	_setup_sprite()
-	_apply_idle_frames()
+	# _apply_idle_frames() # Commented out to use custom editor-configured SpriteFrames
 	_play_facing_anim()
 
 	movement.move_finished.connect(_on_move_finished)
@@ -408,25 +410,45 @@ func _update_facing_from_to(from: Vector2i, to: Vector2i) -> void:
 
 
 func _play_facing_anim() -> void:
+	if _is_acting:
+		return
 	if anim_sprite == null or anim_sprite.sprite_frames == null:
 		return
+	
 	var walk_anim := "walk_" + _facing
 	var idle_anim := "idle_" + _facing
-	var anim := idle_anim
-	if movement != null and movement._is_moving and anim_sprite.sprite_frames.has_animation(walk_anim):
-		anim = walk_anim
-	elif anim_sprite.sprite_frames.has_animation(idle_anim):
-		anim = idle_anim
+	var anim := "idle"
+	
+	if movement != null and movement._is_moving:
+		if anim_sprite.sprite_frames.has_animation(walk_anim):
+			anim = walk_anim
+		elif anim_sprite.sprite_frames.has_animation("walk"):
+			anim = "walk"
+	else:
+		if anim_sprite.sprite_frames.has_animation(idle_anim):
+			anim = idle_anim
+		elif anim_sprite.sprite_frames.has_animation("idle"):
+			anim = "idle"
+			
 	anim_sprite.play(anim)
 
 
 func _apply_facing_flip() -> void:
 	if anim_sprite == null:
 		return
-	if _facing == "left":
-		anim_sprite.flip_h = true
-	elif _facing == "right":
-		anim_sprite.flip_h = false
+	
+	if player_id == 1:
+		# Player 1 (Fighter) faces RIGHT by default in the spritesheet
+		if _facing == "left":
+			anim_sprite.flip_h = true
+		elif _facing == "right":
+			anim_sprite.flip_h = false
+	else:
+		# Player 2 (Wizard) faces LEFT by default in the spritesheet
+		if _facing == "left":
+			anim_sprite.flip_h = false
+		elif _facing == "right":
+			anim_sprite.flip_h = true
 
 
 func _on_died(_killer: Node) -> void:
@@ -434,3 +456,49 @@ func _on_died(_killer: Node) -> void:
 	set_process(false)
 	if anim_sprite != null:
 		anim_sprite.modulate = Color(0.35, 0.35, 0.35, 0.6)
+
+
+func play_attack(ability_id: String) -> void:
+	if anim_sprite == null or anim_sprite.sprite_frames == null:
+		return
+	
+	var anim_name := "attack_1"
+	
+	# List of skills that use attack_2
+	var attack_2_skills := [
+		"slash_flash", "cleave", "divine_departure", # Fighter
+		"fireball", "earth_spike", "gust_of_wind"    # Wizard
+	]
+	
+	if ability_id in attack_2_skills:
+		anim_name = "attack_2"
+		
+	if anim_sprite.sprite_frames.has_animation(anim_name):
+		_is_acting = true
+		# Force loop to false for attack animations
+		anim_sprite.sprite_frames.set_animation_loop(anim_name, false)
+		anim_sprite.play(anim_name)
+		
+		# Await the animation finishing
+		await anim_sprite.animation_finished
+		_is_acting = false
+		
+	# Reset back to facing idle
+	_play_facing_anim()
+
+
+func activate_haki_aura() -> void:
+	if _haki_aura == null:
+		var haki_scene = load("res://components/haki/HakiAura.tscn")
+		if haki_scene:
+			_haki_aura = haki_scene.instantiate()
+			add_child(_haki_aura)
+			
+	if _haki_aura != null and _haki_aura.has_method("activate"):
+		_haki_aura.activate(anim_sprite, player_id)
+
+
+func deactivate_haki_aura() -> void:
+	if _haki_aura != null and _haki_aura.has_method("deactivate"):
+		_haki_aura.deactivate()
+

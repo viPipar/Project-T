@@ -46,7 +46,7 @@ func _process(delta: float) -> void:
 	var map_size = Vector2(1920, 2000)
 			
 	# Move P1
-	if cursor_p1:
+	if cursor_p1 and not InputManager.is_player_blocked(1):
 		var dir1 := Vector2.ZERO
 		var prefix1 := "p1_"
 		if Input.is_action_pressed(prefix1 + "move_right"): dir1.x += 1.0
@@ -69,7 +69,7 @@ func _process(delta: float) -> void:
 			_click_under_cursor(1, cursor_p1.global_position)
 
 	# Move P2
-	if cursor_p2:
+	if cursor_p2 and not InputManager.is_player_blocked(2):
 		var dir2 := Vector2.ZERO
 		var prefix2 := "p2_"
 		if Input.is_action_pressed(prefix2 + "move_right"): dir2.x += 1.0

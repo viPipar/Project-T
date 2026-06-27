@@ -368,6 +368,9 @@ func play_attack_sequence(
 		winner_lbl = _roll_disp
 		loser_lbl  = _ac_disp
 		_roll_disp.add_theme_color_override("font_color", col)
+		
+		if attacker != null and attacker.has_method("activate_haki_aura"):
+			attacker.activate_haki_aura()
 	else:
 		col    = Color(0.85, 0.25, 0.25)
 		result = "MISS!"
@@ -433,6 +436,9 @@ func play_attack_sequence(
 		await get_tree().create_timer(1.0).timeout
 
 	# ── Phase 8: Slide keluar ─────────────────────────────────────────────────
+	if attacker != null and attacker.has_method("deactivate_haki_aura"):
+		attacker.deactivate_haki_aura()
+
 	var vp2    := _get_vp_size()
 	var tw_out := create_tween().set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_CUBIC)
 	tw_out.tween_property(_dice_panel,  "position:x",  _offscreen_x(vp2, false), 0.3)

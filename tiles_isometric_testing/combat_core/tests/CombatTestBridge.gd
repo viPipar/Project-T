@@ -349,6 +349,10 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 		push_warning("[CombatTestBridge] Overlay P%d null! Langsung apply damage." % pid)
 		await get_tree().process_frame
 
+	# ── Jalankan animasi attack pada character sprite (AWAIT) ─────────────────
+	if attacker.has_method("play_attack"):
+		await attacker.play_attack(_ability_id)
+
 	# ---- MAGICAL PROJECTILE PLACEHOLDER ----
 	if hit and is_instance_valid(target) and (is_projectile or is_magical):
 		await _spawn_magic_projectile(attacker, target, element_tag)

@@ -10,6 +10,10 @@ var _player_blocked: Dictionary = {1: false, 2: false}
 func set_player_blocked(player_id: int, blocked: bool) -> void:
 	_player_blocked[player_id] = blocked
 
+## Cek apakah player sedang di-blok (misal: saat roll dadu)
+func is_player_blocked(player_id: int) -> bool:
+	return _player_blocked.get(player_id, false)
+
 # action = "move_up" | "move_down" | "move_left" | "move_right" | "end_turn"
 func _can_accept_input(player_id: int) -> bool:
 	if killcam_active or is_in_menu:
@@ -88,9 +92,7 @@ func get_movement_dir(player_id: int) -> Vector2i:
 	return Vector2i.ZERO
 	
 func is_confirm_pressed(player_id: int) -> bool:
-	if is_in_menu:
-		return false
-	if TurnManager != null and not TurnManager.can_player_act(player_id):
+	if not _can_accept_input(player_id):
 		return false
 	if player_id == 1:
 		return Input.is_action_just_pressed("p1_confirm")
