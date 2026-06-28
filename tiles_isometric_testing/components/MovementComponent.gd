@@ -55,6 +55,10 @@ func _ready() -> void:
 ## Walk to an empty, walkable tile.
 ## Returns false immediately if the move is invalid.
 func move_to(target: Vector2i) -> bool:
+	if _owner_is_downed():
+		move_blocked.emit(target)
+		return false
+
 	var my_pos: Vector2i = _owner_grid_pos()
 
 	if target == my_pos:
@@ -85,6 +89,10 @@ func move_to(target: Vector2i) -> bool:
 ## Use this for attack / interaction — target itself may be blocked.
 ## Picks the reachable neighbour closest to the entity.
 func interact_move_to(entity_tile: Vector2i) -> bool:
+	if _owner_is_downed():
+		move_blocked.emit(entity_tile)
+		return false
+
 	var my_pos: Vector2i = _owner_grid_pos()
 
 	# Gather walkable neighbours of the entity tile
@@ -121,11 +129,17 @@ func interact_move_to(entity_tile: Vector2i) -> bool:
 
 
 func has_movement() -> bool:
+	if _owner_is_downed():
+		return false
 	if infinite_moves: return true
 	return movement_left > 0 and not _is_moving
 
 
 func reset_movement() -> void:
+	if _owner_is_downed():
+		movement_left = 0
+		return
+
 	# base_movement is ALWAYS 6 in the new action economy. 
 	# The stats-based bonus (mov / 5) is already calculated inside _get_movement_bonus()!
 	base_movement = 6
@@ -133,6 +147,9 @@ func reset_movement() -> void:
 
 
 func get_reachable_tiles() -> Array[Vector2i]:
+	if _owner_is_downed():
+		return []
+
 	var max_range: int = movement_left
 	if infinite_moves: max_range = base_movement + _get_movement_bonus()
 	return GridManager.get_reachable_tiles(_owner_grid_pos(), max_range)
@@ -221,6 +238,15 @@ func _get_movement_bonus() -> int:
 	if stats == null:
 		return 0
 	return stats.bonus_movement_tiles()
+
+
+func _owner_is_downed() -> bool:
+	if owner == null:
+		return false
+	if owner.has_method("is_downed"):
+		return bool(owner.is_downed())
+	var health := owner.get_node_or_null("HealthComponent") as HealthComponent
+	return health != null and health.is_downed()
 
 
 func _walkable_neighbours(center: Vector2i) -> Array[Vector2i]:

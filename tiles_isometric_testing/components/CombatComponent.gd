@@ -60,11 +60,10 @@ func attack(target: Node) -> Dictionary:
 		return result
 
 	var raw_roll: int = randi_range(1, 20)
-	var acc: int = StatSystem.get_acc(owner)
-	var modifier: int = floori(acc / 2.0)
+	var modifier: int = StatSystem.get_hit_roll_modifier(owner)
 	var roll: int = raw_roll + modifier
 	var threshold: int = StatSystem.get_resist(target) if is_magical else StatSystem.get_armor(target)
-	var crit_threshold: int = 20 - floori(acc / 10.0)
+	var crit_threshold: int = StatSystem.get_crit_requirement(owner)
 	var crit: bool = raw_roll >= crit_threshold
 	var hit: bool = roll >= threshold or crit
 
@@ -81,6 +80,7 @@ func attack(target: Node) -> Dictionary:
 		return result
 
 	var damage: int = _dice.roll_crit(attack_dice) if crit else _dice.roll_from_string(attack_dice)
+	damage = maxi(0, damage + _get_damage_modifier())
 	var applied: int = StatSystem.apply_damage(target, damage, owner, "magical" if is_magical else "physical")
 	result["damage"] = applied
 
@@ -95,4 +95,10 @@ func attack(target: Node) -> Dictionary:
 
 func _is_dead(entity: Node) -> bool:
 	var health := entity.get_node_or_null("HealthComponent") as HealthComponent
-	return health != null and health.is_dead()
+	return health != null and (health.is_dead() or health.is_downed())
+
+
+func _get_damage_modifier() -> int:
+	if is_magical:
+		return StatSystem.get_magical_damage_modifier(owner)
+	return StatSystem.get_physical_damage_modifier(owner)

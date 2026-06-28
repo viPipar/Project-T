@@ -79,11 +79,11 @@ func _deferred_place() -> void:
 # HP & Damage
 # -----------------------------------------------------------------------------
 
-func take_damage(amount: int, attacker: Node = null) -> int:
+func take_damage(amount: int, attacker: Node = null, damage_type: String = "physical") -> int:
 	if not is_alive:
 		return 0
 	if health != null:
-		return health.take_damage(amount, attacker, "physical")
+		return health.take_damage(amount, attacker, damage_type)
 
 	var applied: int = maxi(0, amount)
 	current_hp = maxi(0, current_hp - applied)
@@ -104,10 +104,54 @@ func heal(amount: int) -> int:
 	return applied
 
 
+func get_hp() -> int:
+	return health.get_hp() if health != null else current_hp
+
+
+func get_max_hp() -> int:
+	return health.get_max_hp() if health != null else max_hp
+
+
+func sub_hp(amount: int, attacker: Node = null, damage_type: String = "true") -> int:
+	if health != null:
+		return health.sub_hp(amount, attacker, damage_type)
+	return take_damage(amount, attacker, damage_type)
+
+
+func add_hp(amount: int) -> int:
+	if health != null:
+		return health.add_hp(amount)
+	return heal(amount)
+
+
+func get_armor() -> int:
+	return stats.get_armor() if stats != null else 0
+
+
+func get_resist() -> int:
+	return stats.get_resist() if stats != null else 0
+
+
+func get_stat(stat_key: String) -> int:
+	return stats.get_stat(stat_key) if stats != null else 0
+
+
+func add_stat(stat_key: String, amount: int) -> bool:
+	return stats.add_base_stat(stat_key, amount) if stats != null else false
+
+
+func sub_stat(stat_key: String, amount: int) -> bool:
+	return stats.sub_base_stat(stat_key, amount) if stats != null else false
+
+
 func is_dead() -> bool:
 	if health != null:
 		return health.is_dead()
 	return not is_alive
+
+
+func is_downed() -> bool:
+	return health != null and health.is_downed()
 
 
 func _setup_health() -> void:
@@ -227,7 +271,7 @@ func _find_nearest_player() -> Node:
 
 	for p in get_tree().get_nodes_in_group("players"):
 		var p_health: HealthComponent = p.get_node_or_null("HealthComponent") as HealthComponent
-		if p_health != null and p_health.is_dead():
+		if p_health != null and (p_health.is_dead() or p_health.is_downed()):
 			continue
 
 		var p_pos: Vector2i = p.get("grid_pos") as Vector2i

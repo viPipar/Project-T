@@ -31,8 +31,7 @@ func setup(stat_prov) -> void:
 func resolve(attacker: Node, target: Node, is_magical: bool = false) -> Dictionary:
 	assert(_stat_provider != null, "[HitMissResolver] stat_provider belum di-setup!")
 
-	var acc      : int = _stat_provider.get_acc(attacker)
-	var modifier : int = floori(acc / 2.0)
+	var modifier : int = _get_hit_roll_modifier(attacker)
 	var raw_d20  : int = _dice.d20()
 	var roll     : int = raw_d20 + modifier
 
@@ -67,3 +66,10 @@ func resolve(attacker: Node, target: Node, is_magical: bool = false) -> Dictiona
 ## Shorthand — langsung return bool
 func did_hit(attacker: Node, target: Node, is_magical: bool = false) -> bool:
 	return resolve(attacker, target, is_magical)["hit"]
+
+
+func _get_hit_roll_modifier(attacker: Node) -> int:
+	if _stat_provider.has_method("get_hit_roll_modifier"):
+		return int(_stat_provider.get_hit_roll_modifier(attacker))
+	var acc: int = _stat_provider.get_acc(attacker)
+	return maxi(0, floori(acc / 2.0))

@@ -73,6 +73,11 @@ func _refresh_player(player: Node) -> void:
 		_store_range(pid, player.get("grid_pos") as Vector2i, [] as Array[Vector2i])
 		return
 
+	if player.has_method("is_downed") and player.is_downed():
+		_clear_type(type)
+		_store_range(pid, player.get("grid_pos") as Vector2i, [] as Array[Vector2i])
+		return
+
 	var move := player.get_node_or_null("MovementComponent") as MovementComponent
 	if move == null or move.movement_left <= 0:
 		_clear_type(type)

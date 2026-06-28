@@ -27,8 +27,12 @@ func setup(stat_prov) -> void:
 ## Hitung crit threshold berdasarkan ACC
 func get_crit_threshold(attacker: Node) -> int:
 	assert(_stat_provider != null, "[CritResolver] stat_provider belum di-setup!")
+	if _stat_provider.has_method("get_crit_requirement"):
+		return int(_stat_provider.get_crit_requirement(attacker))
+	if _stat_provider.has_method("get_natural_crit_requirement"):
+		return int(_stat_provider.get_natural_crit_requirement(attacker))
 	var acc : int = _stat_provider.get_acc(attacker)
-	return 20 - floori(acc / 10.0)
+	return maxi(1, 20 - floori(acc / 10.0))
 
 
 ## Cek apakah raw D20 roll adalah critical
@@ -51,9 +55,8 @@ func is_critical(raw_roll: int, attacker: Node) -> bool:
 func resolve_with_crit(attacker: Node, target: Node, is_magical: bool = false) -> Dictionary:
 	assert(_stat_provider != null, "[CritResolver] stat_provider belum di-setup!")
 
-	var acc            : int = _stat_provider.get_acc(attacker)
-	var modifier       : int = floori(acc / 2.0)
-	var crit_threshold : int = 20 - floori(acc / 10.0)
+	var modifier       : int = _get_hit_roll_modifier(attacker)
+	var crit_threshold : int = get_crit_threshold(attacker)
 
 	var hit_threshold: int
 	if is_magical:
@@ -79,3 +82,10 @@ func resolve_with_crit(attacker: Node, target: Node, is_magical: bool = false) -
 		"crit_threshold": crit_threshold,
 		"is_magical":     is_magical
 	}
+
+
+func _get_hit_roll_modifier(attacker: Node) -> int:
+	if _stat_provider.has_method("get_hit_roll_modifier"):
+		return int(_stat_provider.get_hit_roll_modifier(attacker))
+	var acc: int = _stat_provider.get_acc(attacker)
+	return maxi(0, floori(acc / 2.0))

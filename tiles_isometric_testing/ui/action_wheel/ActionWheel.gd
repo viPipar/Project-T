@@ -384,6 +384,10 @@ func _emit_hovered() -> void:
 
 
 func _emit_selected() -> void:
+	if not _can_player_select():
+		visible = false
+		return
+
 	var action := _get_action_data(_hovered_slot)
 	if not (action["valid"] as bool):
 		return
@@ -393,6 +397,16 @@ func _emit_selected() -> void:
 		
 	# Instantly close the wheel so the player can use the skill!
 	visible = false
+
+
+func _can_player_select() -> bool:
+	if TurnManager != null and not TurnManager.can_player_act(player_id):
+		return false
+
+	for player in get_tree().get_nodes_in_group("players"):
+		if player != null and player.get("player_id") == player_id:
+			return not (player.has_method("is_downed") and player.is_downed())
+	return true
 
 
 func _get_action_data(slot_index: int) -> Dictionary:

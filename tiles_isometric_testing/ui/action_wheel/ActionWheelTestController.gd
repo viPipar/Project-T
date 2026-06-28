@@ -87,12 +87,12 @@ func _execute_ability(action_index: int, caster: Node, target: Node, caster_name
 
 func _unhandled_input(event: InputEvent) -> void:
 	# P1 open (Q or E)
-	if (event.is_action_pressed("p1_ability_1") or event.is_action_pressed("p1_ability_2")) and not action_wheel_left.visible:
+	if (event.is_action_pressed("p1_ability_1") or event.is_action_pressed("p1_ability_2")) and not action_wheel_left.visible and _can_open_wheel(1):
 		action_wheel_left.visible = true
 		get_viewport().set_input_as_handled()
 		
 	# P2 open (U or O)
-	if (event.is_action_pressed("p2_ability_1") or event.is_action_pressed("p2_ability_2")) and not action_wheel_right.visible:
+	if (event.is_action_pressed("p2_ability_1") or event.is_action_pressed("p2_ability_2")) and not action_wheel_right.visible and _can_open_wheel(2):
 		action_wheel_right.visible = true
 		get_viewport().set_input_as_handled()
 		
@@ -104,3 +104,15 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("p2_cancel") and action_wheel_right.visible:
 		action_wheel_right.visible = false
 		get_viewport().set_input_as_handled()
+
+
+func _can_open_wheel(player_id: int) -> bool:
+	if TurnManager != null and not TurnManager.can_player_act(player_id):
+		return false
+
+	for player in get_tree().get_nodes_in_group("players"):
+		if player != null and player.get("player_id") == player_id:
+			if player.has_method("is_downed") and player.is_downed():
+				return false
+			return true
+	return true

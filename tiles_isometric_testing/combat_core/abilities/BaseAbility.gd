@@ -93,6 +93,9 @@ func get_highlight_type() -> String:
 
 
 func execute(caster: Node, targets: Array) -> void:
+	if caster != null and caster.has_method("is_downed") and caster.is_downed():
+		return
+
 	var dice_roller = DiceRoller.new()
 	var hit_miss_resolver = caster.get_node_or_null("/root/HitMissResolver")
 	
@@ -114,7 +117,9 @@ func execute(caster: Node, targets: Array) -> void:
 			# Ally Targeting Resolver: Bypass armor, use DC from skill.
 			var stat_sys = caster.get_node_or_null("/root/StatSystem")
 			var acc_mod = 0
-			if stat_sys != null and stat_sys.has_method("get_acc"):
+			if stat_sys != null and stat_sys.has_method("get_hit_roll_modifier"):
+				acc_mod = int(stat_sys.get_hit_roll_modifier(caster))
+			elif stat_sys != null and stat_sys.has_method("get_acc"):
 				acc_mod = floori(stat_sys.get_acc(caster) / 2.0)
 			
 			var raw_d20 = dice_roller.d20()
@@ -157,6 +162,7 @@ func execute(caster: Node, targets: Array) -> void:
 			if is_heal:
 				_apply_heal(target, output_amount)
 			else:
+				output_amount = maxi(0, output_amount + _get_damage_modifier(caster, is_magical))
 				# TODO (Gilang): Calculate Damage Multipliers here!
 				# Query your upcoming Status Effect System to see if the target 
 				# is "Vulnerable" or has the "Vapor" (+20%) elemental combo.
@@ -184,6 +190,22 @@ func _is_ally(caster: Node, target: Node) -> bool:
 	if caster_pid == null and target_pid == null:
 		return true
 	return false
+
+func _get_damage_modifier(caster: Node, is_magical: bool) -> int:
+	var stat_sys = caster.get_node_or_null("/root/StatSystem")
+	if stat_sys != null:
+		if is_magical and stat_sys.has_method("get_magical_damage_modifier"):
+			return int(stat_sys.get_magical_damage_modifier(caster))
+		if not is_magical and stat_sys.has_method("get_physical_damage_modifier"):
+			return int(stat_sys.get_physical_damage_modifier(caster))
+
+	var stats = caster.get_node_or_null("StatsComponent")
+	if stats != null:
+		if is_magical and stats.has_method("get_magical_damage_modifier"):
+			return int(stats.get_magical_damage_modifier())
+		if not is_magical and stats.has_method("get_physical_damage_modifier"):
+			return int(stats.get_physical_damage_modifier())
+	return 0
 
 func _apply_damage(target: Node, amount: int, attacker: Node, is_magical: bool) -> void:
 	var type_str = "magical" if is_magical else "physical"

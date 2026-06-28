@@ -99,10 +99,10 @@ func place_at(pos: Vector2i) -> void:
 # HP API
 # -----------------------------------------------------------------------------
 
-func take_damage(amount: int, attacker: Node = null) -> int:
+func take_damage(amount: int, attacker: Node = null, damage_type: String = "physical") -> int:
 	if health == null:
 		return 0
-	return health.take_damage(amount, attacker, "physical")
+	return health.take_damage(amount, attacker, damage_type)
 
 
 func heal(amount: int) -> int:
@@ -111,8 +111,52 @@ func heal(amount: int) -> int:
 	return health.heal(amount, self)
 
 
+func get_hp() -> int:
+	return health.get_hp() if health != null else 0
+
+
+func get_max_hp() -> int:
+	return health.get_max_hp() if health != null else 0
+
+
+func sub_hp(amount: int, attacker: Node = null, damage_type: String = "true") -> int:
+	if health == null:
+		return 0
+	return health.sub_hp(amount, attacker, damage_type)
+
+
+func add_hp(amount: int) -> int:
+	if health == null:
+		return 0
+	return health.add_hp(amount)
+
+
+func get_armor() -> int:
+	return stats.get_armor() if stats != null else 0
+
+
+func get_resist() -> int:
+	return stats.get_resist() if stats != null else 0
+
+
+func get_stat(stat_key: String) -> int:
+	return stats.get_stat(stat_key) if stats != null else 0
+
+
+func add_stat(stat_key: String, amount: int) -> bool:
+	return stats.add_base_stat(stat_key, amount) if stats != null else false
+
+
+func sub_stat(stat_key: String, amount: int) -> bool:
+	return stats.sub_base_stat(stat_key, amount) if stats != null else false
+
+
 func is_dead() -> bool:
 	return health != null and health.is_dead()
+
+
+func is_downed() -> bool:
+	return health != null and health.is_downed()
 
 
 func _on_died(_killer: Node) -> void:

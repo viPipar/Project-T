@@ -201,7 +201,7 @@ func _find_best_target() -> Node:
 
 	for player in all_players:
 		var health := player.get_node_or_null("HealthComponent")
-		if health and health.is_dead():
+		if health and (health.is_dead() or health.is_downed()):
 			continue
 		var p_pos: Vector2i = player.get("grid_pos")
 		var dist := GridManager.get_distance(my_pos, p_pos)

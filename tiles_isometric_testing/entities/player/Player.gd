@@ -62,6 +62,10 @@ func _ready() -> void:
 	movement.step_started.connect(_on_step_started)
 	if health != null and not health.died.is_connected(_on_died):
 		health.died.connect(_on_died)
+	if health != null and not health.downed.is_connected(_on_downed):
+		health.downed.connect(_on_downed)
+	if health != null and not health.revived.is_connected(_on_revived):
+		health.revived.connect(_on_revived)
 
 	# Subscribe ke sinyal blok input dari CombatTestBridge via EventBus
 	EventBus.combat_input_blocked.connect(_on_combat_input_blocked)
@@ -69,6 +73,11 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
+	if is_downed():
+		_play_facing_anim()
+		_apply_facing_flip()
+		return
+
 	# Update facing from cursor hover, but only when not mid-travel
 	if not movement._is_moving and _cursor != null and _cursor.has_method("get_hovered_tile"):
 		var hovered: Vector2i = _cursor.get_hovered_tile()
@@ -175,6 +184,9 @@ func _on_step_started(from: Vector2i, to: Vector2i) -> void:
 
 func _on_action_wheel_selected(pid: int, action_name: String) -> void:
 	if pid != player_id:
+		return
+	if is_downed():
+		EventBus.resource_blink_requested.emit(player_id, "stop_all")
 		return
 
 	var raw_id = action_name.to_lower().replace(" ", "_")
@@ -314,6 +326,8 @@ func get_player_id() -> int:
 	return player_id
 
 func get_movement_left() -> int:
+	if is_downed():
+		return 0
 	return movement.movement_left
 
 func bind_cursor(cursor: Node2D) -> void:
@@ -329,10 +343,10 @@ func place_at(pos: Vector2i) -> void:
 	z_index  = IsoUtils.get_depth(pos)
 
 
-func take_damage(amount: int, attacker: Node = null) -> int:
+func take_damage(amount: int, attacker: Node = null, damage_type: String = "physical") -> int:
 	if health == null:
 		return 0
-	return health.take_damage(amount, attacker, "physical")
+	return health.take_damage(amount, attacker, damage_type)
 
 
 func heal(amount: int) -> int:
@@ -341,8 +355,52 @@ func heal(amount: int) -> int:
 	return health.heal(amount, self)
 
 
+func get_hp() -> int:
+	return health.get_hp() if health != null else 0
+
+
+func get_max_hp() -> int:
+	return health.get_max_hp() if health != null else 0
+
+
+func sub_hp(amount: int, attacker: Node = null, damage_type: String = "true") -> int:
+	if health == null:
+		return 0
+	return health.sub_hp(amount, attacker, damage_type)
+
+
+func add_hp(amount: int) -> int:
+	if health == null:
+		return 0
+	return health.add_hp(amount)
+
+
+func get_armor() -> int:
+	return stats.get_armor() if stats != null else 0
+
+
+func get_resist() -> int:
+	return stats.get_resist() if stats != null else 0
+
+
+func get_stat(stat_key: String) -> int:
+	return stats.get_stat(stat_key) if stats != null else 0
+
+
+func add_stat(stat_key: String, amount: int) -> bool:
+	return stats.add_base_stat(stat_key, amount) if stats != null else false
+
+
+func sub_stat(stat_key: String, amount: int) -> bool:
+	return stats.sub_base_stat(stat_key, amount) if stats != null else false
+
+
 func is_dead() -> bool:
 	return health != null and health.is_dead()
+
+
+func is_downed() -> bool:
+	return health != null and health.is_downed()
 
 
 # ── Internal ──────────────────────────────────────────────────────────────────
@@ -458,7 +516,26 @@ func _on_died(_killer: Node) -> void:
 		anim_sprite.modulate = Color(0.35, 0.35, 0.35, 0.6)
 
 
+func _on_downed(_attacker: Node) -> void:
+	print("[Player] %s downed." % char_name)
+	if _state == PlayerState.TARGETING:
+		_exit_targeting()
+	if movement != null:
+		movement.movement_left = 0
+	EventBus.resource_blink_requested.emit(player_id, "stop_all")
+	if anim_sprite != null:
+		anim_sprite.modulate = Color(0.55, 0.55, 0.55, 0.85)
+
+
+func _on_revived() -> void:
+	print("[Player] %s revived." % char_name)
+	if anim_sprite != null:
+		anim_sprite.modulate = Color(1, 1, 1, 1)
+
+
 func play_attack(ability_id: String) -> void:
+	if is_downed():
+		return
 	if anim_sprite == null or anim_sprite.sprite_frames == null:
 		return
 	
@@ -535,4 +612,3 @@ func activate_haki_aura() -> void:
 func deactivate_haki_aura() -> void:
 	if _haki_aura != null and _haki_aura.has_method("deactivate"):
 		_haki_aura.deactivate()
-

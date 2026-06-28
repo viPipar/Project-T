@@ -15,6 +15,7 @@ signal turn_started(entity: Node, player_id: int)
 signal turn_ended(entity: Node)
 signal damage_dealt(target: Node, amount: int, type: String, is_crit: bool)
 signal entity_died(entity: Node, killer: Node)
+signal entity_downed(entity: Node, attacker: Node)
 # TODO (Team): miss_occurred has been deleted and merged into on_miss below
 signal dice_rolled(player_id: int, natural: int, total: int, vs_ac: int, is_hit: bool, is_crit: bool)
 signal attackcam_started(attacker: Node, target: Node, ability_id: String)

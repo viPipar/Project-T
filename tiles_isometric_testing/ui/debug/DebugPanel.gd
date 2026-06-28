@@ -562,7 +562,7 @@ func _format_entity_stats(entity: Node, prefix: String) -> String:
 		]
 		if hp_text == "": hp_text = "MaxHP %d" % stats.get_max_hp()
 		derived_line = "%s | Dmg(P/M) %d/%d | ARM %d RES %d | AP+%d Mv+%d Hit+%d Crit-%d | Slots %d/%d/%d" % [
-			hp_text, stats.get_stat("physical_damage"), stats.get_stat("magical_damage"), stats.get_armor(), stats.get_resist(),
+			hp_text, stats.get_physical_damage_modifier(), stats.get_magical_damage_modifier(), stats.get_armor(), stats.get_resist(),
 			stats.bonus_action_points(), stats.bonus_movement_tiles(),
 			stats.hit_roll_bonus(), stats.crit_roll_reduction(),
 			stats.get_spell_slots_l1(), stats.get_spell_slots_l2(), stats.get_spell_slots_l3()

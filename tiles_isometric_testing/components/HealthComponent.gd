@@ -1,17 +1,21 @@
 # components/HealthComponent.gd
 # Tanggung jawab:
-#   Mengelola HP, damage, heal, dan death untuk player/enemy.
+#   Mengelola HP, damage, heal, downed, revive, dan death untuk player/enemy.
 #   Max HP bisa dibaca otomatis dari StatsComponent atau di-set manual untuk placeholder.
 #
 # Cara pakai:
 #   var health := entity.get_node("HealthComponent") as HealthComponent
 #   health.take_damage(5, attacker, "physical")
+#   health.sub_hp(3, attacker, "true")
 #   health.heal(3)
+#   if health.is_downed():
+#       health.revive()
 #
 # Cara evaluasi:
 #   1. Jalankan Main.tscn.
-#   2. Serang enemy sampai HP turun.
-#   3. Pastikan hp_changed dan died terpanggil, enemy keluar dari grid saat mati.
+#   2. Serang enemy sampai HP 0, enemy harus mati/hilang.
+#   3. Serang player sampai HP 0, player harus downed dan tidak hilang.
+#   4. Heal target downed/dead harus return 0.
 extends Node
 class_name HealthComponent
 
@@ -19,6 +23,8 @@ signal hp_changed(current_hp: int, max_hp: int)
 signal damaged(amount: int)
 signal healed(amount: int)
 signal died(killer: Node)
+signal downed(attacker: Node)
+signal revived()
 
 @export var use_stats_max_hp: bool = true
 @export var starts_full: bool = true
@@ -26,6 +32,7 @@ signal died(killer: Node)
 @export var current_hp: int = 0
 
 var _dead: bool = false
+var _downed: bool = false
 var _stats: StatsComponent = null
 
 
@@ -48,10 +55,11 @@ func _ready() -> void:
 func setup_from_stats(stats: StatsComponent, fill_current: bool = true) -> void:
 	_stats = stats
 	use_stats_max_hp = true
-	refresh_max_hp(not fill_current)
+	refresh_max_hp(false)
 	if fill_current:
 		current_hp = max_hp
 		_dead = false
+		_downed = false
 	_sync_owner_hp()
 	hp_changed.emit(current_hp, max_hp)
 
@@ -62,6 +70,7 @@ func setup_fixed_max(value: int, fill_current: bool = true) -> void:
 	if fill_current:
 		current_hp = max_hp
 		_dead = false
+		_downed = false
 	else:
 		current_hp = clampi(current_hp, 0, max_hp)
 	_sync_owner_hp()
@@ -72,23 +81,15 @@ func refresh_max_hp(keep_ratio: bool = true) -> void:
 	if not use_stats_max_hp:
 		return
 
-	var old_max := max_hp
-	var ratio := 1.0
-	if keep_ratio and old_max > 0:
-		ratio = float(current_hp) / float(old_max)
-
 	if _stats == null:
 		_stats = owner.get_node_or_null("StatsComponent") as StatsComponent
 
 	max_hp = _stats.get_max_hp() if _stats != null else 15
-	if keep_ratio and old_max > 0:
-		current_hp = clampi(int(round(max_hp * ratio)), 0, max_hp)
-	elif starts_full or current_hp <= 0:
+	if starts_full and current_hp <= 0 and not _dead and not _downed:
 		current_hp = max_hp
 	else:
 		current_hp = clampi(current_hp, 0, max_hp)
 
-	_dead = current_hp <= 0
 	_sync_owner_hp()
 	hp_changed.emit(current_hp, max_hp)
 
@@ -96,7 +97,7 @@ func refresh_max_hp(keep_ratio: bool = true) -> void:
 # -- Damage / Heal ------------------------------------------------------------
 
 func take_damage(amount: int, attacker: Node = null, damage_type: String = "physical") -> int:
-	if amount <= 0 or is_dead():
+	if amount <= 0 or is_dead() or is_downed():
 		return 0
 
 	var applied := mini(amount, current_hp)
@@ -106,13 +107,16 @@ func take_damage(amount: int, attacker: Node = null, damage_type: String = "phys
 	hp_changed.emit(current_hp, max_hp)
 
 	if current_hp <= 0:
-		kill(attacker)
+		if _should_down_instead_of_die():
+			down(attacker)
+		else:
+			kill(attacker)
 
 	return applied
 
 
 func heal(amount: int, source: Node = null) -> int:
-	if amount <= 0 or is_dead():
+	if amount <= 0 or is_dead() or is_downed():
 		return 0
 
 	var before := current_hp
@@ -124,10 +128,42 @@ func heal(amount: int, source: Node = null) -> int:
 	return restored
 
 
+func get_hp() -> int:
+	return current_hp
+
+
+func get_max_hp() -> int:
+	return max_hp
+
+
+func set_hp(value: int) -> int:
+	current_hp = clampi(value, 0, max_hp)
+	if current_hp <= 0:
+		if _should_down_instead_of_die():
+			down()
+		else:
+			kill()
+	else:
+		_dead = false
+		_downed = false
+		_sync_owner_hp()
+		hp_changed.emit(current_hp, max_hp)
+	return current_hp
+
+
+func add_hp(amount: int) -> int:
+	return heal(amount)
+
+
+func sub_hp(amount: int, attacker: Node = null, damage_type: String = "true") -> int:
+	return take_damage(amount, attacker, damage_type)
+
+
 func kill(killer: Node = null) -> void:
 	if _dead:
 		return
 	_dead = true
+	_downed = false
 	current_hp = 0
 	_sync_owner_hp()
 	hp_changed.emit(current_hp, max_hp)
@@ -136,21 +172,42 @@ func kill(killer: Node = null) -> void:
 		EventBus.entity_died.emit(owner, killer)
 
 
-func revive(percent: float = 0.2) -> void:
+func down(attacker: Node = null) -> void:
+	if _downed or _dead:
+		return
+	_downed = true
 	_dead = false
+	current_hp = 0
+	_sync_owner_hp()
+	hp_changed.emit(current_hp, max_hp)
+	downed.emit(attacker)
+	if EventBus != null:
+		EventBus.entity_downed.emit(owner, attacker)
+
+
+func revive(percent: float = 0.2) -> void:
+	if not _dead and not _downed:
+		return
+	_dead = false
+	_downed = false
 	current_hp = clampi(int(ceil(max_hp * percent)), 1, max_hp)
 	_sync_owner_hp()
 	hp_changed.emit(current_hp, max_hp)
+	revived.emit()
 
 
 func is_dead() -> bool:
-	return _dead or current_hp <= 0
+	return _dead
+
+
+func is_downed() -> bool:
+	return _downed
 
 
 # -- Internal -----------------------------------------------------------------
 
 func _on_stats_changed() -> void:
-	refresh_max_hp(true)
+	refresh_max_hp(false)
 
 
 func _sync_owner_hp() -> void:
@@ -161,7 +218,17 @@ func _sync_owner_hp() -> void:
 	if _has_owner_property("current_hp"):
 		owner.set("current_hp", current_hp)
 	if _has_owner_property("is_alive"):
-		owner.set("is_alive", not is_dead())
+		owner.set("is_alive", not is_dead() and not is_downed())
+
+
+func _should_down_instead_of_die() -> bool:
+	if owner == null:
+		return false
+	if owner.is_in_group("players"):
+		return true
+	if _has_owner_property("player_id"):
+		return int(owner.get("player_id")) > 0
+	return false
 
 
 func _has_owner_property(prop_name: String) -> bool:

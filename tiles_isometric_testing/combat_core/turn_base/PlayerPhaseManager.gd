@@ -49,6 +49,11 @@ func start_phase() -> void:
 ## Dipanggil oleh Input System saat player konfirmasi skill + target
 ## action = { "ability_id": String, "targets": Array[Node], "caster": Node, "cost_ap": int, "cost_bap": int }
 func submit_action(player_id: int, action: Dictionary) -> void:
+	var caster: Node = action.get("caster")
+	if _is_downed(caster):
+		print("[PlayerPhaseManager] P%d downed, action ditolak." % player_id)
+		return
+
 	if player_id == 1:
 		p1_pending_action = action
 	elif player_id == 2:
@@ -99,6 +104,10 @@ func _execute_action(player_id: int, action: Dictionary) -> void:
 		return
 
 	var caster    : Node   = action.get("caster")
+	if _is_downed(caster):
+		print("[PlayerPhaseManager] P%d downed, action dibatalkan." % player_id)
+		return
+
 	var cost_ap   : int    = action.get("cost_ap", 0)
 	var cost_bap  : int    = action.get("cost_bap", 0)
 
@@ -141,3 +150,12 @@ func is_player_ended(player_id: int) -> bool:
 
 func can_player_act(player_id: int) -> bool:
 	return not is_player_ended(player_id)
+
+
+func _is_downed(entity: Node) -> bool:
+	if entity == null:
+		return false
+	if entity.has_method("is_downed"):
+		return bool(entity.is_downed())
+	var health := entity.get_node_or_null("HealthComponent") as HealthComponent
+	return health != null and health.is_downed()

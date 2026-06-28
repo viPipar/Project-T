@@ -195,6 +195,10 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 	var _pid_raw: Variant = attacker.get("player_id")
 	var pid: int = int(_pid_raw) if _pid_raw != null else 1
 
+	if attacker.has_method("is_downed") and attacker.is_downed():
+		print("[COMBAT] P%d downed, action dibatalkan." % pid)
+		return
+
 	# Blok jika animasi player ini sedang berjalan (cegah spam serangan)
 	var is_busy := _p1_busy if pid == 1 else _p2_busy
 	if is_busy:
@@ -271,28 +275,26 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 	print("[COMBAT] %s → menyerang → %s" % [attacker_name, target_name])
 
 	# ── Resolve Hit/Crit (logika tidak berubah) ───────────────────────────────
-	var result        := _crit_resolver.resolve_with_crit(attacker, target, false)
+	var result        := _crit_resolver.resolve_with_crit(attacker, target, is_magical)
 	var raw    : int   = result["raw_roll"]
 	var total  : int   = result["roll"]
 	var thresh : int   = result["threshold"]
 	var hit    : bool  = result["hit"]
 	var crit   : bool  = result["crit"]
 
-	print("[COMBAT] D20: %d (raw) + modifier → %d  vs  Armor: %d" % [raw, total, thresh])
+	var defense_label := "Resist" if is_magical else "Armor"
+	print("[COMBAT] D20: %d (raw) + modifier → %d  vs  %s: %d" % [raw, total, defense_label, thresh])
 
 	# ── Siapkan data damage (diroll di sini, tapi diapply SETELAH animasi) ────
 	var dmg_formula := base_dice
 	var dmg_rolls   : Array = []
 	var dmg_total   : int = 0
 	
-	var stat_comp = attacker.get_node_or_null("StatsComponent") as StatsComponent
-	var dmg_mod := 0
-	if stat_comp != null:
-		dmg_mod = stat_comp.get_stat("physical_damage")
-		if dmg_mod > 0:
-			dmg_formula += "+%d" % dmg_mod
-		elif dmg_mod < 0:
-			dmg_formula += "%d" % dmg_mod
+	var dmg_mod := _get_damage_modifier(attacker, is_magical)
+	if dmg_mod > 0:
+		dmg_formula += "+%d" % dmg_mod
+	elif dmg_mod < 0:
+		dmg_formula += "%d" % dmg_mod
 
 	if hit:
 		# Roll detail: ambil Array tiap dadu agar bisa divisualisasikan satu per satu
@@ -360,8 +362,8 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 	# ── Apply damage ke target SETELAH animasi selesai ───────────────────────
 	if hit:
 		if is_instance_valid(target):
-			var applied := _apply_damage_to_target(target, dmg_total, attacker)
 			var type_str = "magical" if is_magical else "physical"
+			var applied := _apply_damage_to_target(target, dmg_total, attacker, type_str)
 			EventBus.damage_dealt.emit(target, applied, type_str, crit)
 
 			if ElementSystem != null and element_tag != "physical" and element_tag != "":
@@ -389,14 +391,14 @@ func _on_combat_input_blocked(player_id: int, blocked: bool) -> void:
 	InputManager.set_player_blocked(player_id, blocked)
 
 
-func _apply_damage_to_target(target: Node, amount: int, attacker: Node) -> int:
+func _apply_damage_to_target(target: Node, amount: int, attacker: Node, damage_type: String) -> int:
 	var stat_system := get_node_or_null("/root/StatSystem")
 	if stat_system != null and stat_system.has_method("apply_damage"):
-		return int(stat_system.apply_damage(target, amount, attacker, "physical"))
+		return int(stat_system.apply_damage(target, amount, attacker, damage_type))
 
 	var health := target.get_node_or_null("HealthComponent") as HealthComponent
 	if health != null:
-		return health.take_damage(amount, attacker, "physical")
+		return health.take_damage(amount, attacker, damage_type)
 
 	if target.has_method("take_damage"):
 		target.call("take_damage", amount)
@@ -407,6 +409,23 @@ func _apply_damage_to_target(target: Node, amount: int, attacker: Node) -> int:
 
 
 # ── PHASE TRACKING ────────────────────────────────────────────────────────────
+
+func _get_damage_modifier(attacker: Node, is_magical: bool) -> int:
+	var stat_system := get_node_or_null("/root/StatSystem")
+	if stat_system != null:
+		if is_magical and stat_system.has_method("get_magical_damage_modifier"):
+			return int(stat_system.get_magical_damage_modifier(attacker))
+		if not is_magical and stat_system.has_method("get_physical_damage_modifier"):
+			return int(stat_system.get_physical_damage_modifier(attacker))
+
+	var stat_comp = attacker.get_node_or_null("StatsComponent") as StatsComponent
+	if stat_comp != null:
+		if is_magical and stat_comp.has_method("get_magical_damage_modifier"):
+			return int(stat_comp.get_magical_damage_modifier())
+		if not is_magical and stat_comp.has_method("get_physical_damage_modifier"):
+			return int(stat_comp.get_physical_damage_modifier())
+	return 0
+
 
 func _on_phase_changed(turn: int, phase: int) -> void:
 	if phase == 0:  # TurnManager.Phase.PLAYERS

@@ -36,6 +36,13 @@ func get_resist(entity: Node) -> int:
 	return FALLBACK_RESIST
 
 
+func get_max_armor(entity: Node) -> int:
+	var stats := get_stats_component(entity)
+	if stats != null and stats.has_method("get_max_armor"):
+		return int(stats.get_max_armor())
+	return get_armor(entity)
+
+
 func get_acc(entity: Node) -> int:
 	return get_stat(entity, "acc")
 
@@ -64,9 +71,50 @@ func get_str_stat(entity: Node) -> int:
 	return get_stat(entity, "str")
 
 
+func get_physical_damage_modifier(entity: Node) -> int:
+	var stats := get_stats_component(entity)
+	if stats != null and stats.has_method("get_physical_damage_modifier"):
+		return int(stats.get_physical_damage_modifier())
+	return int(floor(float(get_str_stat(entity)) / 2.0))
+
+
+func get_magical_damage_modifier(entity: Node) -> int:
+	var stats := get_stats_component(entity)
+	if stats != null and stats.has_method("get_magical_damage_modifier"):
+		return int(stats.get_magical_damage_modifier())
+	return int(floor(float(get_int_stat(entity)) / 2.0))
+
+
+func get_hit_roll_modifier(entity: Node) -> int:
+	var stats := get_stats_component(entity)
+	if stats != null and stats.has_method("get_hit_roll_modifier"):
+		return int(stats.get_hit_roll_modifier())
+	return int(floor(float(get_acc(entity)) / 2.0))
+
+
+func get_crit_requirement(entity: Node) -> int:
+	var stats := get_stats_component(entity)
+	if stats != null and stats.has_method("get_natural_crit_requirement"):
+		return int(stats.get_natural_crit_requirement())
+	return maxi(1, 20 - int(floor(float(get_acc(entity)) / 10.0)))
+
+
+func get_natural_crit_requirement(entity: Node) -> int:
+	return get_crit_requirement(entity)
+
+
+func get_luck_roll_modifier(entity: Node) -> int:
+	var stats := get_stats_component(entity)
+	if stats != null and stats.has_method("get_luck_roll_modifier"):
+		return int(stats.get_luck_roll_modifier())
+	return int(floor(float(get_lck(entity)) / 5.0))
+
+
 func get_max_hp(entity: Node) -> int:
 	var health := get_health_component(entity)
 	if health != null:
+		if health.has_method("get_max_hp"):
+			return int(health.get_max_hp())
 		var value = health.get("max_hp")
 		if value != null:
 			return int(value)
@@ -80,6 +128,8 @@ func get_max_hp(entity: Node) -> int:
 func get_current_hp(entity: Node) -> int:
 	var health := get_health_component(entity)
 	if health != null:
+		if health.has_method("get_hp"):
+			return int(health.get_hp())
 		var value = health.get("current_hp")
 		if value != null:
 			return int(value)
@@ -118,6 +168,9 @@ func apply_damage(target: Node, amount: int, attacker: Node = null, damage_type:
 	if health != null and health.has_method("take_damage"):
 		return int(health.take_damage(amount, attacker, damage_type))
 
+	if target != null and target.has_method("sub_hp"):
+		return int(target.sub_hp(amount, attacker, damage_type))
+
 	if target != null and target.has_method("take_damage"):
 		target.take_damage(amount)
 		return maxi(0, amount)
@@ -130,4 +183,9 @@ func apply_heal(target: Node, amount: int, source: Node = null) -> int:
 	var health := get_health_component(target)
 	if health != null and health.has_method("heal"):
 		return int(health.heal(amount, source))
+	if target != null and target.has_method("add_hp"):
+		return int(target.add_hp(amount))
+	if target != null and target.has_method("heal"):
+		target.heal(amount)
+		return maxi(0, amount)
 	return 0
