@@ -300,7 +300,7 @@ func _set_end_overlay(player_id: int, ended: bool) -> void:
 
 	if ended:
 		# Darken layar player yang sudah end turn
-		var cancel_key := "Q" if player_id == 1 else "U"
+		var cancel_key := _get_input_key_label("p%d_end_turn" % player_id, "R" if player_id == 1 else "P")
 		lbl.text = "End Turn\n[%s] Cancel" % cancel_key
 		var tw := create_tween().set_ease(Tween.EASE_OUT)
 		_store_end_tween(player_id, tw)
@@ -367,3 +367,17 @@ func _store_end_tween(player_id: int, tw: Tween) -> void:
 		_p1_end_tween = tw
 	else:
 		_p2_end_tween = tw
+
+
+func _get_input_key_label(action_name: String, fallback: String) -> String:
+	if not InputMap.has_action(action_name):
+		return fallback
+	for event in InputMap.action_get_events(action_name):
+		if event is InputEventKey:
+			var key_event := event as InputEventKey
+			var code := key_event.physical_keycode
+			if code == 0:
+				code = key_event.keycode
+			if code != 0:
+				return OS.get_keycode_string(code)
+	return fallback

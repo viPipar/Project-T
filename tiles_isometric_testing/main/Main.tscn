@@ -218,8 +218,8 @@ offset_right = 383.0
 offset_bottom = 362.0
 theme_override_font_sizes/font_size = 13
 text = "Controls:
-- P1 Move: WASD | Confirm: E | End Turn: Q
-- P2 Move: IJKL | Confirm: O | End Turn: U
+- P1 Move: WASD | Confirm: F | Cancel: X | End Turn: R
+- P2 Move: IJKL | Confirm: ; | Cancel: , | End Turn: P
 
 Current Features:
 - Tile highlight: valid / invalid / entity / self

@@ -5,6 +5,7 @@ var is_in_menu: bool = false
 
 # Blok input per-player saat animasi dice combat berjalan
 var _player_blocked: Dictionary = {1: false, 2: false}
+var _player_menu_blocked: Dictionary = {1: false, 2: false}
 
 ## Set blok input untuk player tertentu (1 atau 2)
 func set_player_blocked(player_id: int, blocked: bool) -> void:
@@ -14,9 +15,19 @@ func set_player_blocked(player_id: int, blocked: bool) -> void:
 func is_player_blocked(player_id: int) -> bool:
 	return _player_blocked.get(player_id, false)
 
+## Blok input gameplay untuk satu player saat UI modal miliknya terbuka.
+func set_player_menu_blocked(player_id: int, blocked: bool) -> void:
+	_player_menu_blocked[player_id] = blocked
+
+
+func is_player_menu_blocked(player_id: int) -> bool:
+	return _player_menu_blocked.get(player_id, false)
+
 # action = "move_up" | "move_down" | "move_left" | "move_right" | "end_turn"
 func _can_accept_input(player_id: int) -> bool:
 	if killcam_active or is_in_menu:
+		return false
+	if _player_menu_blocked.get(player_id, false):
 		return false
 	if _player_blocked.get(player_id, false):
 		return false
@@ -38,6 +49,8 @@ func is_pressed(player_id: int, action: String) -> bool:
 func _can_accept_end_turn_input(player_id: int) -> bool:
 	if killcam_active or is_in_menu:
 		return false
+	if _player_menu_blocked.get(player_id, false):
+		return false
 	if _player_blocked.get(player_id, false):
 		return false
 	if TurnManager == null:
@@ -49,7 +62,7 @@ func _can_accept_end_turn_input(player_id: int) -> bool:
 	return TurnManager.can_player_act(player_id)
 
 func get_movement_dir(player_id: int) -> Vector2i:
-	if killcam_active or is_in_menu:
+	if killcam_active or is_in_menu or _player_menu_blocked.get(player_id, false):
 		return Vector2i.ZERO
 	var up_pressed := is_pressed(player_id, "move_up")
 	var down_pressed := is_pressed(player_id, "move_down")

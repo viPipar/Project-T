@@ -31,6 +31,7 @@ const PULSE_DURATION := 0.45
 
 var _blink_keys: Dictionary = {}
 var _blink_phase: float = 0.0
+var _action_wheel_visible: bool = false
 
 # ── Layout constants ─────────────────────────────────────────────────────────
 const LABEL_FONT_SIZE := 20
@@ -55,6 +56,8 @@ func _ready() -> void:
 		EventBus.resource_blink_requested.connect(_on_resource_blink_requested)
 	if EventBus.has_signal("attackcam_started"):
 		EventBus.attackcam_started.connect(func(_a, _b, _c): _blink_keys.clear())
+	if EventBus.has_signal("action_wheel_visibility_changed"):
+		EventBus.action_wheel_visibility_changed.connect(_on_action_wheel_visibility_changed)
 
 
 func _on_combat_hud_ready(pid: int, ap_mgr: Node, mov_mgr: Node, resource_mgr: Node) -> void:
@@ -135,6 +138,13 @@ func _on_resource_blink_requested(pid: int, res_type: String) -> void:
 		"movement":      _blink_keys["mov"] = true
 
 
+func _on_action_wheel_visibility_changed(pid: int, is_visible: bool) -> void:
+	if pid != player_id:
+		return
+	_action_wheel_visible = is_visible
+	queue_redraw()
+
+
 # ── Pulse animation ─────────────────────────────────────────────────────────
 
 func _start_pulse(key: String) -> void:
@@ -189,7 +199,8 @@ func _draw() -> void:
 	var panel_h := 38.0 + padding * 2
 	
 	var start_x := (size.x - panel_w) / 2.0
-	var start_y := size.y - panel_h - 45.0  # Leave space below for labels
+	var label_space := 8.0 if _action_wheel_visible else 45.0
+	var start_y := size.y - panel_h - label_space
 	
 	var panel_rect := Rect2(start_x, start_y, panel_w, panel_h)
 	draw_rect(panel_rect, COLOR_PANEL_BG)
@@ -219,9 +230,9 @@ func _draw_text_and_label(rect: Rect2, val_text: String, label_text: String, ico
 	var val_pos := Vector2(rect.position.x + icon_w + 4, rect.position.y + rect.size.y * 0.5 + val_size.y * 0.3)
 	draw_string(font, val_pos, val_text, HORIZONTAL_ALIGNMENT_LEFT, -1, LABEL_FONT_SIZE, Color.WHITE)
 	
-	# Draw multiline label below the panel
-	var lbl_y := rect.position.y + rect.size.y + 12
-	draw_multiline_string(font, Vector2(rect.position.x, lbl_y), label_text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, SMALL_FONT_SIZE, -1, Color.BLACK)
+	if not _action_wheel_visible:
+		var lbl_y := rect.position.y + rect.size.y + 12
+		draw_multiline_string(font, Vector2(rect.position.x, lbl_y), label_text, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, SMALL_FONT_SIZE, -1, Color.BLACK)
 
 
 func _draw_ap_box(rect: Rect2) -> void:

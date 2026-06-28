@@ -22,11 +22,11 @@ extends Node2D
 var _show_debug_panel:  bool = false
 var _show_dice_sandbox: bool = false
 var _show_debug_grid:   bool = false
-var _show_f3_debug:     bool = true
+var _show_f3_debug:     bool = false
 var _split_screen: SplitScreenManager = null
 var _stat_debug_panel: StatDebugPanel = null  # Debug stat manipulator (F1)
 var roguelike_ui_shell: CanvasLayer = null
-var _action_wheel_test_overlay: Control = null
+var _action_wheel_overlay: Control = null
 
 func _ready() -> void:
 	var cursor_scene := preload("res://world/SelectionCursor.tscn")
@@ -110,8 +110,8 @@ func _ready() -> void:
 	# ── Stat Debug Panel ─────────────────────────────────────────────────────
 	_spawn_stat_debug_panel()
 
-	# ── Action Wheel Test Overlay ────────────────────────────────────────────
-	_spawn_action_wheel_test_overlay()
+	# ── Battle Action Wheel Overlay ──────────────────────────────────────────
+	_spawn_action_wheel_overlay()
 
 	_apply_debug_visibility()
 
@@ -181,23 +181,22 @@ func _spawn_floating_text_manager() -> void:
 
 
 
-func _spawn_action_wheel_test_overlay() -> void:
-	var test_scene := load("res://ui/action_wheel/testing.tscn")
-	if test_scene == null:
-		push_warning("[Main] ActionWheel testing.tscn tidak ditemukan!")
+func _spawn_action_wheel_overlay() -> void:
+	var wheel_scene := load("res://ui/action_wheel/BattleActionWheelOverlay.tscn")
+	if wheel_scene == null:
+		push_warning("[Main] Action wheel overlay scene tidak ditemukan!")
 		return
-	_action_wheel_test_overlay = test_scene.instantiate() as Control
-	_action_wheel_test_overlay.name = "ActionWheelTestOverlay"
+	_action_wheel_overlay = wheel_scene.instantiate() as Control
+	_action_wheel_overlay.name = "ActionWheelOverlay"
 	
-	# Masukkan ke dalam CanvasLayer agar berada di atas UI lainnya
 	var canvas = CanvasLayer.new()
 	canvas.layer = 100
 	canvas.name = "ActionWheelCanvas"
-	canvas.add_child(_action_wheel_test_overlay)
+	canvas.add_child(_action_wheel_overlay)
 	add_child(canvas)
 	
-	_action_wheel_test_overlay.visible = true
-	print("[Main] ActionWheel Test Overlay siap — use Q/E (P1) or U/O (P2) to toggle ✅")
+	_action_wheel_overlay.visible = true
+	print("[Main] Action wheel overlay siap")
 
 
 # ── SPLIT-SCREEN SETUP ───────────────────────────────────────────────────────

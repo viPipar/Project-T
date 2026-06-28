@@ -18,6 +18,8 @@ func _ready() -> void:
 			EventBus.stats_changed.connect(_on_stats_changed)
 		if not EventBus.buffs_changed.is_connected(_on_buffs_changed):
 			EventBus.buffs_changed.connect(_on_buffs_changed)
+		if EventBus.has_signal("combat_input_blocked") and not EventBus.combat_input_blocked.is_connected(_on_combat_input_blocked):
+			EventBus.combat_input_blocked.connect(_on_combat_input_blocked)
 
 	if TurnManager != null and refresh_on_turn_events:
 		if not TurnManager.turn_state_changed.is_connected(_on_turn_state_changed):
@@ -48,6 +50,10 @@ func _on_buffs_changed(_entity: Node) -> void:
 	_refresh_all()
 
 
+func _on_combat_input_blocked(_player_id: int, _blocked: bool) -> void:
+	_refresh_all()
+
+
 func _refresh_all() -> void:
 	if not enabled:
 		_clear_all()
@@ -63,8 +69,7 @@ func _refresh_player(player: Node) -> void:
 	var pid = _safe_get_int(player, "player_id", -1)
 	var type := _type_for_player(pid)
 
-	# Jika player sedang dalam mode targeting ability, sembunyikan movement range
-	if player.get("_state") == 1: # 1 == PlayerState.TARGETING
+	if player.has_method("should_hide_movement_range") and player.should_hide_movement_range():
 		_clear_type(type)
 		return
 

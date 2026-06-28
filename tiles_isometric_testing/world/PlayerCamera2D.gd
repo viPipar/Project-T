@@ -52,6 +52,8 @@ func _process(delta: float) -> void:
 func _handle_pan_input(delta: float) -> void:
 	if is_instance_valid(InputManager) and InputManager.is_in_menu:
 		return
+	if is_instance_valid(InputManager) and InputManager.is_player_menu_blocked(player_id):
+		return
 
 	var dir := Vector2.ZERO
 

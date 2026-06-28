@@ -1,9 +1,9 @@
 [gd_scene load_steps=3 format=3 uid="uid://0usmt4clg1yi"]
 
 [ext_resource type="PackedScene" uid="uid://bbwemedkpc6lc" path="res://ui/action_wheel/ActionWheel.tscn" id="1_faht1"]
-[ext_resource type="Script" uid="uid://colslj4ypbcr0" path="res://ui/action_wheel/ActionWheelTestController.gd" id="2_script"]
+[ext_resource type="Script" path="res://ui/action_wheel/BattleActionWheelController.gd" id="2_script"]
 
-[node name="Control" type="Control"]
+[node name="BattleActionWheelOverlay" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -11,18 +11,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_script")
-
-[node name="CenterDividerGlow" type="ColorRect" parent="."]
-layout_mode = 1
-anchors_preset = 13
-anchor_left = 0.5
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -6.0
-offset_right = 6.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.94902, 0.788235, 0.368627, 0.12)
 
 [node name="CenterDivider" type="ColorRect" parent="."]
 layout_mode = 1
@@ -47,6 +35,7 @@ grow_vertical = 2
 [node name="ActionWheelLeft" parent="LeftSide" instance=ExtResource("1_faht1")]
 layout_mode = 1
 title_text = "Player 1"
+subtitle_text = "WASD pilih arah, Q/E ganti wheel, F confirm"
 
 [node name="RightSide" type="Control" parent="."]
 clip_contents = true
@@ -61,7 +50,7 @@ grow_vertical = 2
 [node name="ActionWheelRight" parent="RightSide" instance=ExtResource("1_faht1")]
 layout_mode = 1
 title_text = "Player 2"
-subtitle_text = "IJKL pilih arah, U/O geser wheel, ; confirm"
+subtitle_text = "IJKL pilih arah, U/O ganti wheel, ; confirm"
 player_id = 2
 hover_up_key = 73
 hover_left_key = 74

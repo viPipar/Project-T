@@ -201,6 +201,8 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 
 	# Blok jika animasi player ini sedang berjalan (cegah spam serangan)
 	var is_busy := _p1_busy if pid == 1 else _p2_busy
+	if not is_busy:
+		_set_player_busy(pid, true)
 	if is_busy:
 		print("[COMBAT] ⚠️ P%d — Animasi sedang berjalan, input diblok" % pid)
 		return
@@ -228,16 +230,19 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 		# Validasi AP/BAP
 		var ap_mgr = _p1_ap if pid == 1 else _p2_ap
 		if ap_mgr.current_ap < cost_ap or ap_mgr.current_bap < cost_bap:
+			_set_player_busy(pid, false)
 			print("[COMBAT] ⚠️ P%d — Tidak cukup AP/BAP untuk %s!" % [pid, ability.ability_name])
 			return
 			
 		# Validasi Mana
 		if pid == 1 and cost_mana > 0:
 			if _p1_ec.current_charges < cost_mana:
+				_set_player_busy(pid, false)
 				print("[COMBAT] ⚠️ P1 — Tidak cukup Energy Charge untuk %s!" % ability.ability_name)
 				return
 		elif pid == 2 and cost_mana > 0:
 			if _p2_ss.current_slots[cost_mana - 1] < 1:
+				_set_player_busy(pid, false)
 				print("[COMBAT] ⚠️ P2 — Tidak cukup Spell Slot Lv%d untuk %s!" % [cost_mana, ability.ability_name])
 				return
 				
@@ -258,13 +263,9 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 		if pid == 1: has_ap = _p1_ap.spend_ap(1)
 		elif pid == 2: has_ap = _p2_ap.spend_ap(1)
 		if not has_ap:
+			_set_player_busy(pid, false)
 			print("[COMBAT] ⚠️ P%d — Tidak ada Action Point yang tersisa!" % pid)
 			return
-
-	# Set busy & blok input hanya untuk player ini
-	if pid == 1: _p1_busy = true
-	else:         _p2_busy = true
-	EventBus.combat_input_blocked.emit(pid, true)
 
 	var _aname_raw: Variant = attacker.get("char_name")
 	var _tname_raw: Variant = target.get("enemy_name")
@@ -379,16 +380,23 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 		else:
 			print("[COMBAT] ⚠️  Target sudah dikalahkan sebelum serangan mendarat!")
 
-	# Buka blok input player ini
-	if pid == 1: _p1_busy = false
-	else:         _p2_busy = false
-	EventBus.combat_input_blocked.emit(pid, false)
+	_set_player_busy(pid, false)
 
 
 # ── CALLBACK — sync InputManager saat signal diterima ────────────────────────
 
 func _on_combat_input_blocked(player_id: int, blocked: bool) -> void:
 	InputManager.set_player_blocked(player_id, blocked)
+
+
+func _set_player_busy(player_id: int, busy: bool) -> void:
+	if player_id == 1:
+		_p1_busy = busy
+	else:
+		_p2_busy = busy
+	if InputManager != null:
+		InputManager.set_player_blocked(player_id, busy)
+	EventBus.combat_input_blocked.emit(player_id, busy)
 
 
 func _apply_damage_to_target(target: Node, amount: int, attacker: Node, damage_type: String) -> int:

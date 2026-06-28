@@ -26,6 +26,9 @@ var _last_state: String   = ""
 func _process(_delta: float) -> void:
 	if _player == null:
 		return
+	if _player.has_method("is_resolving_action") and _player.is_resolving_action():
+		_clear_highlight()
+		return
 
 	var target: Vector2i = Vector2i(-1, -1)
 	if _player._cursor != null and _player._cursor.has_method("get_hovered_tile"):
@@ -38,7 +41,9 @@ func _process(_delta: float) -> void:
 	var origin: Vector2i = _player.grid_pos
 	var new_state: String
 
-	if target == origin:
+	if _player.has_method("is_targeting_ability") and _player.is_targeting_ability():
+		new_state = _get_targeting_state(target)
+	elif target == origin:
 		new_state = "self"
 	elif GridManager.has_entity_at(target):
 		var reachable_adj := _has_reachable_adjacent(origin, target, _player.get_movement_left())
@@ -76,6 +81,18 @@ func _clear_highlight() -> void:
 	HighlightManager.clear_cursor_back(_player.player_id)
 	_last_pos   = Vector2i(-1, -1)
 	_last_state = ""
+
+
+func _get_targeting_state(target: Vector2i) -> String:
+	if not _player.has_method("is_tile_valid_for_targeting"):
+		return "invalid"
+	if not _player.is_tile_valid_for_targeting(target):
+		return "invalid"
+	if GridManager.has_entity_at(target):
+		return "entity"
+	if _player.has_method("can_target_empty_tile") and _player.can_target_empty_tile():
+		return "valid"
+	return "invalid"
 
 
 func _has_reachable_adjacent(origin: Vector2i, entity_tile: Vector2i, budget: int) -> bool:

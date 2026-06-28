@@ -42,7 +42,7 @@ var _loaded_ability: BaseAbility = null
 var _targeting_tiles: Array[Vector2i] = []
 var _haki_aura: Node2D = null
 
-enum PlayerState { IDLE, TARGETING }
+enum PlayerState { IDLE, TARGETING, ACTING }
 var _state: PlayerState = PlayerState.IDLE
 # Tidak ada _combat_blocked lokal — InputManager.set_player_blocked() yang handle
 
@@ -132,10 +132,13 @@ func _on_confirm() -> void:
 	if occupant != null:
 		match entity_type:
 			GridManager.EntityType.ENEMY:
+				print("[Player P%d] Pilih ability dari action wheel dulu sebelum menyerang." % player_id)
+				return
 				print("Player ", player_id, " menyerang musuh: ", occupant.name)
 				var shot = ProjectileLine.cast(grid_pos, target)
 				match shot.result:
 					"hit_entity":
+						_begin_action_resolution()
 						# Emit signal supaya CombatTestBridge bisa resolve hit/miss/crit
 						EventBus.attackcam_started.emit(self, occupant, selected_ability_id)
 						if player_id == 1:
@@ -153,6 +156,8 @@ func _on_confirm() -> void:
 				# TODO: tampilkan dialog NPC
 
 			GridManager.EntityType.PLAYER:
+				print("[Player P%d] Target player butuh ability/revive flow, bukan direct confirm." % player_id)
+				return
 				print("Player ", player_id, " Interaksi Player : ", occupant.player_id)
 				var shot = ProjectileLine.cast(grid_pos, target)
 				match shot.result:
@@ -221,6 +226,7 @@ func _on_action_wheel_selected(pid: int, action_name: String) -> void:
 	# Self-targeting abilities skip the cursor entirely
 	if _loaded_ability.is_self_target():
 		print("[Player P%d] Self-target: %s — executing immediately" % [player_id, _loaded_ability.ability_name])
+		_begin_action_resolution()
 		EventBus.attackcam_started.emit(self, self, selected_ability_id)
 		return
 
@@ -258,8 +264,7 @@ func _enter_targeting() -> void:
 ## Exit TARGETING state: clear highlights, return to idle.
 func _exit_targeting() -> void:
 	_state = PlayerState.IDLE
-	HighlightManager.clear("attack")
-	HighlightManager.clear("skill")
+	_clear_targeting_highlights()
 	_targeting_tiles.clear()
 	_loaded_ability = null
 	
@@ -287,6 +292,17 @@ func _on_targeting_confirm() -> void:
 	# Check if there's an entity to hit on that tile
 	var occupant := GridManager.get_entity_at(target_tile)
 	if occupant == null:
+		if _can_target_empty_tile():
+			print("[Player P%d] TARGET TILE CONFIRMED: %s at %s" % [player_id, _loaded_ability.ability_name, target_tile])
+			EventBus.resource_blink_requested.emit(player_id, "stop_all")
+			if EventBus != null:
+				EventBus.ability_executed.emit(self, [], {
+					"ability_id": selected_ability_id,
+					"target_tile": target_tile,
+					"is_empty_tile": true,
+				})
+			_finish_action_resolution()
+			return
 		print("[Player P%d] No target entity at tile %s" % [player_id, target_tile])
 		return
 
@@ -294,6 +310,7 @@ func _on_targeting_confirm() -> void:
 
 	# Fire the ability
 	_update_facing_from_to(grid_pos, target_tile)
+	_begin_action_resolution()
 	EventBus.attackcam_started.emit(self, occupant, selected_ability_id)
 	EventBus.resource_blink_requested.emit(player_id, "stop_all")
 	if player_id == 1:
@@ -301,23 +318,48 @@ func _on_targeting_confirm() -> void:
 	elif player_id == 2:
 		AttackCam.play(false, true)
 
-	# Clean up targeting state
-	_state = PlayerState.IDLE
-	HighlightManager.clear("attack")
-	HighlightManager.clear("skill")
-	_targeting_tiles.clear()
-	
+## Dipanggil saat combat_input_blocked signal diterima dari EventBus.
+## Player hanya peduli jika player_id-nya yang diblok.
+func _on_combat_input_blocked(blocked_player_id: int, blocked: bool) -> void:
+	if blocked_player_id != player_id:
+		return
+	if blocked:
+		if _state == PlayerState.TARGETING:
+			_state = PlayerState.ACTING
+		if MovementRangeManager != null and MovementRangeManager.has_method("_refresh_player"):
+			MovementRangeManager._refresh_player(self)
+	elif _state == PlayerState.ACTING:
+		_finish_action_resolution()
+
+
+# ── Public API ────────────────────────────────────────────────────────────────
+
+func _begin_action_resolution() -> void:
+	_state = PlayerState.ACTING
 	if MovementRangeManager != null and MovementRangeManager.has_method("_refresh_player"):
 		MovementRangeManager._refresh_player(self)
 
 
-## Dipanggil saat combat_input_blocked signal diterima dari EventBus.
-## Player hanya peduli jika player_id-nya yang diblok.
-func _on_combat_input_blocked(_blocked_player_id: int, _blocked: bool) -> void:
-	pass  # InputManager.set_player_blocked() sudah dipanggil oleh CombatTestBridge
+func _finish_action_resolution() -> void:
+	_clear_targeting_highlights()
+	_targeting_tiles.clear()
+	_loaded_ability = null
+	_state = PlayerState.IDLE
+	EventBus.resource_blink_requested.emit(player_id, "stop_all")
+	if MovementRangeManager != null and MovementRangeManager.has_method("_refresh_player"):
+		MovementRangeManager._refresh_player(self)
 
 
-# ── Public API ────────────────────────────────────────────────────────────────
+func _clear_targeting_highlights() -> void:
+	HighlightManager.clear("attack")
+	HighlightManager.clear("skill")
+
+
+func _can_target_empty_tile() -> bool:
+	if _loaded_ability == null:
+		return false
+	return _loaded_ability.range_type == "aoe" or _loaded_ability.target_alignment == BaseAbility.TargetAlignment.ANY
+
 
 func get_grid_pos() -> Vector2i:
 	return grid_pos
@@ -401,6 +443,30 @@ func is_dead() -> bool:
 
 func is_downed() -> bool:
 	return health != null and health.is_downed()
+
+
+func is_targeting_ability() -> bool:
+	return _state == PlayerState.TARGETING
+
+
+func is_resolving_action() -> bool:
+	return _state == PlayerState.ACTING
+
+
+func should_hide_movement_range() -> bool:
+	if _state == PlayerState.TARGETING or _state == PlayerState.ACTING:
+		return true
+	if InputManager != null and InputManager.is_player_blocked(player_id):
+		return true
+	return false
+
+
+func is_tile_valid_for_targeting(tile: Vector2i) -> bool:
+	return _state == PlayerState.TARGETING and tile in _targeting_tiles
+
+
+func can_target_empty_tile() -> bool:
+	return _can_target_empty_tile()
 
 
 # ── Internal ──────────────────────────────────────────────────────────────────
@@ -518,7 +584,7 @@ func _on_died(_killer: Node) -> void:
 
 func _on_downed(_attacker: Node) -> void:
 	print("[Player] %s downed." % char_name)
-	if _state == PlayerState.TARGETING:
+	if _state == PlayerState.TARGETING or _state == PlayerState.ACTING:
 		_exit_targeting()
 	if movement != null:
 		movement.movement_left = 0

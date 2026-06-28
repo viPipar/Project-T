@@ -34,6 +34,7 @@ const LABEL_OFFSETS := [
 @export var starts_visible: bool = true
 @export var wraps_pages: bool = true
 @export var blocks_game_input: bool = true
+@export var show_page_previews: bool = false
 @export var player_id: int = 1
 @export var slot_keys: PackedStringArray = ["W", "A", "S", "D"]
 @export var hover_up_key: Key = KEY_W
@@ -73,6 +74,7 @@ var _hold_time_left: float = 0.0
 var _hold_time_right: float = 0.0
 const HOLD_DELAY: float = 0.4
 const HOLD_INTERVAL: float = 0.25
+var _last_synced_visible: bool = false
 
 @export var _title_label: Label
 @export var _subtitle_label: Label
@@ -99,7 +101,9 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	if blocks_game_input and is_instance_valid(InputManager):
-		InputManager.is_in_menu = false
+		InputManager.set_player_menu_blocked(player_id, false)
+	if EventBus != null:
+		EventBus.action_wheel_visibility_changed.emit(player_id, false)
 
 
 func _notification(what: int) -> void:
@@ -237,24 +241,26 @@ func _draw() -> void:
 		var new_main_pos: Vector2 = _center + Vector2(new_main_start_x + offset_x, 0)
 		var new_main_alpha: float = lerp(0.30, 1.0, _slide_progress)
 		
-		var outgoing_preview_start_x: float = -_slide_direction * preview_spacing
-		var outgoing_preview_pos: Vector2 = _center + Vector2(outgoing_preview_start_x + offset_x, 0)
-		var outgoing_preview_alpha: float = lerp(0.30, 0.0, _slide_progress)
-		
-		var incoming_preview_start_x: float = _slide_direction * preview_spacing * 2.0
-		var incoming_preview_pos: Vector2 = _center + Vector2(incoming_preview_start_x + offset_x, 0)
-		var incoming_preview_alpha: float = lerp(0.0, 0.30, _slide_progress)
-		
-		_draw_wheel(_get_preview_page(_transition_from_page - _slide_direction), outgoing_preview_pos, outgoing_preview_alpha, false, -1)
-		_draw_wheel(_get_preview_page(_page_index + _slide_direction), incoming_preview_pos, incoming_preview_alpha, false, -1)
+		if show_page_previews:
+			var outgoing_preview_start_x: float = -_slide_direction * preview_spacing
+			var outgoing_preview_pos: Vector2 = _center + Vector2(outgoing_preview_start_x + offset_x, 0)
+			var outgoing_preview_alpha: float = lerp(0.30, 0.0, _slide_progress)
+
+			var incoming_preview_start_x: float = _slide_direction * preview_spacing * 2.0
+			var incoming_preview_pos: Vector2 = _center + Vector2(incoming_preview_start_x + offset_x, 0)
+			var incoming_preview_alpha: float = lerp(0.0, 0.30, _slide_progress)
+
+			_draw_wheel(_get_preview_page(_transition_from_page - _slide_direction), outgoing_preview_pos, outgoing_preview_alpha, false, -1)
+			_draw_wheel(_get_preview_page(_page_index + _slide_direction), incoming_preview_pos, incoming_preview_alpha, false, -1)
 		_draw_wheel(_transition_from_page, old_main_pos, old_main_alpha, false, -1)
 		_draw_wheel(_page_index, new_main_pos, new_main_alpha, true, _hovered_slot)
 		
 		# Fade text
 		_page_label.self_modulate.a = _slide_progress
 	else:
-		_draw_wheel(_get_preview_page(_page_index - 1), _center + Vector2(-preview_spacing, 0), 0.30, false, -1)
-		_draw_wheel(_get_preview_page(_page_index + 1), _center + Vector2(preview_spacing, 0), 0.30, false, -1)
+		if show_page_previews:
+			_draw_wheel(_get_preview_page(_page_index - 1), _center + Vector2(-preview_spacing, 0), 0.30, false, -1)
+			_draw_wheel(_get_preview_page(_page_index + 1), _center + Vector2(preview_spacing, 0), 0.30, false, -1)
 		_draw_wheel(_page_index, _center, 1.0, true, _hovered_slot)
 		
 		# Reset text alpha
@@ -465,8 +471,13 @@ func _start_slide(previous_page: int, direction: int) -> void:
 func _sync_menu_state() -> void:
 	if not blocks_game_input:
 		return
+	var is_visible := is_visible_in_tree()
 	if is_instance_valid(InputManager):
-		InputManager.is_in_menu = is_visible_in_tree()
+		InputManager.set_player_menu_blocked(player_id, is_visible)
+	if is_visible != _last_synced_visible:
+		_last_synced_visible = is_visible
+		if EventBus != null:
+			EventBus.action_wheel_visibility_changed.emit(player_id, is_visible)
 
 
 func _consume_key(name: String, keycode: Key) -> bool:
