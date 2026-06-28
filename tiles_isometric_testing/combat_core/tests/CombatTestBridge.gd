@@ -298,40 +298,38 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 		dmg_formula += "%d" % dmg_mod
 
 	if hit:
-		# Roll detail: ambil Array tiap dadu agar bisa divisualisasikan satu per satu
+		# Roll detail: ambil Array tiap dadu agar bisa divisualisasikan mentahnya
 		var base_detail := _dice_roller.roll_detailed(base_dice)
-		# Gunakan assign atau biarkan untyped karena return dari base_detail untyped
 		dmg_rolls = base_detail["rolls"]
-		dmg_total = base_detail["total"] + dmg_mod
 
 		if crit:
-			# Crit = dadu ganda: tambah satu set lagi
 			var extra_detail := _dice_roller.roll_detailed(base_dice)
 			for r: int in extra_detail["rolls"]:
 				dmg_rolls.append(r)
-				dmg_total += r
-			var mod_str = ("+%d"%dmg_mod) if dmg_mod >= 0 else ("%d"%dmg_mod)
-			print("[COMBAT] 💥 CRITICAL HIT! Damage (%s × 2 %s) = %d" % [base_dice, mod_str, dmg_total])
-		else:
-			print("[COMBAT] ⚔️  HIT! Damage (%s) = %d" % [dmg_formula, dmg_total])
 
-		# ---- DAMAGE MULTIPLIERS (Vulnerable + Vapor) ----
-		var mult = 1.0
+		# Hitung base total (raw)
+		var base_sum := 0
+		for r: int in dmg_rolls:
+			base_sum += r
+
+		# Kalkulasi total dengan modifier dan multiplier untuk UI saja (teks total akhir)
+		var mult := 1.0
 		var cond_comp = target.get_node_or_null("ConditionComponent")
 		if cond_comp and cond_comp.has_condition("vulnerable"):
 			mult += 0.2
-			print("[COMBAT] Target VULNERABLE! Damage +20%")
-
 		if ElementSystem != null and ElementSystem.has_method("get_damage_multiplier"):
 			var vapor_mult = ElementSystem.get_damage_multiplier(target, element_tag)
 			if vapor_mult > 1.0:
 				mult += (vapor_mult - 1.0)
-				print("[COMBAT] ⬜ VAPOR COMBO! Damage +20%")
-
-		if mult > 1.0:
-			var old_total = dmg_total
-			dmg_total = floori(dmg_total * mult)
-			print("[COMBAT] Multiplied Damage: %d -> %d (x%.2f)" % [old_total, dmg_total, mult])
+				
+		dmg_total = 0
+		for r: int in dmg_rolls:
+			dmg_total += floori(maxi(0, r + dmg_mod) * mult)
+			
+		if crit:
+			print("[COMBAT] CRITICAL HIT! Total Burst Damage = %d" % dmg_total)
+		else:
+			print("[COMBAT] HIT! Total Burst Damage = %d" % dmg_total)
 	else:
 		print("[COMBAT] 💨 MISS!")
 		# TODO (Team): migrated from miss_occurred to on_miss
@@ -340,45 +338,71 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 
 	# ── Jalankan animasi overlay (AWAIT — blok sampai selesai) ────────────────
 	var overlay := _overlay_p1 if pid == 1 else _overlay_p2
-	if overlay != null:
+	var type_str := "magical" if is_magical else "physical"
+	
+	# Track apakah sudah ada knockback/status agar tidak dobel
+	var _knockback_done := false
+
+	if overlay != null and hit:
+		# Biarkan dadu berputar di UI secara mentah (raw), lalu tambahkan modifier visualnya
 		await overlay.play_attack_sequence(
-			attacker, target,
-			result,
-			dmg_rolls,
-			dmg_total,
-			dmg_formula
+			attacker, target, result, dmg_rolls, dmg_total, dmg_formula, dmg_mod
+		)
+	elif overlay != null:
+		# MISS — overlay saja tanpa damage
+		await overlay.play_attack_sequence(
+			attacker, target, result, dmg_rolls, dmg_total, dmg_formula, 0
 		)
 	else:
-		push_warning("[CombatTestBridge] Overlay P%d null! Langsung apply damage." % pid)
+		push_warning("[CombatTestBridge] Overlay P%d null! Fallback damage langsung." % pid)
 		await get_tree().process_frame
 
 	# ── Jalankan animasi attack pada character sprite (AWAIT) ─────────────────
 	if attacker.has_method("play_attack"):
+		# Ini akan pause sampai "Impact Frame" lalu return (asynchronous hit-stop)
 		await attacker.play_attack(_ability_id)
 
 	# ---- MAGICAL PROJECTILE PLACEHOLDER ----
 	if hit and is_instance_valid(target) and (is_projectile or is_magical):
 		await _spawn_magic_projectile(attacker, target, element_tag)
 
-	# ── Apply damage ke target SETELAH animasi selesai ───────────────────────
-	if hit:
-		if is_instance_valid(target):
-			var type_str = "magical" if is_magical else "physical"
-			var applied := _apply_damage_to_target(target, dmg_total, attacker, type_str)
-			EventBus.damage_dealt.emit(target, applied, type_str, crit)
-
+	# ── TEPAT DI IMPACT FRAME: APPLY BURST DAMAGE ─────────────────────────────
+	if hit and is_instance_valid(target):
+		var mult := 1.0
+		var cond_comp = target.get_node_or_null("ConditionComponent")
+		if cond_comp and cond_comp.has_condition("vulnerable"):
+			mult += 0.2
+		if ElementSystem != null and ElementSystem.has_method("get_damage_multiplier"):
+			var vapor_mult = ElementSystem.get_damage_multiplier(target, element_tag)
+			if vapor_mult > 1.0:
+				mult += (vapor_mult - 1.0)
+				
+		for i in range(dmg_rolls.size()):
+			if not is_instance_valid(target): break
+			
+			# Kalkulasi final per-dadu persis sebelum diapply
+			var r_raw: int = dmg_rolls[i]
+			var r_final := floori(maxi(0, r_raw + dmg_mod) * mult)
+			
+			var applied := _apply_damage_to_target(target, r_final, attacker, type_str)
+			
+			# Crit visual hanya di hit pertama
+			EventBus.damage_dealt.emit(target, applied, type_str, crit and i == 0, attacker)
+			
 			if ElementSystem != null and element_tag != "physical" and element_tag != "":
 				ElementSystem.resolve_elemental_hit(target, element_tag, applied)
-
-			if applied > 0 and is_instance_valid(target) and knockback > 0:
-				ForcedMovementResolver.knockback_from_attack(attacker, target, knockback)
-			
-			if ability != null and ability.status_effect != "":
-				var is_base_element = ability.status_effect in ["fire", "water", "air", "earth"]
-				if not is_base_element:
-					EventBus.on_status_applied.emit(target, ability.status_effect, ability.status_duration, ability.status_stacks)
-		else:
-			print("[COMBAT] ⚠️  Target sudah dikalahkan sebelum serangan mendarat!")
+				
+			# Jeda sangat singkat antar angka agar terkesan "Burst" / "Machine Gun"
+			if i < dmg_rolls.size() - 1:
+				await get_tree().create_timer(0.08, false).timeout
+				
+		# Knockback & status effect hanya 1x setelah semua burst selesai
+		if is_instance_valid(target) and knockback > 0:
+			ForcedMovementResolver.knockback_from_attack(attacker, target, knockback)
+		if ability != null and ability.status_effect != "":
+			var is_base_element := ability.status_effect in ["fire", "water", "air", "earth"]
+			if not is_base_element:
+				EventBus.on_status_applied.emit(target, ability.status_effect, ability.status_duration, ability.status_stacks)
 
 	_set_player_busy(pid, false)
 

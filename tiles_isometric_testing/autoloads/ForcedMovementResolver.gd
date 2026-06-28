@@ -138,7 +138,7 @@ func _apply_collision_damage(entity: Node, amount: int, source: Node, options: D
 			applied = int(entity.call("take_damage", amount, source))
 
 	if applied > 0 and EventBus != null:
-		EventBus.damage_dealt.emit(entity, applied, damage_type, false)
+		EventBus.damage_dealt.emit(entity, applied, damage_type, false, null)
 
 	return applied
 

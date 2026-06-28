@@ -13,7 +13,7 @@ signal start_combat(node_type: int)
 signal combat_ended(result: String)
 signal turn_started(entity: Node, player_id: int)
 signal turn_ended(entity: Node)
-signal damage_dealt(target: Node, amount: int, type: String, is_crit: bool)
+signal damage_dealt(target: Node, amount: int, type: String, is_crit: bool, source: Node)
 signal entity_died(entity: Node, killer: Node)
 signal entity_downed(entity: Node, attacker: Node)
 # TODO (Team): miss_occurred has been deleted and merged into on_miss below

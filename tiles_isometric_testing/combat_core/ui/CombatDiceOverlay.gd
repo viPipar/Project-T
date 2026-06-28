@@ -4,6 +4,9 @@ class_name CombatDiceOverlay
 extends CanvasLayer
 
 signal sequence_finished
+## Dipancarkan setiap dadu damage mendarat (index, nilai roll)
+## CombatTestBridge mendengarkan ini untuk apply damage satu per satu
+signal dice_hit_landed(roll_index: int, roll_value: int)
 
 ## 1 = kiri (P1), 2 = kanan (P2)
 var player_id: int = 1
@@ -224,7 +227,8 @@ func play_attack_sequence(
 	hit_result  : Dictionary,
 	dmg_rolls   : Array,
 	dmg_total   : int,
-	dmg_formula : String
+	dmg_formula : String,
+	dmg_mod     : int = 0
 ) -> void:
 	if _is_playing:
 		return
@@ -425,8 +429,36 @@ func play_attack_sequence(
 					await _dice_visual.roll_finished
 				else:
 					await get_tree().create_timer(current_duration + 0.1).timeout
+
+			# ── ANIMASI MODIFIER MENYATU (Absorb) KE DADU DAMAGE ─────────────
+			# Mirip seperti D20: Label "+3" muncul lalu menabrak dadu
+			if dmg_mod != 0:
+				_mod_label.text = "+%d" % dmg_mod if dmg_mod >= 0 else str(dmg_mod)
+				_mod_label.position = Vector2(180, -20)
+				_mod_label.modulate.a = 0.0
+				_mod_label.scale = Vector2(1.5, 1.5)
+				
+				var tw_mod := create_tween()
+				tw_mod.tween_property(_mod_label, "modulate:a", 1.0, 0.15)
+				tw_mod.parallel().tween_property(_mod_label, "scale", Vector2(1.0, 1.0), 0.15).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+				tw_mod.tween_interval(0.2)
+				tw_mod.tween_property(_mod_label, "position", _dice_visual.position, 0.15).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_IN)
+				await tw_mod.finished
+				
+				_mod_label.modulate.a = 0.0
+				if _dice_visual.has_node("NumberLabel"):
+					_dice_visual.get_node("NumberLabel").text = str(dmg_rolls[i] + dmg_mod)
+					
+				var absorb_tw := create_tween()
+				absorb_tw.tween_property(_dice_visual, "scale", Vector2(0.8, 0.8), 0.08).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+				absorb_tw.tween_property(_dice_visual, "scale", Vector2(0.6, 0.6), 0.2).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+				await absorb_tw.finished
+
+			# Emit per-die damage agar Bridge bisa menge-track (walau apply damage nya di akhir)
+			dice_hit_landed.emit(i, dmg_rolls[i] + dmg_mod)
 			
-			var pause = max(0.05, 0.25 * pow(0.65, i))
+			# Jeda sangat kecil antar lemparan dadu berikutnya
+			var pause: float = maxf(0.05, 0.15 * pow(0.65, i))
 			await get_tree().create_timer(pause).timeout
 
 		_total_label.text = "%d damage" % dmg_total

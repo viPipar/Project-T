@@ -100,4 +100,4 @@ func _trigger_conflagration(target: Node, original_damage: int) -> void:
 				if health:
 					var applied = health.take_damage(aoe_dmg, null, "fire")
 					if EventBus != null:
-						EventBus.damage_dealt.emit(t, applied, "fire", false)
+						EventBus.damage_dealt.emit(t, applied, "fire", false, null)

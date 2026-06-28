@@ -38,7 +38,7 @@ func _ready() -> void:
 
 # ── EVENT HANDLERS ─────────────────────────────────────────────────────────────
 
-func _on_damage_dealt(target: Node, amount: int, _dmg_type: String, is_crit: bool) -> void:
+func _on_damage_dealt(target: Node, amount: int, _dmg_type: String, is_crit: bool, source: Node = null) -> void:
 	if not is_instance_valid(target) or amount <= 0:
 		return
 	_apply_hit_impact(target, is_crit)
@@ -46,7 +46,8 @@ func _on_damage_dealt(target: Node, amount: int, _dmg_type: String, is_crit: boo
 	# Offset ke atas sprite, sedikit random agar tidak tumpuk
 	var base_pos : Vector2 = target.global_position + Vector2(0, -48)
 	var type_str  := "crit" if is_crit else "damage"
-	_spawn_number(amount, type_str, base_pos)
+	var pid = source.get_player_id() if source and source.has_method("get_player_id") else 0
+	_spawn_number(amount, type_str, base_pos, pid)
 
 
 func _on_miss(_attacker: Node, target: Node) -> void:
@@ -65,7 +66,7 @@ func _on_floating_text_requested(entity: Node, text: String, color: Color, type:
 		"heal":
 			# text berisi angka heal
 			var amount := text.to_int()
-			_spawn_number(amount, "heal", base_pos)
+			_spawn_number(amount, "heal", base_pos, 0)
 		"miss":
 			_spawn_miss(base_pos)
 		_:
@@ -75,13 +76,13 @@ func _on_floating_text_requested(entity: Node, text: String, color: Color, type:
 
 # ── SPAWN HELPERS ──────────────────────────────────────────────────────────────
 
-func _spawn_number(amount: int, type: String, world_pos: Vector2) -> void:
+func _spawn_number(amount: int, type: String, world_pos: Vector2, player_id: int = 0) -> void:
 	if _scene == null or _world_node == null:
 		return
 	var inst := _scene.instantiate() as FloatingDamageNumber
 	_world_node.add_child(inst)
 	inst.global_position = world_pos
-	inst.display(amount, type)
+	inst.display(amount, type, player_id)
 
 
 func _spawn_miss(world_pos: Vector2) -> void:

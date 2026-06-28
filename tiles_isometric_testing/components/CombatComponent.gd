@@ -84,7 +84,7 @@ func attack(target: Node) -> Dictionary:
 	var applied: int = StatSystem.apply_damage(target, damage, owner, "magical" if is_magical else "physical")
 	result["damage"] = applied
 
-	EventBus.damage_dealt.emit(target, applied, "magical" if is_magical else "physical", crit)
+	EventBus.damage_dealt.emit(target, applied, "magical" if is_magical else "physical", crit, null)
 	attack_resolved.emit(owner, target, result)
 	return result
 

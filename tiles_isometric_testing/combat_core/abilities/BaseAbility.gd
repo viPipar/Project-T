@@ -212,12 +212,12 @@ func _apply_damage(target: Node, amount: int, attacker: Node, is_magical: bool) 
 	var stat_sys = target.get_node_or_null("/root/StatSystem")
 	if stat_sys != null and stat_sys.has_method("apply_damage"):
 		var applied = stat_sys.apply_damage(target, amount, attacker, type_str)
-		EventBus.damage_dealt.emit(target, applied, type_str, false)
+		EventBus.damage_dealt.emit(target, applied, type_str, false, null)
 	else:
 		var health = target.get_node_or_null("HealthComponent")
 		if health != null and health.has_method("take_damage"):
 			var applied = health.take_damage(amount, attacker, type_str)
-			EventBus.damage_dealt.emit(target, applied, type_str, false)
+			EventBus.damage_dealt.emit(target, applied, type_str, false, null)
 		else:
 			# TODO (Candra): Ensure entities have either a StatSystem or HealthComponent
 			push_warning("[BaseAbility] Target %s has no known health component!" % target.name)

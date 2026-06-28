@@ -13,7 +13,7 @@ func execute(caster: Node, targets: Array) -> void:
 		var dmg = floori(current_hp * 0.20)
 		if health_comp.has_method("take_damage"):
 			var applied = health_comp.take_damage(dmg, caster, "true")
-			EventBus.damage_dealt.emit(caster, applied, "true", false)
+			EventBus.damage_dealt.emit(caster, applied, "true", false, null)
 	else:
 		# Fallback to stat system
 		var stat_sys = caster.get_node_or_null("/root/StatSystem")
@@ -22,7 +22,7 @@ func execute(caster: Node, targets: Array) -> void:
 			var dmg = floori(current_hp * 0.20)
 			if stat_sys.has_method("apply_damage"):
 				var applied = stat_sys.apply_damage(caster, dmg, caster, "true")
-				EventBus.damage_dealt.emit(caster, applied, "true", false)
+				EventBus.damage_dealt.emit(caster, applied, "true", false, null)
 	
 	# Apply +4 Armor buff for 1 turn
 	# TODO (Gilang): Ensure the Status Effect System listens for "autotomy_armor_buff"

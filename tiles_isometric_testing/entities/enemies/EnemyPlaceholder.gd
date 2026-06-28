@@ -260,7 +260,7 @@ func do_ai_turn() -> void:
 		print("[%s] Menyerang %s. (jarak 1)" % [enemy_name, p_name])
 		var applied: int = StatSystem.apply_damage(nearest, 2, self, "physical")
 		if applied > 0:
-			EventBus.damage_dealt.emit(nearest, applied, "physical", false)
+			EventBus.damage_dealt.emit(nearest, applied, "physical", false, null)
 	else:
 		print("[%s] Bergerak menuju %s (jarak %d)." % [enemy_name, p_name, near_dist])
 

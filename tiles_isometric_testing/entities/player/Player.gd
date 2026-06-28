@@ -71,6 +71,10 @@ func _ready() -> void:
 	EventBus.combat_input_blocked.connect(_on_combat_input_blocked)
 	EventBus.action_wheel_selected.connect(_on_action_wheel_selected)
 
+	# Subscribe ke sinyal damaged dari HealthComponent untuk animasi hit
+	if health != null and not health.damaged.is_connected(_on_damaged):
+		health.damaged.connect(_on_damaged)
+
 
 func _process(_delta: float) -> void:
 	if is_downed():
@@ -319,7 +323,6 @@ func _on_targeting_confirm() -> void:
 		AttackCam.play(false, true)
 
 ## Dipanggil saat combat_input_blocked signal diterima dari EventBus.
-## Player hanya peduli jika player_id-nya yang diblok.
 func _on_combat_input_blocked(blocked_player_id: int, blocked: bool) -> void:
 	if blocked_player_id != player_id:
 		return
@@ -330,6 +333,28 @@ func _on_combat_input_blocked(blocked_player_id: int, blocked: bool) -> void:
 			MovementRangeManager._refresh_player(self)
 	elif _state == PlayerState.ACTING:
 		_finish_action_resolution()
+
+
+## Dipanggil saat player menerima damage dari HealthComponent.
+func _on_damaged(_amount: int) -> void:
+	_play_hurt_anim()
+
+
+## Mainkan animasi 'hit' satu kali penuh lalu kembali ke idle.
+func _play_hurt_anim() -> void:
+	if anim_sprite == null or anim_sprite.sprite_frames == null:
+		return
+	var hurt_anim := "hit"
+	if not anim_sprite.sprite_frames.has_animation(hurt_anim):
+		return
+	if _is_acting:
+		return  # Jangan interrupt animasi attack
+	_is_acting = true
+	anim_sprite.sprite_frames.set_animation_loop(hurt_anim, false)
+	anim_sprite.play(hurt_anim)
+	await anim_sprite.animation_finished
+	_is_acting = false
+	_play_facing_anim()
 
 
 # ── Public API ────────────────────────────────────────────────────────────────

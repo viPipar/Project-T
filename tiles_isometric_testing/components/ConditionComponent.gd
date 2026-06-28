@@ -251,7 +251,7 @@ func _apply_bleeding(condition_id: String) -> void:
 	if applied > 0:
 		condition_damage.emit(condition_id, applied)
 		if EventBus != null and EventBus.has_signal("damage_dealt"):
-			EventBus.damage_dealt.emit(parent, applied, "bleeding", false)
+			EventBus.damage_dealt.emit(parent, applied, "bleeding", false, null)
 
 func _apply_lacerate(condition_id: String) -> void:
 	if not _conditions.has(condition_id):
@@ -277,7 +277,7 @@ func _apply_lacerate(condition_id: String) -> void:
 	if applied > 0:
 		condition_damage.emit(condition_id, applied)
 		if EventBus != null and EventBus.has_signal("damage_dealt"):
-			EventBus.damage_dealt.emit(parent, applied, "lacerate", false)
+			EventBus.damage_dealt.emit(parent, applied, "lacerate", false, null)
 
 func _apply_dynamic_dot(condition_id: String, damage_per_stack: int, damage_type: String) -> void:
 	if not _conditions.has(condition_id):
@@ -302,7 +302,7 @@ func _apply_dynamic_dot(condition_id: String, damage_per_stack: int, damage_type
 			applied = stat_sys.apply_damage(parent, total_dmg, null, damage_type)
 
 	if EventBus != null and applied > 0:
-		EventBus.damage_dealt.emit(parent, applied, damage_type, false)
+		EventBus.damage_dealt.emit(parent, applied, damage_type, false, null)
 
 # -----------------------------------------------------------------------------
 # Internal
