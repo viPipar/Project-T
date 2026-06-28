@@ -10,7 +10,7 @@ Bagian Candra tahap fondasi sudah dibuat:
 - `StatsComponent` menjadi sumber stat resmi entity.
 - Modifier stat sudah multi-source, jadi class, item, buff, dan status tidak saling overwrite.
 - `StatSystem` sudah menjadi autoload provider stat untuk combat runtime.
-- `HealthComponent` sudah menangani HP, damage, heal, dan death.
+- `HealthComponent` sudah menangani HP, damage, heal, downed, revive, dan death.
 - `ConditionComponent` sekarang sudah terintegrasi penuh dengan `status_effects.json`. Semua stat mods dan DoT dari JSON otomatis dieksekusi tanpa perlu hardcode, selain legacy support untuk `stunned`, `frozen`, `bleeding`, `weakened`.
 - `CombatComponent` minimal sudah tersedia untuk enemy/AI.
 - `CombatTestBridge` sudah memakai `StatSystem` dan apply damage ke `HealthComponent`.
@@ -41,6 +41,11 @@ StatSystem.get_dex(entity)
 StatSystem.get_int_stat(entity)
 StatSystem.get_str_stat(entity)
 StatSystem.get_max_hp(entity)
+StatSystem.get_physical_damage_modifier(entity)
+StatSystem.get_magical_damage_modifier(entity)
+StatSystem.get_hit_roll_modifier(entity)
+StatSystem.get_natural_crit_requirement(entity)
+StatSystem.get_luck_roll_modifier(entity)
 StatSystem.apply_damage(target, amount, attacker, "physical")
 StatSystem.apply_heal(target, amount, source)
 ```
@@ -77,10 +82,18 @@ tiles_isometric_testing/components/ClassComponent.gd
 ```gdscript
 max_hp
 current_hp
+get_hp()
+get_max_hp()
+set_hp(value)
+add_hp(amount)
+sub_hp(amount, attacker, "true")
 take_damage()
 heal()
+down()
+revive()
 kill()
 is_dead()
+is_downed()
 ```
 
 `ConditionComponent.gd` menyimpan status:
@@ -310,6 +323,7 @@ resist
 physical_damage
 magical_damage
 action_points
+bonus_action_points
 hit_roll
 crit_reduction
 movement_tiles
@@ -335,7 +349,8 @@ Armor = 10 + floor(CON / 2) + floor(DEX / 4)
 Resist = 5 + floor(VIT / 4) + floor(CON / 4)
 Physical Damage Bonus = floor(STR / 2)
 Magical Damage Bonus = floor(INT / 2)
-Action Point Bonus = floor(INT / 10) + floor(DEX / 10)
+Action Points = 1 + floor(DEX / 10)
+Bonus Action Points = 1 + floor(INT / 10)
 Hit Roll Bonus = floor(ACC / 2)
 Crit Roll Reduction = floor(ACC / 10)
 Movement Tile Bonus = floor(MOV / 5)
@@ -356,6 +371,9 @@ Contoh:
 var stats := entity.get_node("StatsComponent") as StatsComponent
 stats.set_mod_source("item:ring_str", {"str": 2})
 stats.set_mod_source("condition:weakened", {"armor": -2})
+stats.equip({"id": "iron_ring", "mods": {"str": 2, "armor": 1}})
+stats.apply_buff({"buff_id": "battle_focus", "stat_mods": {"acc": 4}})
+stats.apply_debuff({"debuff_id": "weakened", "modifiers": {"armor": -2}})
 ```
 
 Hapus modifier:
@@ -363,6 +381,9 @@ Hapus modifier:
 ```gdscript
 stats.remove_mod_source("item:ring_str")
 stats.clear_mod_sources("condition:")
+stats.unequip("iron_ring")
+stats.remove_buff("battle_focus")
+stats.remove_debuff("weakened")
 ```
 
 Pola source id yang disarankan:
@@ -400,7 +421,15 @@ ConditionComponent
 ```gdscript
 take_damage(amount, attacker)
 heal(amount)
+get_hp()
+get_max_hp()
+sub_hp(amount, attacker, "physical")
+add_hp(amount)
+get_armor()
+get_resist()
+get_stat("str")
 is_dead()
+is_downed()
 ```
 
 ### EnemyPlaceholder
@@ -459,6 +488,9 @@ Perubahan:
 - `MockStatProvider` tetap fallback untuk test lama.
 - Hit/miss membaca `ACC`, `Armor`, `Resist` dari stat runtime.
 - Damage masuk ke `HealthComponent`.
+- Physical damage memakai STR modifier lewat `StatSystem.get_physical_damage_modifier()`.
+- Magical damage memakai INT modifier lewat `StatSystem.get_magical_damage_modifier()`.
+- Combat input unblock sekarang me-refresh movement highlight setelah dice/attack selesai.
 - `EventBus.damage_dealt`, `on_miss`, dan `entity_died` tetap dipakai.
 
 ## Debug Yang Bisa Dicoba
@@ -654,11 +686,11 @@ data/stat_module/_schemas/stat_keys.json
 
 ## Yang Masih Belum Selesai
 
-- Runtime Godot belum dites lewat CLI karena `godot`/`godot4` tidak tersedia di PATH.
+- Runtime sudah bisa dicek lewat executable Godot lokal/headless jika path executable tersedia.
 - Inventory/equipment belum tersambung ke `StatDataDB.apply_item_mod()`.
 - HUD proper untuk HP/status belum dibuat.
 - Status visual/icon belum dibuat.
-- Ability `.tres` dan damage scaling ability belum terhubung penuh ke stat.
+- Ability damage runtime di `CombatTestBridge` sudah membaca physical/magical damage modifier dari stat. Integrasi penuh `BaseAbility.execute()` ke action queue masih belum selesai.
 - Enemy utama masih `EnemyPlaceholder`, belum migrasi penuh ke `BaseEnemy`.
 - JSON belum punya schema validator otomatis di Godot, baru valid secara parse JSON.
 

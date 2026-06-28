@@ -1,62 +1,159 @@
-# Action Wheel Integration & Controls Overhaul
+# Battle Controls, Action Wheel, and Targeting
 
-We've completely overhauled the input system and successfully migrated the Action Wheel from a standalone test scene directly into your main gameplay loop. Here is a comprehensive breakdown of everything we've implemented.
+Dokumen ini mengikuti implementasi runtime di `Main.tscn` saat ini.
 
-## 1. Global Input Map Layout
+## Input Map
 
-The `project.godot` input map has been entirely rewritten to match your exact split-screen keyboard layout:
-
-| Action | Player 1 (Left Side) | Player 2 (Right Side) |
+| Action | Player 1 | Player 2 |
 | :--- | :--- | :--- |
-| **Move Up / Wheel Up** | `W` | `I` |
-| **Move Left / Wheel Left** | `A` | `J` |
-| **Move Down / Wheel Down** | `S` | `K` |
-| **Move Right / Wheel Right** | `D` | `L` |
-| **Confirm Action** | `F` | `;` (Semicolon) |
-| **Cancel / Close Menu** | `X` | `,` (Comma) |
-| **Open Menu / Ability 1** | `Q` | `U` |
-| **Open Menu / Ability 2** | `E` | `O` |
-| **End Turn** | `R` | `P` |
-| **Inventory** | `C` | `.` (Period) |
-| **Statistics** | `Z` | `M` |
-| **Center Camera** | `Shift` | `Enter` |
-| **Pause Menu** | `Escape` or `Backspace` | (Shared) |
+| Move / Cursor Up | `W` | `I` |
+| Move / Cursor Left | `A` | `J` |
+| Move / Cursor Down | `S` | `K` |
+| Move / Cursor Right | `D` | `L` |
+| Confirm | `F` | `;` |
+| Cancel | `X` | `,` |
+| Open Wheel / Previous Page | `Q` | `U` |
+| Open Wheel / Next Page | `E` | `O` |
+| End Turn / Cancel End Turn | `R` | `P` |
+| Inventory | `C` | `.` |
+| Statistics | `Z` | `M` |
+| Center Camera | `Shift` | `Enter` |
+| Pause Menu | `Escape` / `Backspace` | Shared |
 
----
+Debug shortcuts in `Main.tscn`:
 
-## 2. Independent Action Wheel System
+| Key | Use |
+| :--- | :--- |
+| `F1` | Toggle debug/stat panel |
+| `F2` | Toggle dice sandbox |
+| `F3` | Toggle per-player debug HUD |
+| `T` | Run integrated roguelite + combat tests |
 
-The Action Wheel overlay is now automatically injected into `Main.tscn` via a top-level `CanvasLayer` (Layer 100). The global `F9` toggle has been completely removed.
+F3 debug HUD is off by default in normal battle.
 
-**Per-Player Toggles**:
-Each player controls their own Action Wheel independently. 
-- **Player 1** presses `Q` or `E` to open their wheel.
-- **Player 2** presses `U` or `O` to open their wheel.
-- *Player 2's Action Wheel is explicitly coded to render empty (no abilities loaded) per your request.*
+## Action Wheel Runtime
 
-**Page Flipping & Hold-to-Scroll**:
-To prevent conflicts with the Q/E/U/O menu toggles, we removed the old Q/E page turning system. Now, players can navigate through ability pages using their left or right movement keys:
-- **Double-tap** `A` (P1) / `J` (P2) to flip to the previous page, or `D` (P1) / `L` (P2) for the next page.
-- **Press and Hold** `A`/`J` or `D`/`L` to automatically scroll through pages smoothly.
-- **Smooth Transitions**: Page flipping now features a dynamic slide-and-fade carousel animation.
-- Single taps will simply hover over the corresponding slot as usual.
+Main game now spawns:
 
-**Menu Closing**:
-To close the menu, press your respective Cancel button (`X` for P1, `,` for P2).
+```text
+res://ui/action_wheel/BattleActionWheelOverlay.tscn
+```
 
----
+The old prototype scene is no longer used:
 
-## 3. UI Input Locking (No More Accidental Panning!)
+```text
+res://ui/action_wheel/testing.tscn
+```
 
-We fixed an issue where navigating the Action Wheel would accidentally pan the camera in the background.
+Controller:
 
-- **`ActionWheel.gd`** now correctly toggles `InputManager.is_in_menu = true` only when the wheel is explicitly visible on screen (checking `is_visible_in_tree()`).
-- **`PlayerCamera2D.gd`** now respects `InputManager.is_in_menu`. If any player opens an Action Wheel, camera panning via WASD/IJKL is completely locked out until the menu is closed.
+```text
+res://ui/action_wheel/BattleActionWheelController.gd
+```
 
----
+Both wheels load abilities from:
 
-## 4. Code & Resource Cleanup
+```text
+res://combat_core/abilities/instances/
+```
 
-- **Removed Dummy Code**: Stripped out the fake dummy nodes and fake HP drain prints from `ActionWheelTestController.gd`. The wheels now cleanly emit signals that your real `Player.gd` scripts pick up (e.g., `[Player P1] Ability terpilih: rupture`).
-- **Resource Path Fixes**: Ran a batch powershell script to fix corrupted `res://tiles_isometric_testing/...` paths inside your ability `.tres` files (such as `divine_departure.tres`), ensuring they all load correctly into the game without throwing "File not found" errors.
-- **Inventory Hook**: Updated `SplitScreenManager.gd` to listen for the new `p1_inventory` and `p2_inventory` keys instead of the deleted `open_inventory` binding.
+Physical abilities are assigned to P1. Magical abilities are assigned to P2.
+
+## Per-Player Menu Blocking
+
+Action wheel input blocking is per-player, not global.
+
+Implemented in:
+
+```text
+res://autoloads/InputManager.gd
+res://ui/action_wheel/ActionWheel.gd
+res://world/PlayerCamera2D.gd
+```
+
+Important API:
+
+```gdscript
+InputManager.set_player_menu_blocked(player_id, blocked)
+InputManager.is_player_menu_blocked(player_id)
+```
+
+Rules:
+
+- If P1 opens the wheel, only P1 gameplay input is blocked.
+- If P2 opens the wheel, only P2 gameplay input is blocked.
+- The other player can still pan camera and move cursor.
+- Battle action wheel must not set `InputManager.is_in_menu`.
+- `InputManager.is_in_menu` is reserved for true global menus.
+
+Wheel visibility is broadcast with:
+
+```gdscript
+EventBus.action_wheel_visibility_changed(player_id, visible)
+```
+
+HUD uses this signal to reduce bottom-label clutter while the wheel is open.
+
+## Attack and Targeting Flow
+
+Direct confirm attack is disabled. A player cannot press confirm on self, ally, or enemy to roll damage before selecting an ability.
+
+Correct flow:
+
+1. Open action wheel with `Q` / `E` for P1 or `U` / `O` for P2.
+2. Pick an ability.
+3. Player enters targeting mode.
+4. Movement highlight for the attacker is hidden.
+5. Ability range / target area is highlighted.
+6. Confirm a valid target tile or entity.
+7. Dice / attack sequence runs.
+8. Movement highlight returns only after combat input is unblocked.
+
+Implemented in:
+
+```text
+res://entities/player/Player.gd
+res://autoloads/MovementRangeManager.gd
+res://world/SelectionCursor.gd
+res://world/KeyboardTileCursor.gd
+res://combat_core/tests/CombatTestBridge.gd
+```
+
+Player state used by highlight systems:
+
+```gdscript
+PlayerState.IDLE
+PlayerState.TARGETING
+PlayerState.ACTING
+```
+
+Cursor validity during targeting uses ability target tiles, not movement tiles.
+
+## End Turn Overlay
+
+End-turn overlay text reads the current `InputMap` action instead of hardcoded old keys.
+
+Implemented in:
+
+```text
+res://ui/split_screen/SplitScreenManager.gd
+```
+
+Current default cancel/end-turn keys:
+
+```text
+P1: R
+P2: P
+```
+
+## Manual UX Smoke Test
+
+1. Run `res://main/Main.tscn`.
+2. Open P1 wheel with `Q` or `E`.
+3. Confirm P2 can still move cursor/camera with `IJKL`.
+4. Close P1 wheel with `X`.
+5. Open P2 wheel with `U` or `O`.
+6. Confirm P1 can still move cursor/camera with `WASD`.
+7. Press confirm on an enemy without choosing an ability. It must not roll attack.
+8. Choose an ability, confirm a valid target, and wait for dice/attack to finish.
+9. Confirm movement highlight is hidden during targeting/attack and returns after the attack sequence.

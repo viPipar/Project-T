@@ -1,59 +1,95 @@
 # Game Features Testing Guide
 
-This guide outlines how to test the various implemented systems in the game directly within Godot. The test scripts are designed to output their results to the Godot Editor Console (Output panel).
+Panduan ini mengikuti implementasi runtime saat ini di project Godot `tiles_isometric_testing`.
 
-## 🚀 The Fastest Way: Universal Test Shortcut (T)
-We have integrated all tests directly into the `main.tscn` debug menu!
+## Main Scene Smoke Test
 
-1. Open `res://main/Main.tscn` in the Godot Editor.
-2. Press **`F6`** to play the scene.
-3. While playing, simply press the **`T`** key on your keyboard.
-4. **All tests** (Roguelite Systems & Combat Core) will run immediately, and the results will print to your Godot Output console!
+1. Open `res://main/Main.tscn`.
+2. Run the scene.
+3. Check the Godot Output panel.
 
----
+Useful debug keys:
 
-## 1. Roguelite Run System (Ilham's Features)
-This test suite covers the Node Graph generation, Path Traversal, Item/Balancing Pool, Shop Economy, and Luck Events.
+| Key | Use |
+| :--- | :--- |
+| `F1` | Toggle debug/stat panel |
+| `F2` | Toggle dice sandbox |
+| `F3` | Toggle per-player debug HUD |
+| `T` | Run integrated roguelite + combat tests |
 
-**Location:** `d:\Project-T\tiles_isometric_testing\testing\RoguelikeTester.gd`
+F3 debug HUD is disabled by default and only appears after pressing `F3`.
 
-### How to test:
-**Method A: Inside Godot Editor (Recommended)**
-1. Open the Godot Editor and navigate to `res://testing/` in the FileSystem dock.
-2. Right-click the `RoguelikeTester.gd` script.
-3. Select **"Run"** from the context menu.
-4. Open the **Output** panel at the bottom of the editor to view the simulated results.
+## Battle UX Manual Test
 
-**Method B: Command Line (Headless)**
-Since the script extends `SceneTree`, you can run it via command line without opening the Godot UI:
-```bash
-godot --headless -s d:\Project-T\tiles_isometric_testing\testing\RoguelikeTester.gd
+1. Move P1 cursor/camera with `WASD`.
+2. Move P2 cursor/camera with `IJKL`.
+3. Open P1 action wheel with `Q` or `E`.
+4. Confirm P2 can still pan/move cursor while P1 wheel is open.
+5. Close P1 wheel with `X`.
+6. Open P2 action wheel with `U` or `O`.
+7. Confirm P1 can still pan/move cursor while P2 wheel is open.
+8. Press confirm on an enemy without selecting ability first. It must not roll attack.
+9. Select an ability from the wheel.
+10. Confirm movement highlight hides and ability target highlight appears.
+11. Confirm target, wait for dice/attack sequence, then confirm movement highlight returns.
+
+## Stat / HP Manual Test
+
+1. Run `res://main/Main.tscn`.
+2. Press `F1`.
+3. Confirm Aria, Kael, Goblin, and Orc stats load from JSON.
+4. Attack an enemy and confirm HP decreases.
+5. Kill an enemy and confirm death/removal flow still runs.
+6. Let enemy damage a player to 0 HP.
+7. Confirm player becomes downed and does not disappear from the map.
+8. Confirm heal on downed/dead target returns `0`.
+
+Relevant data:
+
+```text
+res://data/stat_module/entity_base_stats/players.json
+res://data/stat_module/entity_base_stats/enemies.json
+res://data/stat_module/item_stat_mods/equipment.json
+res://data/stat_module/buff_stat_mods/class_buffs.json
+res://data/stat_module/condition_stat_mods/status_effects.json
 ```
 
----
+## Universal Test Shortcut
 
-## 2. Combat Core System (Tapip's Features)
-This test suite covers the Action Economy, RNG Dice Roller, and the Turn Phase Manager.
+`Main.tscn` has a `T` shortcut that runs:
 
-**Location:** `d:\Project-T\tiles_isometric_testing\combat_core\tests\`
+```text
+res://testing/RoguelikeTester.gd
+res://combat_core/tests/test_action_economy.gd
+res://combat_core/tests/test_dice_roller.gd
+res://combat_core/tests/test_phase_manager.gd
+```
 
-### Available Test Scripts:
-*   `test_action_economy.gd` - Tests Action Points, Bonus AP, and Energy/Spell Slot consumption.
-*   `test_dice_roller.gd` - Tests the D20 hit/miss logic and multi-dice damage/heal rolling.
-*   `test_phase_manager.gd` - Tests the transition between concurrent Player Phases and sequential Enemy Phases.
+Run `Main.tscn`, press `T`, and read the Output panel.
 
-### How to test:
-**Method A: Individual Script Testing**
-1. Navigate to `res://combat_core/tests/` in the Godot Editor.
-2. Right-click any of the `test_*.gd` scripts.
-3. Select **"Run"** to execute that specific unit test and check the Output console.
+## Individual Test Scripts
 
-**Method B: Scene Testing**
-1. Open the `test.tscn` scene located in the same folder (`res://combat_core/tests/test.tscn`).
-2. Press `F6` (Play Current Scene) to run the integrated combat tests.
+Roguelite:
 
----
+```text
+res://testing/RoguelikeTester.gd
+```
 
-## 3. General Testing Tips
-*   **Reading Outputs:** Look for `print()` statements in the Output console. Simulated errors or failed tests will typically show up in red or have `[FAILED]` tags depending on how the scripts are written.
-*   **Modifying Tests:** You can easily open any of the `.gd` test files and change variables (e.g., increase the starting coins in `RoguelikeTester.gd`) to see how the systems react to edge cases!
+Combat core:
+
+```text
+res://combat_core/tests/test_action_economy.gd
+res://combat_core/tests/test_dice_roller.gd
+res://combat_core/tests/test_phase_manager.gd
+res://combat_core/tests/test.tscn
+```
+
+In Godot, right-click a `test_*.gd` script and choose Run, or open `test.tscn` and run the scene.
+
+Headless example:
+
+```bash
+godot --headless --path tiles_isometric_testing --quit-after 1
+```
+
+On this local machine, the Godot executable may be outside PATH. Use the full executable path if needed.
