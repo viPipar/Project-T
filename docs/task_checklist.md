@@ -38,7 +38,7 @@
 | Gilang | Status Particle FX | Particle sets: Bleeding/Stun/Fire/Water/Earth/Air/Magma/Mud/Mist/Conflagration | Low | To Do | Particle Emitter | #15 |
 | Gilang | Status Effects | Implement `autotomy_armor_buff` (+4 Armor for 1 turn) from Autotomy | Medium | Done | Status Effects | #9 |
 | Gilang | Audio System | SFX & BGM Manager (Combat sounds, UI clicks, bgm tracks) | High | To Do | EventBus | - |
-| Gilang | AI System | Enemy AI Brain (Target Selection, Ability Choice, Movement Logic) | Critical | To Do | Phase Mgr, A* Grid | - |
+| Gilang | AI System | Enemy AI Brain (Target Selection, Ability Choice, Movement Logic) | Critical | Done | Phase Mgr, A* Grid | - |
 
 ## Candra - Movement, Projectile & Stats
 
@@ -109,7 +109,7 @@
 
 | Programmer | System | Task | Priority | Status | Depends On | Ref # |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| TBD | Combat Animation | Combat Action Queue / Animation Sync | Critical | To Do | EventBus | - |
+| Gilang | Combat Animation | Combat Action Queue / Animation Sync (CombatTestBridge) | Critical | Done | EventBus | - |
 | TBD | Game Loop | Scene Transition Flow (Node Graph -> Combat Scene -> Win/Lose) | Critical | To Do | Node Graph | - |
 | TBD | UI System | Core Menus (Main Menu, Pause, Settings, Game Over Screen) | High | To Do | - | - |
 | TBD | Save System | Run State & Meta-Progression Persistence (Save/Load) | High | To Do | Data structures | - |
