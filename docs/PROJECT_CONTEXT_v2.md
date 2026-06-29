@@ -504,22 +504,22 @@ Item rarity is revealed via a light effect **after** the player picks the item (
 
 ### Combat / Gameplay
 
-- [ ] Co-op turn system (P1 & P2 simultaneous player phase, then sequential enemy phase)
+- [x] Co-op turn system (P1 & P2 simultaneous player phase, then sequential enemy phase)
 - [ ] IAbility interface — modular ability architecture (execute, cost, area, signals)
 - [ ] Friendly fire logic merged into IAbility (remove standalone Friendly Fire System)
 - [ ] Grid-based movement + pathfinding
 - [ ] Action queue / anti-conflict system (concurrent same-target attacks resolve sequentially)
-- [ ] Action Economy enforcement (AP, Bonus AP, Spell Slots [P2], Energy Charge [P1], Movement)
-- [ ] Mana equivalence converter (Spell Slot item → Energy Charge for Fighter)
-- [ ] D20 RNG hit/miss system vs. Armor/Resist thresholds
-- [ ] Damage/heal dice system (separate roll post hit-check)
+- [x] Action Economy enforcement (AP, Bonus AP, Spell Slots [P2], Energy Charge [P1], Movement)
+- [x] Mana equivalence converter (Spell Slot item → Energy Charge for Fighter)
+- [x] D20 RNG hit/miss system vs. Armor/Resist thresholds
+- [x] Damage/heal dice system (separate roll post hit-check)
 - [ ] Elemental synergy & status tag system
 - [ ] Status particle FX per entity (bleeding, stun, fire, water, earth, air, combo statuses)
 - [ ] Projectile system with grid tile collision detection
 - [ ] Signal bridge: IAbility `on_knockback` signal → Knockback Resolver
 - [ ] Environmental interaction (knockback into walls → bonus damage)
 - [ ] Revive mechanic (downed player → ally stands adjacent + spends Action → revived at 20% HP)
-- [ ] Enemy AI — sequential turn execution (enemies act one by one)
+- [x] Enemy AI — sequential turn execution (enemies act one by one)
 
 ### Roguelite / Level
 

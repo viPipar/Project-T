@@ -48,7 +48,7 @@ func test_balancing_and_items() -> void:
 
 func test_shop_and_economy() -> void:
 	print("--- 💰 TESTING SHOP & ECONOMY ---")
-	var economy = CoinEconomy.new()
+	var economy = preload("res://systems/shop/CoinEconomy.gd").new()
 	economy.add_coins(1, 100) # Player 1 gets 100
 	economy.add_coins(2, 20)  # Player 2 gets 20
 	

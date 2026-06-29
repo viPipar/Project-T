@@ -886,13 +886,13 @@ Luck also determines Contested Item Pick winner and Luck Event outcomes.
 
 ### Combat / Gameplay
 
-- [ ] Co-op turn system (P1 & P2 simultaneous Player Phase)
-- [ ] **Sequential Enemy Phase** (queue-based, one enemy at a time with delay)
+- [x] Co-op turn system (P1 & P2 simultaneous Player Phase)
+- [x] **Sequential Enemy Phase** (queue-based, one enemy at a time with delay)
 - [ ] Grid-based movement + pathfinding (A*)
 - [ ] Action queue / anti-conflict resolver (concurrent P1+P2 on same target)
-- [ ] Action Economy enforcement (AP, Bonus AP, Energy Charge / Spell Slots, Movement)
-- [ ] D20 RNG hit/miss system vs. Armor/Resist thresholds
-- [ ] Damage/heal dice system (separate roll post hit-check)
+- [x] Action Economy enforcement (AP, Bonus AP, Energy Charge / Spell Slots, Movement)
+- [x] D20 RNG hit/miss system vs. Armor/Resist thresholds
+- [x] Damage/heal dice system (separate roll post hit-check)
 - [ ] **BaseAbility Custom Resource** system (class_name, @export vars, execute(), signal)
 - [ ] **Projectile System** (spawner, tile-by-tile mover, grid collision detector, pool)
 - [ ] **Knockback via Signal** (Knockback Resolver listens to `ability_executed` signal)
@@ -903,7 +903,7 @@ Luck also determines Contested Item Pick winner and Luck Event outcomes.
 - [ ] Enemy AI (targets lowest HP + nearest player)
 - [ ] **Contested Pick System** (D20 + LCK tiebreak on simultaneous item selection)
 - [ ] **Cursed Item** handler (locked until Rest, visual/stat debuff)
-- [ ] **Mana Cross-Conversion** (Spell Slot item → Energy Charge for Fighter, vice versa)
+- [x] **Mana Cross-Conversion** (Spell Slot item → Energy Charge for Fighter, vice versa)
 
 ### Roguelite / Meta
 
