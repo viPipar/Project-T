@@ -95,7 +95,7 @@ func _trigger_conflagration(target: Node, original_damage: int) -> void:
 	if grid and grid.has_method("get_adjacent_entities"):
 		var targets = grid.get_adjacent_entities(target)
 		for t in targets:
-			if t.has_method("get_node"):
+			if is_instance_valid(t) and t.has_method("get_node"):
 				var health = t.get_node_or_null("HealthComponent")
 				if health:
 					var applied = health.take_damage(aoe_dmg, null, "fire")

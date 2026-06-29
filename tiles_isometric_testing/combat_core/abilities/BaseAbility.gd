@@ -93,7 +93,7 @@ func get_highlight_type() -> String:
 
 
 func execute(caster: Node, targets: Array) -> void:
-	if caster != null and caster.has_method("is_downed") and caster.is_downed():
+	if is_instance_valid(caster) and caster.has_method("is_downed") and caster.is_downed():
 		return
 
 	var dice_roller = DiceRoller.new()
@@ -117,9 +117,9 @@ func execute(caster: Node, targets: Array) -> void:
 			# Ally Targeting Resolver: Bypass armor, use DC from skill.
 			var stat_sys = caster.get_node_or_null("/root/StatSystem")
 			var acc_mod = 0
-			if stat_sys != null and stat_sys.has_method("get_hit_roll_modifier"):
+			if is_instance_valid(stat_sys) and stat_sys.has_method("get_hit_roll_modifier"):
 				acc_mod = int(stat_sys.get_hit_roll_modifier(caster))
-			elif stat_sys != null and stat_sys.has_method("get_acc"):
+			elif is_instance_valid(stat_sys) and stat_sys.has_method("get_acc"):
 				acc_mod = floori(stat_sys.get_acc(caster) / 2.0)
 			
 			var raw_d20 = dice_roller.d20()
@@ -138,7 +138,7 @@ func execute(caster: Node, targets: Array) -> void:
 			if not hit:
 				EventBus.on_miss.emit(caster, target)
 		else:
-			if hit_miss_resolver != null and hit_miss_resolver.has_method("resolve"):
+			if is_instance_valid(hit_miss_resolver) and hit_miss_resolver.has_method("resolve"):
 				hit_result = hit_miss_resolver.resolve(caster, target, is_magical)
 			else:
 				# TODO (Tapip): HitMissResolver is currently missing from /root or lacks resolve()
@@ -210,12 +210,12 @@ func _get_damage_modifier(caster: Node, is_magical: bool) -> int:
 func _apply_damage(target: Node, amount: int, attacker: Node, is_magical: bool) -> void:
 	var type_str = "magical" if is_magical else "physical"
 	var stat_sys = target.get_node_or_null("/root/StatSystem")
-	if stat_sys != null and stat_sys.has_method("apply_damage"):
+	if is_instance_valid(stat_sys) and stat_sys.has_method("apply_damage"):
 		var applied = stat_sys.apply_damage(target, amount, attacker, type_str)
 		EventBus.damage_dealt.emit(target, applied, type_str, false, null)
 	else:
 		var health = target.get_node_or_null("HealthComponent")
-		if health != null and health.has_method("take_damage"):
+		if is_instance_valid(health) and health.has_method("take_damage"):
 			var applied = health.take_damage(amount, attacker, type_str)
 			EventBus.damage_dealt.emit(target, applied, type_str, false, null)
 		else:
@@ -224,11 +224,11 @@ func _apply_damage(target: Node, amount: int, attacker: Node, is_magical: bool) 
 
 func _apply_heal(target: Node, amount: int) -> void:
 	var stat_sys = target.get_node_or_null("/root/StatSystem")
-	if stat_sys != null and stat_sys.has_method("apply_heal"):
+	if is_instance_valid(stat_sys) and stat_sys.has_method("apply_heal"):
 		stat_sys.apply_heal(target, amount)
 	else:
 		var health = target.get_node_or_null("HealthComponent")
-		if health != null and health.has_method("heal"):
+		if is_instance_valid(health) and health.has_method("heal"):
 			health.heal(amount)
 
 func _get_knockback_dir(caster: Node, target: Node) -> Vector2:

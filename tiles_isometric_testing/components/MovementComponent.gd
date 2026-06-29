@@ -243,7 +243,7 @@ func _get_movement_bonus() -> int:
 func _owner_is_downed() -> bool:
 	if owner == null:
 		return false
-	if owner.has_method("is_downed"):
+	if is_instance_valid(owner) and owner.has_method("is_downed"):
 		return bool(owner.is_downed())
 	var health := owner.get_node_or_null("HealthComponent") as HealthComponent
 	return health != null and health.is_downed()

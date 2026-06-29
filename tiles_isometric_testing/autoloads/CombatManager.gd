@@ -17,7 +17,7 @@ func _on_start_combat(node_type: int) -> void:
 	# Transisi kamera dari Map ke Combat Arena
 	
 	# Contoh memanggil TurnManager (hanya jika memang diserahkan ke CombatManager)
-	if TurnManager != null and TurnManager.has_method("start_battle"):
+	if is_instance_valid(TurnManager) and TurnManager.has_method("start_battle"):
 		# TurnManager.start_battle() bisa dipanggil setelah loading scene selesai
 		pass
 	

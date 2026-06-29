@@ -31,10 +31,10 @@ func take_turn() -> void:
 	# Kondisi yang mencegah aksi
 	var cond := owner.get_node_or_null("ConditionComponent")
 	if cond:
-		if cond.has_method("is_stunned") and cond.is_stunned():
+		if is_instance_valid(cond) and cond.has_method("is_stunned") and cond.is_stunned():
 			end_turn()
 			return
-		if cond.has_method("is_frozen") and cond.is_frozen():
+		if is_instance_valid(cond) and cond.has_method("is_frozen") and cond.is_frozen():
 			end_turn()
 			return
 

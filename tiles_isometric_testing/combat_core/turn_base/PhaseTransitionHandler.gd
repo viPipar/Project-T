@@ -109,7 +109,7 @@ func _get_living_enemies() -> Array[Node]:
 		var alive: Variant = node.get("is_alive")  # Variant by design
 		var alive_bool: bool
 		if alive == null:
-			if node.has_method("is_dead"):
+			if is_instance_valid(node) and node.has_method("is_dead"):
 				alive_bool = not node.is_dead()
 			else:
 				alive_bool = true

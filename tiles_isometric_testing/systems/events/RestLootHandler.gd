@@ -23,7 +23,7 @@ func handle_rest_choice(player_id: int, option: int) -> void:
 		0: # FULL_HEAL
 			print("[RestLootHandler] P%d selected Full Heal." % player_id)
 			if hc != null:
-				hc.heal_to_full() if hc.has_method("heal_to_full") else hc.heal(9999)
+				hc.heal_to_full() if is_instance_valid(hc) and hc.has_method("heal_to_full") else hc.heal(9999)
 			EventNotifier.show_message("P%d Rested: Full HP Restored" % player_id, Color.GREEN)
 		1: # PARTIAL_HEAL_BUFF
 			print("[RestLootHandler] P%d selected Partial Heal + Buff." % player_id)

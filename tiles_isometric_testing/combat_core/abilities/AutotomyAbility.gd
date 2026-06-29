@@ -8,19 +8,19 @@ func execute(caster: Node, targets: Array) -> void:
 	print("[Autotomy] Executing custom logic on caster...")
 	
 	var health_comp = caster.get_node_or_null("HealthComponent")
-	if health_comp != null and health_comp.has_method("get_hp"):
+	if is_instance_valid(health_comp) and health_comp.has_method("get_hp"):
 		var current_hp = health_comp.get_hp()
 		var dmg = floori(current_hp * 0.20)
-		if health_comp.has_method("take_damage"):
+		if is_instance_valid(health_comp) and health_comp.has_method("take_damage"):
 			var applied = health_comp.take_damage(dmg, caster, "true")
 			EventBus.damage_dealt.emit(caster, applied, "true", false, null)
 	else:
 		# Fallback to stat system
 		var stat_sys = caster.get_node_or_null("/root/StatSystem")
-		if stat_sys != null and stat_sys.has_method("get_current_hp"):
+		if is_instance_valid(stat_sys) and stat_sys.has_method("get_current_hp"):
 			var current_hp = stat_sys.get_current_hp(caster)
 			var dmg = floori(current_hp * 0.20)
-			if stat_sys.has_method("apply_damage"):
+			if is_instance_valid(stat_sys) and stat_sys.has_method("apply_damage"):
 				var applied = stat_sys.apply_damage(caster, dmg, caster, "true")
 				EventBus.damage_dealt.emit(caster, applied, "true", false, null)
 	

@@ -123,7 +123,7 @@ func _on_confirm() -> void:
 	# Blok dicek via InputManager (is_confirm_pressed sudah cek _player_blocked di sana)
 
 	var target: Vector2i = Vector2i(-1, -1)
-	if _cursor != null and _cursor.has_method("get_hovered_tile"):
+	if is_instance_valid(_cursor) and _cursor.has_method("get_hovered_tile"):
 		target = _cursor.get_hovered_tile()
 	if target.x < 0:
 		return
@@ -259,7 +259,7 @@ func _enter_targeting() -> void:
 	var highlight_type := _loaded_ability.get_highlight_type()
 	HighlightManager.replace_tiles(_targeting_tiles, highlight_type, player_id)
 	
-	if MovementRangeManager != null and MovementRangeManager.has_method("_refresh_player"):
+	if is_instance_valid(MovementRangeManager) and MovementRangeManager.has_method("_refresh_player"):
 		MovementRangeManager._refresh_player(self)
 		
 	print("[Player P%d] TARGETING mode — %d tiles highlighted" % [player_id, _targeting_tiles.size()])
@@ -272,7 +272,7 @@ func _exit_targeting() -> void:
 	_targeting_tiles.clear()
 	_loaded_ability = null
 	
-	if MovementRangeManager != null and MovementRangeManager.has_method("_refresh_player"):
+	if is_instance_valid(MovementRangeManager) and MovementRangeManager.has_method("_refresh_player"):
 		MovementRangeManager._refresh_player(self)
 		
 	EventBus.resource_blink_requested.emit(player_id, "stop_all")
@@ -329,7 +329,7 @@ func _on_combat_input_blocked(blocked_player_id: int, blocked: bool) -> void:
 	if blocked:
 		if _state == PlayerState.TARGETING:
 			_state = PlayerState.ACTING
-		if MovementRangeManager != null and MovementRangeManager.has_method("_refresh_player"):
+		if is_instance_valid(MovementRangeManager) and MovementRangeManager.has_method("_refresh_player"):
 			MovementRangeManager._refresh_player(self)
 	elif _state == PlayerState.ACTING:
 		_finish_action_resolution()
@@ -361,7 +361,7 @@ func _play_hurt_anim() -> void:
 
 func _begin_action_resolution() -> void:
 	_state = PlayerState.ACTING
-	if MovementRangeManager != null and MovementRangeManager.has_method("_refresh_player"):
+	if is_instance_valid(MovementRangeManager) and MovementRangeManager.has_method("_refresh_player"):
 		MovementRangeManager._refresh_player(self)
 
 
@@ -371,7 +371,7 @@ func _finish_action_resolution() -> void:
 	_loaded_ability = null
 	_state = PlayerState.IDLE
 	EventBus.resource_blink_requested.emit(player_id, "stop_all")
-	if MovementRangeManager != null and MovementRangeManager.has_method("_refresh_player"):
+	if is_instance_valid(MovementRangeManager) and MovementRangeManager.has_method("_refresh_player"):
 		MovementRangeManager._refresh_player(self)
 
 
@@ -696,10 +696,10 @@ func activate_haki_aura() -> void:
 			_haki_aura = haki_scene.instantiate()
 			add_child(_haki_aura)
 			
-	if _haki_aura != null and _haki_aura.has_method("activate"):
+	if is_instance_valid(_haki_aura) and _haki_aura.has_method("activate"):
 		_haki_aura.activate(anim_sprite, player_id)
 
 
 func deactivate_haki_aura() -> void:
-	if _haki_aura != null and _haki_aura.has_method("deactivate"):
+	if is_instance_valid(_haki_aura) and _haki_aura.has_method("deactivate"):
 		_haki_aura.deactivate()

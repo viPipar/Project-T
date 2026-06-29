@@ -62,7 +62,7 @@ func _can_open_wheel(player_id: int) -> bool:
 
 	for player in get_tree().get_nodes_in_group("players"):
 		if player != null and player.get("player_id") == player_id:
-			if player.has_method("is_downed") and player.is_downed():
+			if is_instance_valid(player) and player.has_method("is_downed") and player.is_downed():
 				return false
 			return true
 	return true

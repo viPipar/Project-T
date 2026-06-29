@@ -15,6 +15,8 @@ var _bg_panel    : ColorRect
 var _name_label  : Label
 var _hp_label    : Label
 var _armor_label : Label
+var _ap_label    : Label
+var _mp_label    : Label
 
 var _is_visible  : bool = false
 var _target_layer: int  = 0
@@ -41,7 +43,7 @@ func _build_ui() -> void:
 	_bg_panel.offset_left   = -120
 	_bg_panel.offset_right  =  120
 	_bg_panel.offset_top    = -50
-	_bg_panel.offset_bottom =  50
+	_bg_panel.offset_bottom =  100
 	add_child(_bg_panel)
 
 	# 2. Enemy Name (Baris Atas)
@@ -75,6 +77,31 @@ func _build_ui() -> void:
 	_armor_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	_bg_panel.add_child(_armor_label)
 
+	# 5. AP Row (Baris Bawah 2 Kiri)
+	var ap_icon = _make_label("⚡", 30, Color(1.0, 0.9, 0.2))
+	ap_icon.position = Vector2(20, 90)
+	ap_icon.size = Vector2(40, 40)
+	_bg_panel.add_child(ap_icon)
+
+	_ap_label = _make_label("0", 30, Color.WHITE)
+	_ap_label.position = Vector2(60, 90)
+	_ap_label.size = Vector2(50, 40)
+	_ap_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_bg_panel.add_child(_ap_label)
+
+	# 6. MP Row (Baris Bawah 2 Kanan)
+	var mp_icon = _make_label("👟", 30, Color(0.3, 0.9, 0.9))
+	mp_icon.position = Vector2(130, 90)
+	mp_icon.size = Vector2(40, 40)
+	_bg_panel.add_child(mp_icon)
+
+	_mp_label = _make_label("0", 30, Color.WHITE)
+	_mp_label.position = Vector2(170, 90)
+	_mp_label.size = Vector2(50, 40)
+	_mp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_bg_panel.add_child(_mp_label)
+
+
 
 func _make_label(txt: String, f_size: int, f_color: Color) -> Label:
 	var l := Label.new()
@@ -91,10 +118,12 @@ func _make_label(txt: String, f_size: int, f_color: Color) -> Label:
 # ── Public API ───────────────────────────────────────────────────────────────
 
 ## Menampilkan tooltip. layer_mask menentukan viewport mana yang merender ini.
-func show_for(e_name: String, hp: int, max_hp: int, armor: int, layer_mask: int) -> void:
+func show_for(e_name: String, hp: int, max_hp: int, armor: int, ap: int, mp: int, layer_mask: int) -> void:
 	_name_label.text  = e_name
 	_hp_label.text    = str(hp)
 	_armor_label.text = str(armor)
+	_ap_label.text    = str(ap)
+	_mp_label.text    = str(mp)
 	_target_layer     = layer_mask
 	
 	# Node2D properties

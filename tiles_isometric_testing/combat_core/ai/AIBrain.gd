@@ -37,14 +37,14 @@ func find_closest_player(entity: Node, max_range: int = 99) -> Node:
 func can_afford_ability(entity: Node, ability: BaseAbility) -> bool:
 	# Check Action Points
 	var class_comp = entity.get_node_or_null("ClassComponent")
-	if class_comp != null and class_comp.has_method("get_current_ap"):
+	if is_instance_valid(class_comp) and class_comp.has_method("get_current_ap"):
 		if class_comp.get_current_ap() < ability.cost_action:
 			return false
 		
 	# Check Mana
 	var stats_comp = entity.get_node_or_null("StatsComponent")
 	if ability.cost_mana > 0:
-		if stats_comp != null and stats_comp.has_method("get_current_mana"):
+		if is_instance_valid(stats_comp) and stats_comp.has_method("get_current_mana"):
 			if stats_comp.get_current_mana() < ability.cost_mana:
 				return false
 				

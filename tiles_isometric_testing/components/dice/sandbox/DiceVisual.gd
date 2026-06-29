@@ -346,11 +346,11 @@ func _apply_camera_shake(p_id: int, duration: float, amp: float, horizontal_only
 	var main = get_tree().current_scene
 	if main.has_node("SplitScreenManager"):
 		var ssm = main.get_node("SplitScreenManager")
-		if ssm.has_method("shake_camera"):
+		if is_instance_valid(ssm) and ssm.has_method("shake_camera"):
 			ssm.shake_camera(p_id, duration, amp, horizontal_only)
 	elif main.has_node("World/Camera2D"):
 		var cam = main.get_node("World/Camera2D")
-		if cam.has_method("shake"):
+		if is_instance_valid(cam) and cam.has_method("shake"):
 			cam.shake(duration, amp, horizontal_only)
 
 

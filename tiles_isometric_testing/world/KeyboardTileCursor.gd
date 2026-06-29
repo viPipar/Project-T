@@ -151,7 +151,7 @@ func _is_tile_allowed(tile: Vector2i, player: Node) -> bool:
 
 	# Prefer cached range tiles from MovementRangeManager (if available)
 	var range_mgr := get_node_or_null("/root/MovementRangeManager")
-	if range_mgr != null and range_mgr.has_method("get_range_tiles_for_player"):
+	if is_instance_valid(range_mgr) and range_mgr.has_method("get_range_tiles_for_player"):
 		var tiles: Array[Vector2i] = range_mgr.get_range_tiles_for_player(player_id)
 		if tile in tiles:
 			return true

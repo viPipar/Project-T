@@ -128,13 +128,13 @@ func _apply_collision_damage(entity: Node, amount: int, source: Node, options: D
 
 	var damage_type: String = str(options.get("damage_type", DEFAULT_DAMAGE_TYPE))
 	var applied: int = 0
-	if StatSystem != null and StatSystem.has_method("apply_damage"):
+	if is_instance_valid(StatSystem) and StatSystem.has_method("apply_damage"):
 		applied = int(StatSystem.apply_damage(entity, amount, source, damage_type))
 	else:
 		var health: HealthComponent = entity.get_node_or_null("HealthComponent") as HealthComponent
 		if health != null:
 			applied = health.take_damage(amount, source, damage_type)
-		elif entity.has_method("take_damage"):
+		elif is_instance_valid(entity) and entity.has_method("take_damage"):
 			applied = int(entity.call("take_damage", amount, source))
 
 	if applied > 0 and EventBus != null:
@@ -176,7 +176,7 @@ func _sync_entity_position(entity: Node, tile: Vector2i) -> void:
 
 
 func _get_entity_grid_pos(entity: Node) -> Vector2i:
-	if entity.has_method("get_grid_pos"):
+	if is_instance_valid(entity) and entity.has_method("get_grid_pos"):
 		var method_value: Variant = entity.call("get_grid_pos")
 		if method_value is Vector2i:
 			return method_value

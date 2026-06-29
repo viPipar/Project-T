@@ -155,7 +155,7 @@ func can_player_act(player_id: int) -> bool:
 func _is_downed(entity: Node) -> bool:
 	if entity == null:
 		return false
-	if entity.has_method("is_downed"):
+	if is_instance_valid(entity) and entity.has_method("is_downed"):
 		return bool(entity.is_downed())
 	var health := entity.get_node_or_null("HealthComponent") as HealthComponent
 	return health != null and health.is_downed()

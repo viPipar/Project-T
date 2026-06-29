@@ -26,12 +26,12 @@ var _last_state: String   = ""
 func _process(_delta: float) -> void:
 	if _player == null:
 		return
-	if _player.has_method("is_resolving_action") and _player.is_resolving_action():
+	if is_instance_valid(_player) and _player.has_method("is_resolving_action") and _player.is_resolving_action():
 		_clear_highlight()
 		return
 
 	var target: Vector2i = Vector2i(-1, -1)
-	if _player._cursor != null and _player._cursor.has_method("get_hovered_tile"):
+	if is_instance_valid(_player._cursor) and _player._cursor.has_method("get_hovered_tile"):
 		target = _player._cursor.get_hovered_tile()
 
 	if target.x < 0:
@@ -41,7 +41,7 @@ func _process(_delta: float) -> void:
 	var origin: Vector2i = _player.grid_pos
 	var new_state: String
 
-	if _player.has_method("is_targeting_ability") and _player.is_targeting_ability():
+	if is_instance_valid(_player) and _player.has_method("is_targeting_ability") and _player.is_targeting_ability():
 		new_state = _get_targeting_state(target)
 	elif target == origin:
 		new_state = "self"
@@ -90,7 +90,7 @@ func _get_targeting_state(target: Vector2i) -> String:
 		return "invalid"
 	if GridManager.has_entity_at(target):
 		return "entity"
-	if _player.has_method("can_target_empty_tile") and _player.can_target_empty_tile():
+	if is_instance_valid(_player) and _player.has_method("can_target_empty_tile") and _player.can_target_empty_tile():
 		return "valid"
 	return "invalid"
 

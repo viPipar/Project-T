@@ -46,7 +46,7 @@ func spawn_entity(scene: PackedScene, grid_pos: Vector2i, data := {}) -> Node:
 	return entity
 
 func despawn_entity(entity: Node) -> void:
-	if entity.has_method("get_grid_pos"):
+	if is_instance_valid(entity) and entity.has_method("get_grid_pos"):
 		GridManager.unregister_entity(entity.get_grid_pos())
 	entity.queue_free()
 

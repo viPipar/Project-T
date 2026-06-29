@@ -15,7 +15,7 @@ func _ready() -> void:
 			InventoryManager.item_removed.connect(_on_inventory_changed)
 
 func _on_inventory_changed(player_id: int, _item_id: String) -> void:
-	if TurnManager != null and TurnManager.has_method("_get_player_by_id"):
+	if is_instance_valid(TurnManager) and TurnManager.has_method("_get_player_by_id"):
 		var player = TurnManager._get_player_by_id(player_id)
 		if player != null:
 			recalculate_player_stats(player, player_id)
@@ -30,7 +30,7 @@ func apply_immediate_effect(player_id: int, item_id: String, player_node: Node =
 		print("[ItemEffectApplier] Healing P%d for %d HP" % [player_id, on_use.get("heal", 0)])
 		if player_node != null and player_node.has_node("HealthComponent"):
 			var hc = player_node.get_node("HealthComponent")
-			if hc.has_method("heal"):
+			if is_instance_valid(hc) and hc.has_method("heal"):
 				hc.heal(on_use.get("heal", 0))
 
 func recalculate_player_stats(player_node: Node, player_id: int) -> void:
@@ -97,7 +97,7 @@ func _on_turn_started(entity: Node, player_id: int) -> void:
 			print("[ItemEffectApplier] P%d takes %d damage from %s" % [player_id, on_turn.get("damage_per_turn", 0), item_name])
 			if entity.has_node("HealthComponent"):
 				var hc = entity.get_node("HealthComponent")
-				if hc.has_method("take_damage"):
+				if is_instance_valid(hc) and hc.has_method("take_damage"):
 					hc.take_damage(on_turn.get("damage_per_turn", 0), null, "true_damage")
 					EventNotifier.show_message("Curse! P%d took damage!" % player_id, Color.PURPLE)
 					

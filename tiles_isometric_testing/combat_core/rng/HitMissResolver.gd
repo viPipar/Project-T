@@ -69,7 +69,7 @@ func did_hit(attacker: Node, target: Node, is_magical: bool = false) -> bool:
 
 
 func _get_hit_roll_modifier(attacker: Node) -> int:
-	if _stat_provider.has_method("get_hit_roll_modifier"):
+	if is_instance_valid(_stat_provider) and _stat_provider.has_method("get_hit_roll_modifier"):
 		return int(_stat_provider.get_hit_roll_modifier(attacker))
 	var acc: int = _stat_provider.get_acc(attacker)
 	return maxi(0, floori(acc / 2.0))

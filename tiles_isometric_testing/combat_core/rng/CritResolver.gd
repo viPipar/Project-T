@@ -27,9 +27,9 @@ func setup(stat_prov) -> void:
 ## Hitung crit threshold berdasarkan ACC
 func get_crit_threshold(attacker: Node) -> int:
 	assert(_stat_provider != null, "[CritResolver] stat_provider belum di-setup!")
-	if _stat_provider.has_method("get_crit_requirement"):
+	if is_instance_valid(_stat_provider) and _stat_provider.has_method("get_crit_requirement"):
 		return int(_stat_provider.get_crit_requirement(attacker))
-	if _stat_provider.has_method("get_natural_crit_requirement"):
+	if is_instance_valid(_stat_provider) and _stat_provider.has_method("get_natural_crit_requirement"):
 		return int(_stat_provider.get_natural_crit_requirement(attacker))
 	var acc : int = _stat_provider.get_acc(attacker)
 	return maxi(1, 20 - floori(acc / 10.0))
@@ -85,7 +85,7 @@ func resolve_with_crit(attacker: Node, target: Node, is_magical: bool = false) -
 
 
 func _get_hit_roll_modifier(attacker: Node) -> int:
-	if _stat_provider.has_method("get_hit_roll_modifier"):
+	if is_instance_valid(_stat_provider) and _stat_provider.has_method("get_hit_roll_modifier"):
 		return int(_stat_provider.get_hit_roll_modifier(attacker))
 	var acc: int = _stat_provider.get_acc(attacker)
 	return maxi(0, floori(acc / 2.0))

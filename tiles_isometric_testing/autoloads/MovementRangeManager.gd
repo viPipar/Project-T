@@ -69,7 +69,7 @@ func _refresh_player(player: Node) -> void:
 	var pid = _safe_get_int(player, "player_id", -1)
 	var type := _type_for_player(pid)
 
-	if player.has_method("should_hide_movement_range") and player.should_hide_movement_range():
+	if is_instance_valid(player) and player.has_method("should_hide_movement_range") and player.should_hide_movement_range():
 		_clear_type(type)
 		return
 
@@ -78,7 +78,7 @@ func _refresh_player(player: Node) -> void:
 		_store_range(pid, player.get("grid_pos") as Vector2i, [] as Array[Vector2i])
 		return
 
-	if player.has_method("is_downed") and player.is_downed():
+	if is_instance_valid(player) and player.has_method("is_downed") and player.is_downed():
 		_clear_type(type)
 		_store_range(pid, player.get("grid_pos") as Vector2i, [] as Array[Vector2i])
 		return

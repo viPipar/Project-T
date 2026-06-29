@@ -29,6 +29,7 @@ var current_hp: int = 30
 var is_alive: bool = true
 var _death_started: bool = false
 var _hovering_players: Dictionary = {} # int -> bool
+var _is_my_turn: bool = false
 
 const INSECT_DIR := "res://assets/characters/insect1_placeholder"
 
@@ -39,6 +40,10 @@ func _ready() -> void:
 	_setup_health()
 	_setup_sprite()
 	_apply_idle_frames()
+	
+	if EventBus != null:
+		EventBus.turn_started.connect(_on_turn_started)
+		EventBus.turn_ended.connect(_on_turn_ended)
 	
 	# Spawn tooltip
 	var tooltip_script = load("res://ui/shared/EnemyStatTooltip.gd")
@@ -172,7 +177,7 @@ func _on_hp_changed(new_hp: int, new_max_hp: int) -> void:
 	is_alive = current_hp > 0
 	
 	var tooltip = get_node_or_null("EnemyStatTooltip")
-	if tooltip != null and tooltip.has_method("update_hp"):
+	if is_instance_valid(tooltip) and tooltip.has_method("update_hp"):
 		tooltip.update_hp(current_hp)
 
 
@@ -192,7 +197,7 @@ func _die(killer: Node = null, emit_bus: bool = true) -> void:
 	current_hp = 0
 	
 	var tooltip = get_node_or_null("EnemyStatTooltip")
-	if tooltip != null and tooltip.has_method("hide_tooltip"):
+	if is_instance_valid(tooltip) and tooltip.has_method("hide_tooltip"):
 		tooltip.hide_tooltip()
 		
 	print("[%s] Kalah." % enemy_name)
@@ -226,16 +231,21 @@ func _update_tooltip_visibility() -> void:
 	var tooltip = get_node_or_null("EnemyStatTooltip")
 	if tooltip == null: return
 	
-	if _hovering_players.is_empty():
+	if _hovering_players.is_empty() and not _is_my_turn:
 		tooltip.hide_tooltip()
 	else:
 		var layer_mask := 0
-		if _hovering_players.has(1): layer_mask |= 2 # P1
-		if _hovering_players.has(2): layer_mask |= 4 # P2
+		if _hovering_players.has(1) or _is_my_turn: layer_mask |= 2 # P1
+		if _hovering_players.has(2) or _is_my_turn: layer_mask |= 4 # P2
 		
 		var armor := 0
-		if stats != null: armor = stats.get_armor()
-		tooltip.show_for(enemy_name, current_hp, max_hp, armor, layer_mask)
+		var ap := 0
+		var mp := 0
+		if stats != null: 
+			armor = stats.get_armor()
+			ap = stats.get_action_points()
+			mp = stats.get_stat("mov")
+		tooltip.show_for(enemy_name, current_hp, max_hp, armor, ap, mp, layer_mask)
 
 
 func play_attack(ability_id: String) -> void:
@@ -259,7 +269,7 @@ func do_ai_turn() -> void:
 		return
 		
 	var ai_comp = get_node_or_null("AIComponent")
-	if ai_comp != null and ai_comp.has_method("take_turn"):
+	if is_instance_valid(ai_comp) and ai_comp.has_method("take_turn"):
 		ai_comp.take_turn()
 		return
 
@@ -342,3 +352,13 @@ func _load_frames_from_dir(dir_path: String) -> Array[Texture2D]:
 		if tex != null:
 			result.append(tex)
 	return result
+
+func _on_turn_started(entity: Node, _pid: int) -> void:
+	if entity == self:
+		_is_my_turn = true
+		_update_tooltip_visibility()
+
+func _on_turn_ended(entity: Node) -> void:
+	if entity == self:
+		_is_my_turn = false
+		_update_tooltip_visibility()

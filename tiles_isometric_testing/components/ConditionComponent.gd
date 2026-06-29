@@ -298,7 +298,7 @@ func _apply_dynamic_dot(condition_id: String, damage_per_stack: int, damage_type
 		applied = health.take_damage(total_dmg, null, damage_type)
 	else:
 		var stat_sys = get_node_or_null("/root/StatSystem")
-		if stat_sys != null and stat_sys.has_method("apply_damage"):
+		if is_instance_valid(stat_sys) and stat_sys.has_method("apply_damage"):
 			applied = stat_sys.apply_damage(parent, total_dmg, null, damage_type)
 
 	if EventBus != null and applied > 0:

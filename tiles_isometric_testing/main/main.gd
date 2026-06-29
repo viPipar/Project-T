@@ -249,7 +249,7 @@ func _run_all_tests() -> void:
 	
 	# Roguelike Tests
 	var roguelike_tester = load("res://testing/RoguelikeTester.gd").new()
-	if roguelike_tester.has_method("run_all_tests"):
+	if is_instance_valid(roguelike_tester) and roguelike_tester.has_method("run_all_tests"):
 		roguelike_tester.run_all_tests()
 	
 	# Combat Tests
@@ -277,7 +277,7 @@ func _apply_debug_visibility() -> void:
 		debug_tooltip.visible = true
 	if _stat_debug_panel != null:
 		pass
-	if world != null and world.has_method("set_debug_grid_visible"):
+	if is_instance_valid(world) and world.has_method("set_debug_grid_visible"):
 		world.set_debug_grid_visible(_show_debug_grid)
 	var autoload_debug := get_node_or_null("/root/DebugGrid")
 	if autoload_debug != null:

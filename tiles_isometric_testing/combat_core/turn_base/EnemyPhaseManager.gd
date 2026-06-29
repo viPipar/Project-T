@@ -88,8 +88,12 @@ func _process_next_enemy() -> void:
 
 
 func _execute_enemy_turn(enemy: Node) -> void:
+	if not is_instance_valid(enemy):
+		_schedule_next(enemy)
+		return
+		
 	# Panggil AI turn pada enemy node
-	if enemy.has_method("do_ai_turn"):
+	if is_instance_valid(enemy) and enemy.has_method("do_ai_turn"):
 		enemy.do_ai_turn()
 	else:
 		print("[EnemyPhaseManager] %s tidak punya do_ai_turn()" % _get_name(enemy))
@@ -115,14 +119,18 @@ func _schedule_next(enemy: Node) -> void:
 # ── HELPER ───────────────────────────────────────────────────────────────────
 
 func _is_alive(entity: Node) -> bool:
+	if not is_instance_valid(entity):
+		return false
 	# Cek via property is_alive (MockEntity) atau method is_dead
-	if entity.has_method("is_dead"):
+	if is_instance_valid(entity) and entity.has_method("is_dead"):
 		return not entity.is_dead()
 	var alive: Variant = entity.get("is_alive")  # Variant by design
 	return alive if alive != null else true
 
 
 func _get_name(entity: Node) -> String:
+	if not is_instance_valid(entity):
+		return "DeadEntity"
 	var n: Variant = entity.get("entity_name")  # Variant by design
 	if n != null:
 		return str(n)

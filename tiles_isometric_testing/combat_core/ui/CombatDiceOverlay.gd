@@ -189,7 +189,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_prompt_confirmed.emit()
 			get_viewport().set_input_as_handled()
 		else:
-			if _dice_visual != null and _dice_visual.has_method("skip_roll"):
+			if is_instance_valid(_dice_visual) and _dice_visual.has_method("skip_roll"):
 				_dice_visual.skip_roll()
 			get_viewport().set_input_as_handled()
 
@@ -280,7 +280,7 @@ func play_attack_sequence(
 	if is_crit: outcome = "crit"
 	elif not is_hit: outcome = "miss"
 
-	if _dice_visual.has_method("start_roll"):
+	if is_instance_valid(_dice_visual) and _dice_visual.has_method("start_roll"):
 		_dice_visual.start_roll(raw_d20, "d20", 2.6, target_pos, player_id, outcome)
 		if _dice_visual.has_signal("roll_finished"):
 			await _dice_visual.roll_finished
@@ -382,7 +382,7 @@ func play_attack_sequence(
 		loser_lbl  = _ac_disp
 		_roll_disp.add_theme_color_override("font_color", col)
 		
-		if attacker != null and attacker.has_method("activate_haki_aura"):
+		if is_instance_valid(attacker) and attacker.has_method("activate_haki_aura"):
 			attacker.activate_haki_aura()
 	else:
 		col    = Color(0.85, 0.25, 0.25)
@@ -432,7 +432,7 @@ func play_attack_sequence(
 			var current_duration = max(0.6, 2.6 * pow(0.65, i))
 			
 			_title_label.text = "Damage %d/%d  —  %s" % [i + 1, dmg_rolls.size(), dmg_formula]
-			if _dice_visual.has_method("start_roll"):
+			if is_instance_valid(_dice_visual) and _dice_visual.has_method("start_roll"):
 				_dice_visual.start_roll(dmg_rolls[i], _formula_dice(dmg_formula), current_duration, target_pos, player_id)
 				if _dice_visual.has_signal("roll_finished"):
 					await _dice_visual.roll_finished
@@ -477,7 +477,7 @@ func play_attack_sequence(
 		await get_tree().create_timer(1.0).timeout
 
 	# ── Phase 8: Slide keluar ─────────────────────────────────────────────────
-	if attacker != null and attacker.has_method("deactivate_haki_aura"):
+	if is_instance_valid(attacker) and attacker.has_method("deactivate_haki_aura"):
 		attacker.deactivate_haki_aura()
 
 	var vp2    := _get_vp_size()

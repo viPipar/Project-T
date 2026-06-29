@@ -161,7 +161,7 @@ func _build_ui() -> void:
 		var main = get_tree().current_scene
 		if main:
 			main.set("_show_dice_sandbox", not main.get("_show_dice_sandbox"))
-			if main.has_method("_apply_debug_visibility"): main.call("_apply_debug_visibility")
+			if is_instance_valid(main) and main.has_method("_apply_debug_visibility"): main.call("_apply_debug_visibility")
 	)
 	toggle_hbox.add_child(btn_dice)
 
@@ -172,7 +172,7 @@ func _build_ui() -> void:
 		var main = get_tree().current_scene
 		if main:
 			main.set("_show_debug_grid", not main.get("_show_debug_grid"))
-			if main.has_method("_apply_debug_visibility"): main.call("_apply_debug_visibility")
+			if is_instance_valid(main) and main.has_method("_apply_debug_visibility"): main.call("_apply_debug_visibility")
 	)
 	toggle_hbox.add_child(btn_grid)
 	

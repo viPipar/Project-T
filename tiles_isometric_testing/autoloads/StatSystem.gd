@@ -113,7 +113,7 @@ func get_luck_roll_modifier(entity: Node) -> int:
 func get_max_hp(entity: Node) -> int:
 	var health := get_health_component(entity)
 	if is_instance_valid(health):
-		if health.has_method("get_max_hp"):
+		if is_instance_valid(health) and health.has_method("get_max_hp"):
 			return int(health.get_max_hp())
 		var value = health.get("max_hp")
 		if value != null:
@@ -128,7 +128,7 @@ func get_max_hp(entity: Node) -> int:
 func get_current_hp(entity: Node) -> int:
 	var health := get_health_component(entity)
 	if is_instance_valid(health):
-		if health.has_method("get_hp"):
+		if is_instance_valid(health) and health.has_method("get_hp"):
 			return int(health.get_hp())
 		var value = health.get("current_hp")
 		if value != null:

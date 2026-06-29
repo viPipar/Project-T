@@ -318,7 +318,7 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 		var cond_comp = target.get_node_or_null("ConditionComponent")
 		if cond_comp and cond_comp.has_condition("vulnerable"):
 			mult += 0.2
-		if ElementSystem != null and ElementSystem.has_method("get_damage_multiplier"):
+		if is_instance_valid(ElementSystem) and ElementSystem.has_method("get_damage_multiplier"):
 			var vapor_mult = ElementSystem.get_damage_multiplier(target, element_tag)
 			if vapor_mult > 1.0:
 				mult += (vapor_mult - 1.0)
@@ -387,7 +387,7 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 		var cond_comp = target.get_node_or_null("ConditionComponent")
 		if cond_comp and cond_comp.has_condition("vulnerable"):
 			mult += 0.2
-		if ElementSystem != null and ElementSystem.has_method("get_damage_multiplier"):
+		if is_instance_valid(ElementSystem) and ElementSystem.has_method("get_damage_multiplier"):
 			var vapor_mult = ElementSystem.get_damage_multiplier(target, element_tag)
 			if vapor_mult > 1.0:
 				mult += (vapor_mult - 1.0)
@@ -457,11 +457,11 @@ func _apply_camera_shake(p_id: int, duration: float, amp: float, horizontal_only
 	var main = get_tree().current_scene
 	if main.has_node("SplitScreenManager"):
 		var ssm = main.get_node("SplitScreenManager")
-		if ssm.has_method("shake_camera"):
+		if is_instance_valid(ssm) and ssm.has_method("shake_camera"):
 			ssm.shake_camera(p_id, duration, amp, horizontal_only)
 	elif main.has_node("World/Camera2D"):
 		var cam = main.get_node("World/Camera2D")
-		if cam.has_method("shake"):
+		if is_instance_valid(cam) and cam.has_method("shake"):
 			cam.shake(duration, amp, horizontal_only)
 
 
@@ -495,7 +495,7 @@ func _play_enemy_dice_sequence(
 	if is_crit: outcome = "crit"
 	elif not is_hit: outcome = "miss"
 	
-	if dice_visual.has_method("start_roll"):
+	if is_instance_valid(dice_visual) and dice_visual.has_method("start_roll"):
 		dice_visual.start_roll(raw_roll, "d20", 1.8, base_pos, p_id, outcome, true, Vector2(0.45, 0.45))
 		if dice_visual.has_signal("roll_finished"):
 			await dice_visual.roll_finished
@@ -672,7 +672,7 @@ func _set_player_busy(player_id: int, busy: bool) -> void:
 
 func _apply_damage_to_target(target: Node, amount: int, attacker: Node, damage_type: String) -> int:
 	var stat_system := get_node_or_null("/root/StatSystem")
-	if stat_system != null and stat_system.has_method("apply_damage"):
+	if is_instance_valid(stat_system) and stat_system.has_method("apply_damage"):
 		return int(stat_system.apply_damage(target, amount, attacker, damage_type))
 
 	var health := target.get_node_or_null("HealthComponent") as HealthComponent
