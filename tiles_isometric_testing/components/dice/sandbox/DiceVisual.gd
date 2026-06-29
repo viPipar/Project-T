@@ -39,6 +39,7 @@ var _orbital_particles: Array[Dictionary] = []
 
 var _roll_tween: Tween
 var _scale_tween: Tween
+var _reveal_tween: Tween
 
 func skip_roll() -> void:
 	if not _is_rolling: return
@@ -159,6 +160,10 @@ func _process(delta: float) -> void:
 
 
 func start_roll(result: int, dice_type: String = "custom", roll_duration: float = 2.6, target_pos: Vector2 = Vector2.ZERO, p_id: int = 0, outcome: String = "hit", in_place: bool = false, base_scale_override: Vector2 = Vector2(0.6, 0.6)) -> void:
+	if _reveal_tween and _reveal_tween.is_valid():
+		_reveal_tween.kill()
+	self.modulate.a = 1.0
+	
 	# Bersihkan partikel dari roll sebelumnya
 	for data in _orbital_particles:
 		if is_instance_valid(data.node):
@@ -283,29 +288,39 @@ func show_result() -> void:
 	_play_landing_vfx(_outcome)
 	
 	# --- OUTCOME VARIANTS ---
-	var base_scale = _base_scale # Ukuran dadu normal
+	var base_scale = _base_scale
 	self.scale = base_scale
-	number_label.scale = Vector2(1.0, 1.0) # Reset scale angka
-	var reveal_tween = create_tween()
+	number_label.scale = Vector2(1.0, 1.0)
+	_reveal_tween = create_tween()
 	var spd_mult = clamp(_current_roll_duration / 2.6, 0.15, 1.0)
+	
+	_reveal_tween.tween_property(self, "scale", base_scale * 1.5, 0.1 * spd_mult)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_reveal_tween.tween_property(self, "scale", base_scale, 0.2 * spd_mult)\
+		.set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	
+	number_label.scale = Vector2.ZERO
+	number_label.modulate.a = 1.0
+	
+	_reveal_tween.tween_property(number_label, "scale", Vector2(1.5, 1.5), 0.15 * spd_mult)\
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_reveal_tween.tween_property(number_label, "scale", Vector2(1.0, 1.0), 0.15 * spd_mult)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+
 	
 	if _outcome == "crit":
 		# Freeze frame briefly
-		reveal_tween.tween_interval(0.1)
-		# Punch to 1.4x -> 1.0x
-		reveal_tween.tween_property(self, "scale", base_scale * 1.4, 0.35 * spd_mult).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
-		reveal_tween.tween_property(self, "scale", base_scale, 0.2)
-		# Number style: bright gold, dark red stroke
-		number_label.add_theme_color_override("font_color", Color("#FFD700"))
+		# Screen shake horizontal only
+		spd_mult = 1.2
+		_apply_camera_shake(_player_id, 0.2, 6.0)
+		# Teks meledak: Dark Crimson border
+		number_label.add_theme_color_override("font_color", Color("#FFE23D"))
 		number_label.add_theme_color_override("font_outline_color", Color("#8B0000"))
 		number_label.add_theme_constant_override("outline_size", 3)
 		# Glow flash
 		dice_sprite.modulate = Color(1, 1, 0.5, 1)
 		var glow_tw = create_tween()
 		glow_tw.tween_property(dice_sprite, "modulate", Color.WHITE, 0.3)
-		
-		# Screen shake via camera
-		_apply_camera_shake(_player_id, 0.2, 6.0)
 		
 	elif _outcome == "miss":
 		# Screen shake horizontal only
@@ -319,27 +334,25 @@ func show_result() -> void:
 		number_label.add_theme_color_override("font_outline_color", Color("#1A1030"))
 		number_label.add_theme_constant_override("outline_size", 2)
 		# Slight shrink
-		reveal_tween.tween_property(self, "scale", base_scale * 0.85, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		reveal_tween.tween_property(self, "scale", base_scale, 0.15)
+		_reveal_tween.tween_property(self, "scale", base_scale * 0.85, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		_reveal_tween.tween_property(self, "scale", base_scale, 0.15)
 		
 	else: # normal hit
 		# Scale punch 1.15x -> 1.0x
-		reveal_tween.tween_property(self, "scale", base_scale * 1.15, 0.1 * spd_mult).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		reveal_tween.tween_property(self, "scale", base_scale, 0.1 * spd_mult)
+		_reveal_tween.tween_property(self, "scale", base_scale * 1.15, 0.1 * spd_mult).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		_reveal_tween.tween_property(self, "scale", base_scale, 0.1 * spd_mult)
 		# Warm parchment text, dark ink stroke
 		number_label.add_theme_color_override("font_color", Color("#F5EAD8"))
 		number_label.add_theme_color_override("font_outline_color", Color("#1A1030"))
 		number_label.add_theme_constant_override("outline_size", 2)
 	
 	# Beri jeda secukupnya agar orbit sempat menyedot ke tengah (1 detik)
-	reveal_tween.tween_interval(1.0 * spd_mult)
-	reveal_tween.tween_callback(func(): roll_finished.emit(_final_result))
+	_reveal_tween.tween_interval(1.0 * spd_mult)
+	_reveal_tween.tween_callback(func(): roll_finished.emit(_final_result))
 	
-	# QUEUE FREE CLEANUP!
-	# Set delay untuk disappear animation
-	reveal_tween.tween_interval(1.0)
-	reveal_tween.tween_property(self, "modulate:a", 0.0, 0.3)
-	reveal_tween.tween_callback(self.queue_free)
+	# HANYA FADE OUT, JANGAN QUEUE_FREE KARENA REUSABLE
+	_reveal_tween.tween_interval(1.0)
+	_reveal_tween.tween_property(self, "modulate:a", 0.0, 0.3)
 
 func _apply_camera_shake(p_id: int, duration: float, amp: float, horizontal_only: bool = false) -> void:
 	if not get_tree() or not get_tree().current_scene: return
