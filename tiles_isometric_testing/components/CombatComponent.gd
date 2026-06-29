@@ -73,6 +73,10 @@ func attack(target: Node) -> Dictionary:
 	result["crit"] = crit
 	result["hit"] = hit
 
+	# Trigger Dice Roll UI and WAIT for it to finish!
+	EventBus.request_dice_roll.emit(owner, target, result)
+	await EventBus.dice_roll_finished
+
 	if not hit:
 		# TODO (Team): migrated from miss_occurred to on_miss
 		EventBus.on_miss.emit(owner, target)

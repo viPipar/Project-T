@@ -23,6 +23,7 @@ var _roll_frame_idx: int = 0
 var _current_roll_duration: float = 2.6
 var _outcome: String = "hit"
 var _player_id: int = 0
+var _base_scale: Vector2 = Vector2(0.6, 0.6)
 
 # Cache Asset Dadu
 var _dice_cache_static: Dictionary = {}
@@ -78,15 +79,15 @@ func _ready() -> void:
 	if custom_font:
 		number_label.add_theme_font_override("font", custom_font)
 
-	number_label.size = Vector2(100, 60)
-	# Set pivot ke tengah label agar animasi pop-up meledak dari tengah, bukan dari ujung kiri atas
-	number_label.pivot_offset = Vector2(50, 30)
-	# Posisikan label agar pusatnya (50,30) berada di (0, 15).
-	# Offset Y = 15 ditambahkan karena wajah segitiga tengah D20 posisinya agak ke bawah dari origin
-	number_label.position = Vector2(-50, -30 + 15)
-	# Perbesar ukuran font-nya agar lebih proporsional dengan D20
-	number_label.add_theme_font_size_override("font_size", 48)
-	number_label.add_theme_constant_override("outline_size", 2)
+	number_label.size = Vector2(240, 160)
+	# Set pivot ke tengah label agar animasi pop-up meledak dari tengah
+	number_label.pivot_offset = Vector2(120, 80)
+	number_label.position = Vector2(-120, -80 + 20)
+	# Perbesar ukuran font-nya secara signifikan agar crisp saat diskala turun ke 0.2
+	number_label.add_theme_font_size_override("font_size", 140)
+	number_label.add_theme_constant_override("outline_size", 8)
+	number_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	number_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	
 	# Ambil data ukuran layar dan posisi tengahnya
 	_viewport_rect = get_viewport_rect()
@@ -157,7 +158,7 @@ func _process(delta: float) -> void:
 			_orbital_particles.remove_at(i)
 
 
-func start_roll(result: int, dice_type: String = "custom", roll_duration: float = 2.6, target_pos: Vector2 = Vector2.ZERO, p_id: int = 0, outcome: String = "hit") -> void:
+func start_roll(result: int, dice_type: String = "custom", roll_duration: float = 2.6, target_pos: Vector2 = Vector2.ZERO, p_id: int = 0, outcome: String = "hit", in_place: bool = false, base_scale_override: Vector2 = Vector2(0.6, 0.6)) -> void:
 	# Bersihkan partikel dari roll sebelumnya
 	for data in _orbital_particles:
 		if is_instance_valid(data.node):
@@ -193,7 +194,8 @@ func start_roll(result: int, dice_type: String = "custom", roll_duration: float 
 	# --- RESET POSISI DAN ROTASI AWAL ---
 	dice_sprite.rotation = 0
 	dice_sprite.scale = Vector2(0.5, 0.5) # Mulai dari kecil
-	self.scale = Vector2(0.6, 0.6) # Pastikan base scale reset jika terpotong
+	_base_scale = base_scale_override
+	self.scale = _base_scale # Pastikan base scale reset jika terpotong
 	_current_roll_duration = roll_duration
 	
 	_viewport_rect = get_viewport_rect()
@@ -205,28 +207,32 @@ func start_roll(result: int, dice_type: String = "custom", roll_duration: float 
 		_central_pos = target_pos
 	else:
 		_central_pos = _viewport_rect.get_center()
-	
-	# Set posisi awal dadu (P1 dari kiri jauh, P2 dari kanan jauh)
-	var start_y = _central_pos.y + 100 # Agak ke bawah sedikit agar melengkung ke atas
-	if p_id == 2:
-		global_position = Vector2(screen_w + 150, start_y)
+		
+	if in_place:
+		# Just pop up slightly above the target
+		global_position = _central_pos
 	else:
-		global_position = Vector2(-150, start_y)
+		# Set posisi awal dadu (P1 dari kiri jauh, P2 dari kanan jauh)
+		var start_y = _central_pos.y + 100 # Agak ke bawah sedikit agar melengkung ke atas
+		if p_id == 2:
+			global_position = Vector2(screen_w + 150, start_y)
+		else:
+			global_position = Vector2(-150, start_y)
 	
 	# --- TWEEN TERARAH (Directed Trajectory) ---
 	var tween = create_tween()
 	_roll_tween = tween
 	tween.set_parallel(true)
 	
-	# 1. Animasi Terbang (Position): Melengkung ke target
-	tween.tween_property(self, "global_position", _central_pos, roll_duration)\
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	if not in_place:
+		# 1. Animasi Terbang (Position): Melengkung ke target
+		tween.tween_property(self, "global_position", _central_pos, roll_duration)\
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		
-	# 2. Animasi Memantul (Scale): 4 Kali Pantulan (Lebih banyak)
+	# 2. Animasi Memantul (Scale)
 	var scale_tween = create_tween()
 	_scale_tween = scale_tween
 	
-	# Distribusi waktu berdasarkan persentase roll_duration (Total 100%)
 	var b1_up = roll_duration * 0.20
 	var b1_dn = roll_duration * 0.18
 	var b2_up = roll_duration * 0.16
@@ -236,41 +242,29 @@ func start_roll(result: int, dice_type: String = "custom", roll_duration: float 
 	var b4_up = roll_duration * 0.06
 	var b4_dn = roll_duration * 0.06
 	
-	# Pantulan 1 (Paling tinggi)
-	scale_tween.tween_property(dice_sprite, "scale", Vector2(2.5, 2.5), b1_up)\
-		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	scale_tween.tween_property(dice_sprite, "scale", Vector2(0.5, 0.5), b1_dn)\
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	# Full bouncy animation regardless of in_place
+	scale_tween.tween_property(dice_sprite, "scale", Vector2(2.5, 2.5), b1_up).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	scale_tween.tween_property(dice_sprite, "scale", Vector2(0.5, 0.5), b1_dn).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	scale_tween.tween_callback(func(): _spawn_ripple(1.0))
 		
 	# Pantulan 2 
-	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.8, 1.8), b2_up)\
-		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	scale_tween.tween_property(dice_sprite, "scale", Vector2(0.7, 0.7), b2_dn)\
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.8, 1.8), b2_up).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	scale_tween.tween_property(dice_sprite, "scale", Vector2(0.7, 0.7), b2_dn).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	scale_tween.tween_callback(func(): _spawn_ripple(0.75))
 		
 	# Pantulan 3
-	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.4, 1.4), b3_up)\
-		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	scale_tween.tween_property(dice_sprite, "scale", Vector2(0.85, 0.85), b3_dn)\
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.4, 1.4), b3_up).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	scale_tween.tween_property(dice_sprite, "scale", Vector2(0.85, 0.85), b3_dn).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	scale_tween.tween_callback(func(): _spawn_ripple(0.5))
 		
 	# Pantulan 4 (Mendarat)
-	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.15, 1.15), b4_up)\
-		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.0, 1.0), b4_dn)\
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.15, 1.15), b4_up).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.0, 1.0), b4_dn).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	scale_tween.tween_callback(func(): _spawn_ripple(0.3))
 		
-	# 3. Animasi Putaran (Rotation) - Dinonaktifkan sesuai permintaan
-	# tween.tween_property(dice_sprite, "rotation", 4 * TAU, roll_duration)\
-	# 	.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		
 	# 4. Selesai
-	# Kita tunggu tween posisi utama selesai, lalu panggil show_result
-	tween.chain().tween_callback(show_result)
+	# Kita tunggu scale_tween selesai (karena in_place gak pakai pos tween)
+	scale_tween.chain().tween_callback(show_result)
 
 
 
@@ -289,7 +283,7 @@ func show_result() -> void:
 	_play_landing_vfx(_outcome)
 	
 	# --- OUTCOME VARIANTS ---
-	var base_scale = Vector2(0.6, 0.6) # Ukuran dadu normal
+	var base_scale = _base_scale # Ukuran dadu normal
 	self.scale = base_scale
 	number_label.scale = Vector2(1.0, 1.0) # Reset scale angka
 	var reveal_tween = create_tween()
@@ -339,6 +333,12 @@ func show_result() -> void:
 	# Beri jeda secukupnya agar orbit sempat menyedot ke tengah (1 detik)
 	reveal_tween.tween_interval(1.0 * spd_mult)
 	reveal_tween.tween_callback(func(): roll_finished.emit(_final_result))
+	
+	# QUEUE FREE CLEANUP!
+	# Set delay untuk disappear animation
+	reveal_tween.tween_interval(1.0)
+	reveal_tween.tween_property(self, "modulate:a", 0.0, 0.3)
+	reveal_tween.tween_callback(self.queue_free)
 
 func _apply_camera_shake(p_id: int, duration: float, amp: float, horizontal_only: bool = false) -> void:
 	if not get_tree() or not get_tree().current_scene: return

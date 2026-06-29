@@ -238,6 +238,18 @@ func _update_tooltip_visibility() -> void:
 		tooltip.show_for(enemy_name, current_hp, max_hp, armor, layer_mask)
 
 
+func play_attack(ability_id: String) -> void:
+	# A placeholder for enemy attack animation
+	# Currently just bumps the enemy sprite towards the target direction briefly
+	if sprite != null:
+		var tw = create_tween()
+		tw.tween_property(sprite, "position:y", sprite.position.y + 15, 0.1).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.tween_property(sprite, "position:y", sprite.position.y, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		await tw.finished
+	else:
+		await get_tree().create_timer(0.2).timeout
+
+
 # -----------------------------------------------------------------------------
 # Simple AI (dipanggil oleh CombatTestBridge saat enemy phase)
 # -----------------------------------------------------------------------------
@@ -245,6 +257,12 @@ func _update_tooltip_visibility() -> void:
 func do_ai_turn() -> void:
 	if is_dead():
 		return
+		
+	var ai_comp = get_node_or_null("AIComponent")
+	if ai_comp != null and ai_comp.has_method("take_turn"):
+		ai_comp.take_turn()
+		return
+
 	if cond != null and (cond.is_stunned() or cond.is_frozen()):
 		return
 

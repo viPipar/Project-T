@@ -94,12 +94,19 @@ func _execute_enemy_turn(enemy: Node) -> void:
 	else:
 		print("[EnemyPhaseManager] %s tidak punya do_ai_turn()" % _get_name(enemy))
 
-	# Tunggu delay sebelum musuh berikutnya (await agar tidak blocking)
+	# Tunggu sampai turn benar-benar selesai
 	_schedule_next(enemy)
 
 
 func _schedule_next(enemy: Node) -> void:
-	await get_tree().create_timer(ACTION_DELAY_SEC).timeout
+	while true:
+		var ended_enemy = await EventBus.turn_ended
+		if ended_enemy == enemy:
+			break
+			
+	# Jeda sedikit saja antar musuh untuk readability
+	await get_tree().create_timer(0.2).timeout
+	
 	enemy_turn_ended.emit(enemy)
 	print("[EnemyPhaseManager] %s selesai bertindak." % _get_name(enemy))
 	_process_next_enemy()

@@ -332,35 +332,69 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 			print("[COMBAT] HIT! Total Burst Damage = %d" % dmg_total)
 	else:
 		print("[COMBAT] 💨 MISS!")
-		# TODO (Team): migrated from miss_occurred to on_miss
-		EventBus.on_miss.emit(attacker, target)
+		# For players, emit immediately (dice overlay handles the reveal)
+		# For enemies, defer until after the dice animation
+		if not attacker.is_in_group("enemies"):
+			EventBus.on_miss.emit(attacker, target)
+	var _deferred_miss := not hit and attacker.is_in_group("enemies")
 	print("[COMBAT] ────────────────────────────")
 
 	# ── Jalankan animasi overlay (AWAIT — blok sampai selesai) ────────────────
-	var overlay := _overlay_p1 if pid == 1 else _overlay_p2
+	var is_enemy := attacker.is_in_group("enemies")
 	var type_str := "magical" if is_magical else "physical"
 	
 	# Track apakah sudah ada knockback/status agar tidak dobel
 	var _knockback_done := false
 
-	if overlay != null and hit:
-		# Biarkan dadu berputar di UI secara mentah (raw), lalu tambahkan modifier visualnya
-		await overlay.play_attack_sequence(
-			attacker, target, result, dmg_rolls, dmg_total, dmg_formula, dmg_mod
-		)
-	elif overlay != null:
-		# MISS — overlay saja tanpa damage
-		await overlay.play_attack_sequence(
-			attacker, target, result, dmg_rolls, dmg_total, dmg_formula, 0
-		)
+	if is_enemy:
+		# Enemy: attack animation FIRST, then dice
+		if attacker.has_method("play_attack"):
+			await attacker.play_attack(_ability_id)
+		# Enemy uses in-world dice popup!
+		var dice_scene := load("res://components/dice/sandbox/DiceVisual.tscn") as PackedScene
+		if dice_scene != null:
+			var dice_visual = dice_scene.instantiate()
+			dice_visual.z_index = 4096 # Force draw on top
+			# Tampilkan dadu di atas kepala attacker
+			var spawn_pos = attacker.global_position + Vector2(0, -180)
+			get_tree().root.add_child(dice_visual)
+			
+			var outcome := "hit"
+			if crit: outcome = "crit"
+			elif not hit: outcome = "miss"
+			
+			if dice_visual.has_method("start_roll"):
+				dice_visual.start_roll(raw, "d20", 1.8, spawn_pos, pid, outcome, true, Vector2(0.25, 0.25))
+				if dice_visual.has_signal("roll_finished"):
+					await dice_visual.roll_finished
+				else:
+					await get_tree().create_timer(1.9).timeout
+			
+			await get_tree().create_timer(0.6).timeout
+			dice_visual.queue_free()
+		# Now emit the miss signal AFTER the dice has finished
+		if _deferred_miss:
+			EventBus.on_miss.emit(attacker, target)
 	else:
-		push_warning("[CombatTestBridge] Overlay P%d null! Fallback damage langsung." % pid)
-		await get_tree().process_frame
+		# Player uses full UI Overlay
+		var overlay := _overlay_p1 if pid == 1 else _overlay_p2
+		if overlay != null and hit:
+			# Biarkan dadu berputar di UI secara mentah (raw), lalu tambahkan modifier visualnya
+			await overlay.play_attack_sequence(
+				attacker, target, result, dmg_rolls, dmg_total, dmg_formula, dmg_mod
+			)
+		elif overlay != null:
+			# MISS — overlay saja tanpa damage
+			await overlay.play_attack_sequence(
+				attacker, target, result, dmg_rolls, dmg_total, dmg_formula, 0
+			)
+		else:
+			push_warning("[CombatTestBridge] Overlay P%d null! Fallback damage langsung." % pid)
+			await get_tree().process_frame
 
-	# ── Jalankan animasi attack pada character sprite (AWAIT) ─────────────────
-	if attacker.has_method("play_attack"):
-		# Ini akan pause sampai "Impact Frame" lalu return (asynchronous hit-stop)
-		await attacker.play_attack(_ability_id)
+		# Player: attack animation AFTER dice overlay
+		if attacker.has_method("play_attack"):
+			await attacker.play_attack(_ability_id)
 
 	# ---- MAGICAL PROJECTILE PLACEHOLDER ----
 	if hit and is_instance_valid(target) and (is_projectile or is_magical):
@@ -405,6 +439,10 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 				EventBus.on_status_applied.emit(target, ability.status_effect, ability.status_duration, ability.status_stacks)
 
 	_set_player_busy(pid, false)
+	
+	# BERITAHU AI BAHWA SERANGAN SELESAI
+	if is_enemy:
+		EventBus.combat_action_finished.emit()
 
 
 # ── CALLBACK — sync InputManager saat signal diterima ────────────────────────
@@ -489,17 +527,8 @@ func _on_enemy_turn_started(enemy: Node) -> void:
 	var _ename_raw: Variant = enemy.get("enemy_name")
 	var name_str: String = str(_ename_raw) if _ename_raw != null else enemy.name
 	print("\n[ENEMY AI] ─── Giliran %s ───" % name_str)
-
-	# Panggil AI method jika ada (EnemyPlaceholder.do_ai_turn())
-	if enemy.has_method("do_ai_turn"):
-		enemy.do_ai_turn()
-	else:
-		print("[ENEMY AI] %s tidak punya do_ai_turn() — idle." % name_str)
-
-	# Akhiri giliran enemy ini → TurnManager advance ke enemy berikutnya
-	# Delay 0.5s biar kelihatan prosesnya
-	await get_tree().create_timer(0.5).timeout
-	TurnManager.request_end_turn()
+	# AIComponent automatically listens to EventBus.turn_started and will execute its brain.
+	# It will also call TurnManager.request_end_turn() when it's fully done.
 
 
 # ── DEBUG KEYBOARD ────────────────────────────────────────────────────────────

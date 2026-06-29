@@ -22,6 +22,7 @@ signal attackcam_started(attacker: Node, target: Node, ability_id: String)
 signal action_wheel_selected(player_id: int, action_name: String)
 signal action_wheel_visibility_changed(player_id: int, visible: bool)
 signal attackcam_finished(attacker: Node)
+signal combat_action_finished()
 
 # Phase movement+ - forced movement / knockback events
 signal forced_movement_started(entity: Node, from: Vector2i, direction: Vector2i, power: int)
@@ -57,6 +58,9 @@ signal inventory_toggled()
 signal ability_executed(caster: Node, targets: Array, result: Dictionary)
 
 ## Hit/miss resolution — downstream of ability_executed
+signal request_dice_roll(attacker: Node, target: Node, hit_result: Dictionary)
+signal dice_roll_finished()
+
 signal on_hit(attacker: Node, target: Node, result: Dictionary)
 signal on_miss(attacker: Node, target: Node)
 

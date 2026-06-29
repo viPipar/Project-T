@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="SimpleMeleeBrain" load_steps=2 format=3]
+
+[ext_resource type="Script" uid="uid://cuwn53yifuwku" path="res://combat_core/ai/brains/SimpleMeleeBrain.gd" id="1_ai_script"]
+
+[resource]
+script = ExtResource("1_ai_script")
+detection_range = 6
