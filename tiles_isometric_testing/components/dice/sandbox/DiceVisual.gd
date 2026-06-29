@@ -243,22 +243,22 @@ func start_roll(result: int, dice_type: String = "custom", roll_duration: float 
 	var b4_dn = roll_duration * 0.06
 	
 	# Full bouncy animation regardless of in_place
-	scale_tween.tween_property(dice_sprite, "scale", Vector2(2.5, 2.5), b1_up).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	scale_tween.tween_property(dice_sprite, "scale", Vector2(0.5, 0.5), b1_dn).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.6, 1.6), b1_up).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	scale_tween.tween_property(dice_sprite, "scale", Vector2(0.7, 0.7), b1_dn).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	scale_tween.tween_callback(func(): _spawn_ripple(1.0))
 		
 	# Pantulan 2 
-	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.8, 1.8), b2_up).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	scale_tween.tween_property(dice_sprite, "scale", Vector2(0.7, 0.7), b2_dn).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.3, 1.3), b2_up).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	scale_tween.tween_property(dice_sprite, "scale", Vector2(0.8, 0.8), b2_dn).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	scale_tween.tween_callback(func(): _spawn_ripple(0.75))
 		
 	# Pantulan 3
-	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.4, 1.4), b3_up).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	scale_tween.tween_property(dice_sprite, "scale", Vector2(0.85, 0.85), b3_dn).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.15, 1.15), b3_up).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	scale_tween.tween_property(dice_sprite, "scale", Vector2(0.9, 0.9), b3_dn).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	scale_tween.tween_callback(func(): _spawn_ripple(0.5))
 		
 	# Pantulan 4 (Mendarat)
-	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.15, 1.15), b4_up).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.08, 1.08), b4_up).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.0, 1.0), b4_dn).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	scale_tween.tween_callback(func(): _spawn_ripple(0.3))
 		
@@ -292,8 +292,9 @@ func show_result() -> void:
 	if _outcome == "crit":
 		# Freeze frame briefly
 		reveal_tween.tween_interval(0.1)
-		# Punch to 1.4 -> 1.0
-		reveal_tween.tween_property(self, "scale", Vector2(1.4, 1.4), 0.35 * spd_mult).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+		# Punch to 1.4x -> 1.0x
+		reveal_tween.tween_property(self, "scale", base_scale * 1.4, 0.35 * spd_mult).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+		reveal_tween.tween_property(self, "scale", base_scale, 0.2)
 		# Number style: bright gold, dark red stroke
 		number_label.add_theme_color_override("font_color", Color("#FFD700"))
 		number_label.add_theme_color_override("font_outline_color", Color("#8B0000"))
@@ -318,12 +319,12 @@ func show_result() -> void:
 		number_label.add_theme_color_override("font_outline_color", Color("#1A1030"))
 		number_label.add_theme_constant_override("outline_size", 2)
 		# Slight shrink
-		reveal_tween.tween_property(self, "scale", Vector2(0.92, 0.92), 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		reveal_tween.tween_property(self, "scale", base_scale * 0.85, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		reveal_tween.tween_property(self, "scale", base_scale, 0.15)
 		
 	else: # normal hit
-		# Scale punch 1.15 -> 1.0
-		reveal_tween.tween_property(self, "scale", Vector2(1.15, 1.15), 0.1 * spd_mult).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		# Scale punch 1.15x -> 1.0x
+		reveal_tween.tween_property(self, "scale", base_scale * 1.15, 0.1 * spd_mult).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		reveal_tween.tween_property(self, "scale", base_scale, 0.1 * spd_mult)
 		# Warm parchment text, dark ink stroke
 		number_label.add_theme_color_override("font_color", Color("#F5EAD8"))

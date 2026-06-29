@@ -9,7 +9,7 @@
 [ext_resource type="Script" uid="uid://dehtujp1qplci" path="res://components/CombatComponent.gd" id="7_combat"]
 [ext_resource type="Script" uid="uid://dfgx2uqpj1g3d" path="res://components/AIComponent.gd" id="8_ai"]
 [ext_resource type="Script" uid="uid://dleotlv76kabm" path="res://components/MovementComponent.gd" id="9_move"]
-[ext_resource type="Resource" path="res://combat_core/ai/brains/SimpleMeleeBrain.tres" id="10_brain"]
+[ext_resource type="Resource" uid="uid://bivjnnvw0rb8h" path="res://combat_core/ai/brains/SimpleMeleeBrain.tres" id="10_brain"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_enemy"]
 atlas = ExtResource("4_tex")

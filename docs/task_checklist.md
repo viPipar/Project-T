@@ -38,6 +38,7 @@
 | Gilang | Status Particle FX | Particle sets: Bleeding/Stun/Fire/Water/Earth/Air/Magma/Mud/Mist/Conflagration | Low | To Do | Particle Emitter | #15 |
 | Gilang | Status Effects | Implement `autotomy_armor_buff` (+4 Armor for 1 turn) from Autotomy | Medium | Done | Status Effects | #9 |
 | Gilang | Audio System | SFX & BGM Manager (Combat sounds, UI clicks, bgm tracks) | High | To Do | EventBus | - |
+| Gilang | AI System | Enemy AI Brain (Target Selection, Ability Choice, Movement Logic) | Critical | To Do | Phase Mgr, A* Grid | - |
 
 ## Candra - Movement, Projectile & Stats
 
@@ -98,7 +99,7 @@
 | Rapit | Combat Text | MISS! Label | Medium | To Do | SignalBus (Gilang) | - |
 | Rapit | Combat Text | Element Icon Popup (Fire/Water/Air/Earth) | Medium | To Do | Element Tags (Gilang) | - |
 | Rapit | FX | Item Rarity Reveal FX (White/Blue/Gold glow) | Medium | To Do | Rarity Handler (Ilham) | #4 |
-| Rapit | FX | Dice Roll Animation (D20 Spin Overlay) | Low | To Do | RNG (Tapip) | - |
+| Gilang | FX | Dice Roll Animation (In-world D20 Spin above caster's head) | Low | Done | RNG (Tapip) | - |
 | Rapit | Input | Pointer/Target Cursor (Tapip & Gilang) | High | Done | Grid (Candra) | - |
 | Rapit | Input | Input Manager (P1: WASD/QE/F/X/R/ZC, P2: IJKL/UO/;/,/P/M.) | Critical | Done | - | - |
 | Rapit | Input | Per-player action wheel blocking and targeting highlight cleanup | High | Done | Input Manager, Action Wheel | - |
@@ -109,7 +110,6 @@
 | Programmer | System | Task | Priority | Status | Depends On | Ref # |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | TBD | Combat Animation | Combat Action Queue / Animation Sync | Critical | To Do | EventBus | - |
-| TBD | AI System | Enemy AI Brain (Target Selection, Ability Choice, Movement Logic) | Critical | To Do | Phase Mgr, A* Grid | - |
 | TBD | Game Loop | Scene Transition Flow (Node Graph -> Combat Scene -> Win/Lose) | Critical | To Do | Node Graph | - |
 | TBD | UI System | Core Menus (Main Menu, Pause, Settings, Game Over Screen) | High | To Do | - | - |
 | TBD | Save System | Run State & Meta-Progression Persistence (Save/Load) | High | To Do | Data structures | - |
