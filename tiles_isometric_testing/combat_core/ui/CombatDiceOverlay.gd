@@ -94,6 +94,8 @@ func _build_ui() -> void:
 	# DiceVisual — di kiri panel
 	var dv_scene := load("res://components/dice/sandbox/DiceVisual.tscn") as PackedScene
 	_dice_visual = dv_scene.instantiate() as Node2D
+	if _dice_visual and "auto_free" in _dice_visual:
+		_dice_visual.auto_free = false
 	_dice_visual.position = Vector2(72, PANEL_H * 0.52)
 	_dice_panel.add_child(_dice_visual)
 

@@ -23,6 +23,7 @@ var _roll_frame_idx: int = 0
 var _current_roll_duration: float = 2.6
 var _outcome: String = "hit"
 var _player_id: int = 0
+var auto_free: bool = true
 var _base_scale: Vector2 = Vector2(0.6, 0.6)
 
 # Cache Asset Dadu
@@ -195,8 +196,10 @@ func start_roll(result: int, dice_type: String = "custom", roll_duration: float 
 	_outcome = outcome
 	_player_id = p_id
 	
-	number_label.hide()
+	self.visible = true
+	self.modulate.a = 1.0
 	
+	number_label.hide()
 	dice_sprite.visible = true
 	
 	# --- PILIH TIPE DADU ---
@@ -391,7 +394,7 @@ func show_result() -> void:
 	_reveal_tween.tween_interval(1.0 * spd_mult)
 	_reveal_tween.tween_callback(func(): roll_finished.emit(_final_result))
 	
-	# HANYA FADE OUT, JANGAN QUEUE_FREE KARENA REUSABLE
+	# Set delay untuk disappear animation
 	_reveal_tween.tween_interval(1.0)
 	if _dice_type == "d20enemy":
 		# Float up slowly while fading out
@@ -400,6 +403,11 @@ func show_result() -> void:
 		_reveal_tween.parallel().tween_property(self, "modulate:a", 0.0, 1.0)
 	else:
 		_reveal_tween.tween_property(self, "modulate:a", 0.0, 0.3)
+		
+	if auto_free:
+		_reveal_tween.tween_callback(self.queue_free)
+	else:
+		_reveal_tween.tween_property(self, "visible", false, 0.0)
 
 func _apply_camera_shake(p_id: int, duration: float, amp: float, horizontal_only: bool = false) -> void:
 	if not get_tree() or not get_tree().current_scene: return

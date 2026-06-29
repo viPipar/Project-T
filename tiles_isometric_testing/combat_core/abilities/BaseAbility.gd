@@ -60,11 +60,17 @@ func get_target_tiles(caster_pos: Vector2i) -> Array[Vector2i]:
 						tiles.append(caster_pos + Vector2i(dx, dy))
 
 		"line":
-			# Straight lines in 4 cardinal directions, range_size tiles deep
+			# Straight lines in 4 cardinal directions, range_size tiles deep.
+			# Stops at walls, and stops expanding after hitting the first entity (no piercing).
 			var dirs := [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 			for dir in dirs:
 				for step in range(1, range_size + 1):
-					tiles.append(caster_pos + dir * step)
+					var next_tile = caster_pos + dir * step
+					if is_instance_valid(GridManager) and not GridManager.is_terrain_walkable(next_tile):
+						break # Wall blocked the line of sight
+					tiles.append(next_tile)
+					if is_instance_valid(GridManager) and GridManager.has_entity_at(next_tile):
+						break # Stop expanding the line (can hit this entity, but nothing behind it)
 
 		"aoe":
 			# NxN box centered on caster (range_size = radius)
@@ -81,6 +87,12 @@ func get_target_tiles(caster_pos: Vector2i) -> Array[Vector2i]:
 			tiles.append(caster_pos + Vector2i(0, -1))
 
 	return tiles
+
+
+## Override this in custom abilities (like SlashFlashAbility) to define pre-attack dash movement.
+## Returns Vector2i(-1, -1) if no dash is required.
+func get_dash_destination(_caster: Node, _target: Node) -> Vector2i:
+	return Vector2i(-1, -1)
 
 
 ## Get the HighlightManager type string for this ability's grid area color.
