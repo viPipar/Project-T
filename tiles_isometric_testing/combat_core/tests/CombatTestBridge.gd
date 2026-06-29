@@ -346,11 +346,40 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 	
 	# Track apakah sudah ada knockback/status agar tidak dobel
 	var _knockback_done := false
+	var _played_attack := false
 
 	if is_enemy:
-		# Enemy: attack animation FIRST, then dice
+		# ── ENEMY ANIME DASH SEQUENCE ──
+		# Enemy attacks first, then dashes, then dice
 		if is_instance_valid(attacker) and attacker.has_method("play_attack"):
-			await attacker.play_attack(_ability_id)
+			# Start animation concurrently (no await)
+			attacker.play_attack(_ability_id)
+			_played_attack = true
+			# Wait for the animation "windup" (approx 50%) before flashing forward
+			await get_tree().create_timer(0.6, false).timeout
+
+		if hit and ability != null and ability.has_method("get_dash_destination"):
+			var dash_dest: Vector2i = ability.get_dash_destination(attacker, target)
+			if dash_dest.x >= 0:
+				var old_pos: Vector2i = attacker.get("grid_pos")
+				if old_pos != dash_dest:
+					var t_pos: Vector2i = target.get("grid_pos") if target != null else Vector2i(-1, -1)
+					
+					# Knockback FIRST to clear the tile if we are dashing into them
+					if dash_dest == t_pos and knockback > 0 and not _knockback_done:
+						ForcedMovementResolver.knockback_from_attack(attacker, target, knockback)
+						_knockback_done = true
+						
+					# Single fast blitz dash to destination
+					if is_instance_valid(GridManager) and GridManager.move_entity(old_pos, dash_dest, attacker):
+						attacker.set("grid_pos", dash_dest)
+						var end_px = IsoUtils.world_to_iso(dash_dest)
+						attacker.z_index = IsoUtils.get_depth(dash_dest)
+						var dash_tw = attacker.create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+						dash_tw.tween_property(attacker, "position", end_px, 0.15)
+						await dash_tw.finished
+						EventBus.player_moved.emit(attacker, old_pos, dash_dest)
+
 		# Enemy uses in-world dice popup + stat breakdown!
 		await _play_enemy_dice_sequence(attacker, raw, total, thresh, hit_modifier, hit, crit, pid)
 		# Now emit the miss signal AFTER the dice has finished
@@ -373,9 +402,36 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 			push_warning("[CombatTestBridge] Overlay P%d null! Fallback damage langsung." % pid)
 			await get_tree().process_frame
 
-		# Player: attack animation AFTER dice overlay
-		if is_instance_valid(attacker) and attacker.has_method("play_attack"):
-			await attacker.play_attack(_ability_id)
+		# ── PLAYER ANIME DASH SEQUENCE ──
+		# Player: attack animation AFTER dice overlay, BUT BEFORE dash!
+		if not _played_attack and is_instance_valid(attacker) and attacker.has_method("play_attack"):
+			# Start animation concurrently (no await)
+			attacker.play_attack(_ability_id)
+			_played_attack = true
+			# Wait for the animation "windup" (approx 50%) before flashing forward
+			await get_tree().create_timer(0.6, false).timeout
+
+		if hit and ability != null and ability.has_method("get_dash_destination"):
+			var dash_dest: Vector2i = ability.get_dash_destination(attacker, target)
+			if dash_dest.x >= 0:
+				var old_pos: Vector2i = attacker.get("grid_pos")
+				if old_pos != dash_dest:
+					var t_pos: Vector2i = target.get("grid_pos") if target != null else Vector2i(-1, -1)
+					
+					# Knockback FIRST to clear the tile if we are dashing into them
+					if dash_dest == t_pos and knockback > 0 and not _knockback_done:
+						ForcedMovementResolver.knockback_from_attack(attacker, target, knockback)
+						_knockback_done = true
+						
+					# Single fast blitz dash to destination
+					if is_instance_valid(GridManager) and GridManager.move_entity(old_pos, dash_dest, attacker):
+						attacker.set("grid_pos", dash_dest)
+						var end_px = IsoUtils.world_to_iso(dash_dest)
+						attacker.z_index = IsoUtils.get_depth(dash_dest)
+						var dash_tw = attacker.create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+						dash_tw.tween_property(attacker, "position", end_px, 0.15)
+						await dash_tw.finished
+						EventBus.player_moved.emit(attacker, old_pos, dash_dest)
 
 	# ---- MAGICAL PROJECTILE PLACEHOLDER ----
 	if hit and is_instance_valid(target) and (is_projectile or is_magical):
@@ -412,7 +468,7 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 				await get_tree().create_timer(0.08, false).timeout
 				
 		# Knockback & status effect hanya 1x setelah semua burst selesai
-		if is_instance_valid(target) and knockback > 0:
+		if is_instance_valid(target) and knockback > 0 and not _knockback_done:
 			ForcedMovementResolver.knockback_from_attack(attacker, target, knockback)
 		if ability != null and ability.status_effect != "":
 			var is_base_element := ability.status_effect in ["fire", "water", "air", "earth"]
