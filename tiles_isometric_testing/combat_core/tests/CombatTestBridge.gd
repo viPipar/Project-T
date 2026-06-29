@@ -459,8 +459,8 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 			
 			var applied := _apply_damage_to_target(target, r_final, attacker, type_str)
 			
-			# Crit visual hanya di hit pertama
-			EventBus.damage_dealt.emit(target, applied, type_str, crit and i == 0, attacker)
+			# Crit visual hanya di hit pertama, TAMPILKAN OVERKILL (r_final) bukan (applied)
+			EventBus.damage_dealt.emit(target, r_final, type_str, crit and i == 0, attacker)
 			
 			if ElementSystem != null and element_tag != "physical" and element_tag != "":
 				ElementSystem.resolve_elemental_hit(target, element_tag, applied)
