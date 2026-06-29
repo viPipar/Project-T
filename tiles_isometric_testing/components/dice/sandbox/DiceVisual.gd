@@ -33,6 +33,20 @@ var _current_static: Texture2D = null
 
 var _orbital_particles: Array[Dictionary] = []
 
+
+
+
+var _roll_tween: Tween
+var _scale_tween: Tween
+
+func skip_roll() -> void:
+	if not _is_rolling: return
+	_is_rolling = false
+	if _roll_tween and _roll_tween.is_valid():
+		_roll_tween.custom_step(10.0)
+	if _scale_tween and _scale_tween.is_valid():
+		_scale_tween.custom_step(10.0)
+
 func _get_dice_static(type: String) -> Texture2D:
 	if not _dice_cache_static.has(type):
 		var path = "res://assets/dice/%s/%s_static.png" % [type, type]
@@ -79,6 +93,7 @@ func _ready() -> void:
 	_central_pos = _viewport_rect.get_center()
 
 func _process(delta: float) -> void:
+
 	if _is_rolling:
 		_roll_timer += delta
 		# Ganti frame setiap 0.05 detik untuk efek blur
@@ -200,6 +215,7 @@ func start_roll(result: int, dice_type: String = "custom", roll_duration: float 
 	
 	# --- TWEEN TERARAH (Directed Trajectory) ---
 	var tween = create_tween()
+	_roll_tween = tween
 	tween.set_parallel(true)
 	
 	# 1. Animasi Terbang (Position): Melengkung ke target
@@ -208,6 +224,7 @@ func start_roll(result: int, dice_type: String = "custom", roll_duration: float 
 		
 	# 2. Animasi Memantul (Scale): 4 Kali Pantulan (Lebih banyak)
 	var scale_tween = create_tween()
+	_scale_tween = scale_tween
 	
 	# Distribusi waktu berdasarkan persentase roll_duration (Total 100%)
 	var b1_up = roll_duration * 0.20

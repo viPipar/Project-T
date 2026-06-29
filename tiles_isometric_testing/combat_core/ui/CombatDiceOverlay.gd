@@ -44,6 +44,9 @@ func _ready() -> void:
 	visible = false
 	_build_ui()
 
+func _exit_tree() -> void:
+	# Pastikan time_scale selalu reset jika overlay dihapus paksa
+	pass
 
 # ── UI BUILDER ────────────────────────────────────────────────────────────────
 
@@ -176,13 +179,19 @@ func _lbl(text: String, size: int, color: Color) -> Label:
 # ── INPUT — hanya saat menunggu konfirmasi player ─────────────────────────────
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not _waiting_input or not _is_playing:
+	if not _is_playing:
 		return
+		
 	var confirm_action := "p1_confirm" if player_id == 1 else "p2_confirm"
 	if event.is_action_pressed(confirm_action):
-		_waiting_input = false
-		_prompt_confirmed.emit()
-		get_viewport().set_input_as_handled()
+		if _waiting_input:
+			_waiting_input = false
+			_prompt_confirmed.emit()
+			get_viewport().set_input_as_handled()
+		else:
+			if _dice_visual != null and _dice_visual.has_method("skip_roll"):
+				_dice_visual.skip_roll()
+			get_viewport().set_input_as_handled()
 
 
 # ── PROMPT SYSTEM ─────────────────────────────────────────────────────────────
