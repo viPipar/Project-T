@@ -39,6 +39,8 @@
 | Gilang | Status Effects | Implement `autotomy_armor_buff` (+4 Armor for 1 turn) from Autotomy | Medium | Done | Status Effects | #9 |
 | Gilang | Audio System | SFX & BGM Manager (Combat sounds, UI clicks, bgm tracks) | High | To Do | EventBus | - |
 | Gilang | AI System | Enemy AI Brain (Target Selection, Ability Choice, Movement Logic) | Critical | Done | Phase Mgr, A* Grid | - |
+| Gilang | AI System | Simple Ranged Brain (kiting, maximize distance, shoot) | High | To Do | Enemy AI Brain | - |
+| Gilang | AI System | Character Specific Custom Brains (Bosses/Elites) | Medium | To Do | Enemy AI Brain | - |
 
 ## Candra - Movement, Projectile & Stats
 
@@ -104,6 +106,7 @@
 | Rapit | Input | Input Manager (P1: WASD/QE/F/X/R/ZC, P2: IJKL/UO/;/,/P/M.) | Critical | Done | - | - |
 | Rapit | Input | Per-player action wheel blocking and targeting highlight cleanup | High | Done | Input Manager, Action Wheel | - |
 | Rapit (w/ Gilang) | Animation System | Character Sprite/Model State Machine (Idle/Walk/Attack/Hurt/Die) | High | To Do | Ability System, Grid | - |
+| Rapit (w/ Gilang) | Animation System | Character Animation Hooks (`play_anim("attack")`/`"hurt"`) in `CombatTestBridge` | High | To Do | Combat Animation Sync | - |
 
 ## Unassigned / Missing Systems
 
