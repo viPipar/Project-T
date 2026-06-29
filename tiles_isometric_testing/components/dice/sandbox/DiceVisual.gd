@@ -40,6 +40,7 @@ var _orbital_particles: Array[Dictionary] = []
 var _roll_tween: Tween
 var _scale_tween: Tween
 var _reveal_tween: Tween
+var _dice_type: String = "d20"
 
 func skip_roll() -> void:
 	if not _is_rolling: return
@@ -52,6 +53,8 @@ func skip_roll() -> void:
 func _get_dice_static(type: String) -> Texture2D:
 	if not _dice_cache_static.has(type):
 		var path = "res://assets/dice/%s/%s_static.png" % [type, type]
+		if type == "d20enemy":
+			path = "res://assets/dice/d20enemy/staticenemy1.png"
 		if not ResourceLoader.exists(path): type = "d20"; path = "res://assets/dice/d20/d20_static.png"
 		_dice_cache_static[type] = load(path)
 	return _dice_cache_static[type]
@@ -59,6 +62,15 @@ func _get_dice_static(type: String) -> Texture2D:
 func _get_dice_rolls(type: String) -> Array[Texture2D]:
 	if not _dice_cache_rolls.has(type):
 		var arr: Array[Texture2D] = []
+		if type == "d20enemy":
+			if ResourceLoader.exists("res://assets/dice/d20enemy/rollenemy1.png"):
+				arr.append(load("res://assets/dice/d20enemy/rollenemy1.png"))
+				arr.append(load("res://assets/dice/d20enemy/rollenemy2.png"))
+				arr.append(load("res://assets/dice/d20enemy/rollenemy3.png"))
+				arr.append(load("res://assets/dice/d20enemy/rollenemy4.png"))
+				arr.append(load("res://assets/dice/d20enemy/rollenemy5.png"))
+				_dice_cache_rolls[type] = arr
+				return arr
 		if not ResourceLoader.exists("res://assets/dice/%s/%s_roll_1.png" % [type, type]): type = "d20"
 		arr.append(load("res://assets/dice/%s/%s_roll_1.png" % [type, type]))
 		arr.append(load("res://assets/dice/%s/%s_roll_2.png" % [type, type]))
@@ -160,6 +172,11 @@ func _process(delta: float) -> void:
 
 
 func start_roll(result: int, dice_type: String = "custom", roll_duration: float = 2.6, target_pos: Vector2 = Vector2.ZERO, p_id: int = 0, outcome: String = "hit", in_place: bool = false, base_scale_override: Vector2 = Vector2(0.6, 0.6)) -> void:
+	# Simpan data roll
+	_final_result = result
+	_player_id = p_id
+	_outcome = outcome
+	_dice_type = dice_type
 	if _reveal_tween and _reveal_tween.is_valid():
 		_reveal_tween.kill()
 	self.modulate.a = 1.0
@@ -225,51 +242,75 @@ func start_roll(result: int, dice_type: String = "custom", roll_duration: float 
 			global_position = Vector2(-150, start_y)
 	
 	# --- TWEEN TERARAH (Directed Trajectory) ---
-	var tween = create_tween()
-	_roll_tween = tween
-	tween.set_parallel(true)
-	
-	if not in_place:
-		# 1. Animasi Terbang (Position): Melengkung ke target
-		tween.tween_property(self, "global_position", _central_pos, roll_duration)\
+	if dice_type == "d20enemy":
+		var duration = min(roll_duration, 1.5)
+		var tween = create_tween()
+		_roll_tween = tween
+		tween.set_parallel(true)
+		
+		# Putar 360 derajat (2 * PI) dalam 0.5 detik
+		tween.tween_property(dice_sprite, "rotation", deg_to_rad(360), 0.5)\
+			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+			
+		# Membesar perlahan lalu mengecil (Scale)
+		tween.tween_property(self, "scale", _base_scale * 1.2, 0.5)\
 			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tween.tween_property(self, "scale", _base_scale, 0.5)\
+			.set_delay(0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+			
+		# Float up perlahan-lahan
+		tween.tween_property(self, "global_position", _central_pos + Vector2(0, -30), duration)\
+			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+			
+		tween.chain().tween_callback(show_result)
+		_scale_tween = null
+	else:
+		if not in_place:
+			var tween = create_tween()
+			_roll_tween = tween
+			tween.set_parallel(true)
+			# 1. Animasi Terbang (Position): Melengkung ke target
+			tween.tween_property(self, "global_position", _central_pos, roll_duration)\
+				.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		else:
+			_roll_tween = null
+			
+		# 2. Animasi Memantul (Scale)
+		var scale_tween = create_tween()
+		_scale_tween = scale_tween
 		
-	# 2. Animasi Memantul (Scale)
-	var scale_tween = create_tween()
-	_scale_tween = scale_tween
-	
-	var b1_up = roll_duration * 0.20
-	var b1_dn = roll_duration * 0.18
-	var b2_up = roll_duration * 0.16
-	var b2_dn = roll_duration * 0.14
-	var b3_up = roll_duration * 0.10
-	var b3_dn = roll_duration * 0.10
-	var b4_up = roll_duration * 0.06
-	var b4_dn = roll_duration * 0.06
-	
-	# Full bouncy animation regardless of in_place
-	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.6, 1.6), b1_up).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	scale_tween.tween_property(dice_sprite, "scale", Vector2(0.7, 0.7), b1_dn).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	scale_tween.tween_callback(func(): _spawn_ripple(1.0))
+		var b1_up = roll_duration * 0.20
+		var b1_dn = roll_duration * 0.18
+		var b2_up = roll_duration * 0.16
+		var b2_dn = roll_duration * 0.14
+		var b3_up = roll_duration * 0.10
+		var b3_dn = roll_duration * 0.10
+		var b4_up = roll_duration * 0.06
+		var b4_dn = roll_duration * 0.06
 		
-	# Pantulan 2 
-	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.3, 1.3), b2_up).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	scale_tween.tween_property(dice_sprite, "scale", Vector2(0.8, 0.8), b2_dn).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	scale_tween.tween_callback(func(): _spawn_ripple(0.75))
-		
-	# Pantulan 3
-	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.15, 1.15), b3_up).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	scale_tween.tween_property(dice_sprite, "scale", Vector2(0.9, 0.9), b3_dn).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	scale_tween.tween_callback(func(): _spawn_ripple(0.5))
-		
-	# Pantulan 4 (Mendarat)
-	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.08, 1.08), b4_up).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	scale_tween.tween_property(dice_sprite, "scale", Vector2(1.0, 1.0), b4_dn).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	scale_tween.tween_callback(func(): _spawn_ripple(0.3))
-		
-	# 4. Selesai
-	# Kita tunggu scale_tween selesai (karena in_place gak pakai pos tween)
-	scale_tween.chain().tween_callback(show_result)
+		# Full bouncy animation regardless of in_place
+		scale_tween.tween_property(dice_sprite, "scale", Vector2(1.6, 1.6), b1_up).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		scale_tween.tween_property(dice_sprite, "scale", Vector2(0.7, 0.7), b1_dn).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		scale_tween.tween_callback(func(): _spawn_ripple(1.0))
+			
+		# Pantulan 2 
+		scale_tween.tween_property(dice_sprite, "scale", Vector2(1.3, 1.3), b2_up).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		scale_tween.tween_property(dice_sprite, "scale", Vector2(0.8, 0.8), b2_dn).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		scale_tween.tween_callback(func(): _spawn_ripple(0.75))
+			
+		# Pantulan 3
+		scale_tween.tween_property(dice_sprite, "scale", Vector2(1.15, 1.15), b3_up).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		scale_tween.tween_property(dice_sprite, "scale", Vector2(0.9, 0.9), b3_dn).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		scale_tween.tween_callback(func(): _spawn_ripple(0.5))
+			
+		# Pantulan 4 (Mendarat)
+		scale_tween.tween_property(dice_sprite, "scale", Vector2(1.08, 1.08), b4_up).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		scale_tween.tween_property(dice_sprite, "scale", Vector2(1.0, 1.0), b4_dn).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		scale_tween.tween_callback(func(): _spawn_ripple(0.3))
+			
+		# 4. Selesai
+		# Kita tunggu scale_tween selesai (karena in_place gak pakai pos tween)
+		scale_tween.chain().tween_callback(show_result)
 
 
 
@@ -352,7 +393,13 @@ func show_result() -> void:
 	
 	# HANYA FADE OUT, JANGAN QUEUE_FREE KARENA REUSABLE
 	_reveal_tween.tween_interval(1.0)
-	_reveal_tween.tween_property(self, "modulate:a", 0.0, 0.3)
+	if _dice_type == "d20enemy":
+		# Float up slowly while fading out
+		_reveal_tween.parallel().tween_property(self, "global_position", global_position + Vector2(0, -60), 1.0)\
+			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		_reveal_tween.parallel().tween_property(self, "modulate:a", 0.0, 1.0)
+	else:
+		_reveal_tween.tween_property(self, "modulate:a", 0.0, 0.3)
 
 func _apply_camera_shake(p_id: int, duration: float, amp: float, horizontal_only: bool = false) -> void:
 	if not get_tree() or not get_tree().current_scene: return

@@ -209,7 +209,9 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 		
 	# ── Load Ability ──────────────────────────────────────────────────────────
 	var ability_path := "res://combat_core/abilities/instances/%s.tres" % _ability_id
-	var ability := load(ability_path) as BaseAbility
+	var ability: BaseAbility = null
+	if ResourceLoader.exists(ability_path):
+		ability = load(ability_path) as BaseAbility
 	var base_dice := "1D8"
 	var knockback := 2
 	var is_magical := false
@@ -496,7 +498,7 @@ func _play_enemy_dice_sequence(
 	elif not is_hit: outcome = "miss"
 	
 	if is_instance_valid(dice_visual) and dice_visual.has_method("start_roll"):
-		dice_visual.start_roll(raw_roll, "d20", 1.8, base_pos, p_id, outcome, true, Vector2(0.45, 0.45))
+		dice_visual.start_roll(raw_roll, "d20enemy", 1.8, base_pos, p_id, outcome, true, Vector2(0.45, 0.45))
 		if dice_visual.has_signal("roll_finished"):
 			await dice_visual.roll_finished
 		else:
