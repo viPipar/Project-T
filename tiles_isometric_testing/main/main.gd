@@ -94,7 +94,7 @@ func _ready() -> void:
 
 	# ── Spawn enemy placeholder untuk testing combat_core ─────────────────────
 	_spawn_enemy_from_json("goblin", "Goblin", Vector2i(5, 5), Color(0.3, 0.9, 0.3, 1.0))
-	_spawn_enemy_from_json("orc", "Orc", Vector2i(8, 5), Color(0.9, 0.4, 0.1, 1.0))
+	# _spawn_enemy_from_json("orc", "Orc", Vector2i(8, 5), Color(0.9, 0.4, 0.1, 1.0))
 
 	# ── CombatTestBridge ──────────────────────────────────────────────────────
 	var bridge := Node.new()
@@ -142,7 +142,7 @@ func _spawn_enemy_from_json(
 	tint_color: Color
 ) -> Node:
 	var data: Dictionary = StatDataDB.get_enemy_data(entity_id)
-	var scene: PackedScene = StatDataDB.load_entity_scene(data, "res://entities/enemies/EnemyPlaceholder.tscn")
+	var scene: PackedScene = StatDataDB.load_entity_scene(data, "res://entities/enemies/EnemyMeleePlaceholder.tscn")
 	var enemy: Node = scene.instantiate()
 	enemy.set("enemy_name", str(data.get("display_name", fallback_name)))
 	enemy.set("tint_color", tint_color)

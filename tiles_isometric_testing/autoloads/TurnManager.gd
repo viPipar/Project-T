@@ -275,7 +275,7 @@ func _mark_player_ended(player_id: int, emit_turn_ended: bool = false) -> void:
 func _is_entity_downed(entity: Node) -> bool:
 	if entity == null:
 		return false
-	if entity.has_method("is_downed") and entity.is_downed():
+	if is_instance_valid(entity) and entity.has_method("is_downed") and entity.is_downed():
 		return true
 	var health := entity.get_node_or_null("HealthComponent") as HealthComponent
 	return health != null and (health.is_downed() or health.is_dead())

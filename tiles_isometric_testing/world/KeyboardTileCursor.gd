@@ -142,7 +142,7 @@ func _is_tile_allowed(tile: Vector2i, player: Node) -> bool:
 		return true
 	if player == null:
 		return true
-	if player.has_method("is_targeting_ability") and player.is_targeting_ability():
+	if is_instance_valid(player) and player.has_method("is_targeting_ability") and player.is_targeting_ability():
 		return player.has_method("is_tile_valid_for_targeting") and player.is_tile_valid_for_targeting(tile)
 
 	var origin := player.get("grid_pos") as Vector2i

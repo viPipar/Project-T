@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="BaseAbility" load_steps=2 format=3 uid="uid://d13qx3vboh5fk"]
+
+[ext_resource type="Script" uid="uid://dx7f0dfumdgr6" path="res://combat_core/abilities/BaseAbility.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+ability_name = "Generic Ranged Placeholder"
+ability_description = "A standard long-range attack. [WARNING: PLACEHOLDER ONLY. DO NOT USE IN FINAL BUILD]"
+ability_tag = "ability_base"
+ability_type = 0
+element_tag = "physical"
+target_alignment = 0
+ally_targeting_dc = 10
+range_type = "aoe"
+range_size = 4
+is_projectile = true
+damage_dice = "1D6"
+is_heal = false
+knockback_tiles = 0
+status_effect = ""
+status_duration = 0
+status_stacks = 1
+cost_action = 1
+cost_bonus_action = 0
+cost_mana = 0

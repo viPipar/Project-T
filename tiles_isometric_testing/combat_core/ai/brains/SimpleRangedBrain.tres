@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="SimpleRangedBrain" load_steps=3 format=3 uid="uid://cnnh4dffxrj3q"]
+
+[ext_resource type="Script" path="res://combat_core/ai/brains/SimpleRangedBrain.gd" id="1_ai_script"]
+[ext_resource type="Resource" path="res://combat_core/abilities/instances/generic_ranged_placeholder.tres" id="2_ability"]
+
+[resource]
+script = ExtResource("1_ai_script")
+ranged_ability = ExtResource("2_ability")
+detection_range = 99

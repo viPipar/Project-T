@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://bdlxkcifnvago"]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" uid="uid://csd3h2kxj7v0f" path="res://entities/enemies/EnemyPlaceholder.gd" id="1_h7x2k"]
 [ext_resource type="Script" uid="uid://b5e8838ogl3f7" path="res://components/StatsComponent.gd" id="2_stats"]
@@ -26,8 +26,9 @@ animations = [{
 "speed": 5.0
 }]
 
-[node name="EnemyPlaceholder" type="CharacterBody2D"]
+[node name="EnemyMeleePlaceholder" type="CharacterBody2D"]
 script = ExtResource("1_h7x2k")
+tint_color = Color(1, 0, 0, 1)
 
 [node name="StatsComponent" type="Node" parent="."]
 script = ExtResource("2_stats")

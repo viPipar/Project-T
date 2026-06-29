@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://bdlxkcifnvago"]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" uid="uid://csd3h2kxj7v0f" path="res://entities/enemies/EnemyPlaceholder.gd" id="1_h7x2k"]
 [ext_resource type="Script" uid="uid://b5e8838ogl3f7" path="res://components/StatsComponent.gd" id="2_stats"]
@@ -9,7 +9,7 @@
 [ext_resource type="Script" uid="uid://dehtujp1qplci" path="res://components/CombatComponent.gd" id="7_combat"]
 [ext_resource type="Script" uid="uid://dfgx2uqpj1g3d" path="res://components/AIComponent.gd" id="8_ai"]
 [ext_resource type="Script" uid="uid://dleotlv76kabm" path="res://components/MovementComponent.gd" id="9_move"]
-[ext_resource type="Resource" uid="uid://bivjnnvw0rb8h" path="res://combat_core/ai/brains/SimpleMeleeBrain.tres" id="10_brain"]
+[ext_resource type="Resource" path="res://combat_core/ai/brains/SimpleRangedBrain.tres" id="10_brain"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_enemy"]
 atlas = ExtResource("4_tex")
@@ -26,8 +26,9 @@ animations = [{
 "speed": 5.0
 }]
 
-[node name="EnemyPlaceholder" type="CharacterBody2D"]
+[node name="EnemyRangedPlaceholder" type="CharacterBody2D"]
 script = ExtResource("1_h7x2k")
+tint_color = Color(1, 1, 1, 1)
 
 [node name="StatsComponent" type="Node" parent="."]
 script = ExtResource("2_stats")
@@ -56,7 +57,7 @@ script = ExtResource("9_move")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 texture_filter = 1
-position = Vector2(14, -113)
-scale = Vector2(0.75, 0.75)
+position = Vector2(14, -75)
+scale = Vector2(0.5, 0.5)
 sprite_frames = SubResource("SpriteFrames_enemy")
 animation = &"idle_down"

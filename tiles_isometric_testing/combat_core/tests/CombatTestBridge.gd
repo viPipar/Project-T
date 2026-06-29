@@ -195,7 +195,7 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 	var _pid_raw: Variant = attacker.get("player_id")
 	var pid: int = int(_pid_raw) if _pid_raw != null else 1
 
-	if attacker.has_method("is_downed") and attacker.is_downed():
+	if is_instance_valid(attacker) and attacker.has_method("is_downed") and attacker.is_downed():
 		print("[COMBAT] P%d downed, action dibatalkan." % pid)
 		return
 
@@ -349,7 +349,7 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 
 	if is_enemy:
 		# Enemy: attack animation FIRST, then dice
-		if attacker.has_method("play_attack"):
+		if is_instance_valid(attacker) and attacker.has_method("play_attack"):
 			await attacker.play_attack(_ability_id)
 		# Enemy uses in-world dice popup + stat breakdown!
 		await _play_enemy_dice_sequence(attacker, raw, total, thresh, hit_modifier, hit, crit, pid)
@@ -374,7 +374,7 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String) -> void:
 			await get_tree().process_frame
 
 		# Player: attack animation AFTER dice overlay
-		if attacker.has_method("play_attack"):
+		if is_instance_valid(attacker) and attacker.has_method("play_attack"):
 			await attacker.play_attack(_ability_id)
 
 	# ---- MAGICAL PROJECTILE PLACEHOLDER ----
@@ -679,7 +679,7 @@ func _apply_damage_to_target(target: Node, amount: int, attacker: Node, damage_t
 	if health != null:
 		return health.take_damage(amount, attacker, damage_type)
 
-	if target.has_method("take_damage"):
+	if is_instance_valid(target) and target.has_method("take_damage"):
 		target.call("take_damage", amount)
 		return maxi(0, amount)
 
