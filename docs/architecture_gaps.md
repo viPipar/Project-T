@@ -23,9 +23,9 @@ We transformed `CombatTestBridge.gd` into a centralized combat orchestrator.
 `EnemyPlaceholder.gd` currently just prints `Bergerak menuju Player` or attacks if perfectly adjacent. There is no logic for pathfinding around obstacles to reach a target, no ability selection, and no threat evaluation.
 
 **The Solution (Implemented):**
-A unified `AIComponent` runs an injected `AIBrain` resource (e.g., `SimpleMeleeBrain`).
+A unified `AIComponent` runs an injected `AIBrain` resource (e.g., `SimpleMeleeBrain` or `SimpleRangedBrain`).
 1. The AI calculates the closest valid target ignoring dead players.
-2. It interacts with the `MovementComponent` to navigate towards the player.
+2. It interacts with the `MovementComponent` to navigate towards the player, or kite away if it's a ranged archetype.
 3. Once in range, it triggers the exact same combat pipeline as the player via `CombatTestBridge`.
 4. The `AIComponent` uses a re-entrancy lock (`_is_taking_turn`) to ensure only one enemy acts at a time, keeping the queue clean.
 
@@ -49,3 +49,13 @@ Stats, unlocked items, and current HP are lost when closing the game.
 
 **The Solution:**
 A `SaveManager` that serializes the `StatsComponent` states, current Node Graph seed, and inventory into JSON/binary, and reconstructs the `players` group on load.
+
+## 5. Memory Safety & Event Race Conditions (The "Freed Instance" Crash)
+**Status:** 🟢 Resolved
+**Owner:** Tapip & Gilang
+
+**The Problem:**
+Combat actions (like multi-hit burst damage, counter-attacks, or environmental triggers) can kill an entity while it is still in the queue to be processed, or mid-resolution. This caused the engine to crash when trying to call methods (e.g. `has_method("take_damage")`) on a previously freed node.
+
+**The Solution (Implemented):**
+A global sweep was performed across the entire combat core (TurnManager, CombatTestBridge, StatSystem, AI Components). All checks against dynamic nodes are now guarded with `is_instance_valid(target)`. `EnemyPhaseManager` also actively scrubs dead queue entries before executing AI turns, ensuring absolute stability during combat chain-reactions.

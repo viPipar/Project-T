@@ -39,7 +39,7 @@
 | Gilang | Status Effects | Implement `autotomy_armor_buff` (+4 Armor for 1 turn) from Autotomy | Medium | Done | Status Effects | #9 |
 | Gilang | Audio System | SFX & BGM Manager (Combat sounds, UI clicks, bgm tracks) | High | To Do | EventBus | - |
 | Gilang | AI System | Enemy AI Brain (Target Selection, Ability Choice, Movement Logic) | Critical | Done | Phase Mgr, A* Grid | - |
-| Gilang | AI System | Simple Ranged Brain (kiting, maximize distance, shoot) | High | To Do | Enemy AI Brain | - |
+| Gilang | AI System | Simple Ranged Brain (kiting, maximize distance, shoot) | High | Done | Enemy AI Brain | - |
 | Gilang | AI System | Character Specific Custom Brains (Bosses/Elites) | Medium | To Do | Enemy AI Brain | - |
 
 ## Candra - Movement, Projectile & Stats
