@@ -45,6 +45,30 @@ func _ready() -> void:
 	NeobrutalStyle.apply_to_button(reroll_btn, NeobrutalStyle.COLOR_RED)
 	reroll_btn.text = "Reroll Shop (%d Coins)" % REROLL_COST
 	
+	# Add Patungan P1 -> P2 Button
+	var p1_to_p2_btn = Button.new()
+	p1_to_p2_btn.text = "💰 P1 Send Half to P2"
+	p1_to_p2_btn.position = Vector2(20, 100)
+	p1_to_p2_btn.add_theme_font_size_override("font_size", 18)
+	NeobrutalStyle.apply_to_button(p1_to_p2_btn, NeobrutalStyle.COLOR_CYAN)
+	p1_to_p2_btn.pressed.connect(func():
+		if CoinEconomy != null:
+			CoinEconomy.send_half(1, 2)
+	)
+	add_child(p1_to_p2_btn)
+
+	# Add Patungan P2 -> P1 Button
+	var p2_to_p1_btn = Button.new()
+	p2_to_p1_btn.text = "💰 P2 Send Half to P1"
+	p2_to_p1_btn.position = Vector2(20, 160)
+	p2_to_p1_btn.add_theme_font_size_override("font_size", 18)
+	NeobrutalStyle.apply_to_button(p2_to_p1_btn, NeobrutalStyle.COLOR_YELLOW)
+	p2_to_p1_btn.pressed.connect(func():
+		if CoinEconomy != null:
+			CoinEconomy.send_half(2, 1)
+	)
+	add_child(p2_to_p1_btn)
+	
 	_refresh_coins_display()
 	if CoinEconomy != null:
 		CoinEconomy.balance_changed.connect(_on_coins_changed)

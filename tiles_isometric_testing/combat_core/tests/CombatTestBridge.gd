@@ -116,6 +116,9 @@ func _setup_combat_core() -> void:
 	_p1_ap.setup(p1_dex, p1_int)
 	_p1_mov.setup(p1_mov)
 	_p1_ec.setup()
+	if RunManager != null and RunManager.get("p1_saved_energy") != null and RunManager.p1_saved_energy != -1:
+		_p1_ec.current_charges = RunManager.p1_saved_energy
+		print("[CombatTestBridge] Restored P1 Energy from RunManager: %d" % _p1_ec.current_charges)
 
 	# P2 (Wizard)
 	_p2_ap  = ActionPointManager.new();   add_child(_p2_ap)
@@ -124,6 +127,9 @@ func _setup_combat_core() -> void:
 	_p2_ap.setup(p2_dex, p2_int)
 	_p2_mov.setup(p2_mov)
 	_p2_ss.setup(p2_att)
+	if RunManager != null and RunManager.get("p2_saved_slots") != null and RunManager.p2_saved_slots.size() == 4:
+		_p2_ss.current_slots = RunManager.p2_saved_slots.duplicate()
+		print("[CombatTestBridge] Restored P2 Slots from RunManager: %s" % str(_p2_ss.current_slots))
 
 	# --- DEBUG INFINITE RESOURCES FOR TESTING ---
 	#_p1_ap.max_ap += 99; _p1_ap.current_ap += 99
