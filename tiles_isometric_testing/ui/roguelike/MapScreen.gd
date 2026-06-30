@@ -217,7 +217,7 @@ func _on_node_clicked(node_id: int, node_type: NodeGraph.NodeType) -> void:
 		if found_shell:
 			found_shell.show_screen("res://ui/roguelike/ShopScreen.tscn")
 			
-	elif node_type in [NodeGraph.NodeType.LOOT, NodeGraph.NodeType.REST]:
+	elif node_type == NodeGraph.NodeType.LOOT:
 		print("[MapScreen] Entering LOOT node!")
 		var current = get_parent()
 		var found_shell = null
@@ -228,6 +228,18 @@ func _on_node_clicked(node_id: int, node_type: NodeGraph.NodeType) -> void:
 			current = current.get_parent()
 		if found_shell:
 			found_shell.show_screen("res://ui/roguelike/LootScreen.tscn")
+			
+	elif node_type == NodeGraph.NodeType.REST:
+		print("[MapScreen] Entering REST node!")
+		var current = get_parent()
+		var found_shell = null
+		while current and current != get_tree().get_root():
+			if "RoguelikeUIShell" in current.name or current.has_method("show_screen"):
+				found_shell = current
+				break
+			current = current.get_parent()
+		if found_shell:
+			found_shell.show_screen("res://ui/roguelike/RestScreen.tscn")
 			
 	else:
 		print("[MapScreen] Node clicked: %s. (No UI Logic implemented yet)" % NodeGraph.NodeType.keys()[node_type])

@@ -13,7 +13,10 @@ func _ready() -> void:
 	
 	_setup_dual_cursor()
 	
-	# We should hook to CoinEconomy to update wallets, but for now just mock
+	# Hook to CoinEconomy to dynamically update wallets
+	if CoinEconomy != null:
+		CoinEconomy.balance_changed.connect(func(_p_id, _new_bal): _update_wallets())
+		
 	_update_wallets()
 	_apply_neobrutalism()
 
@@ -77,9 +80,12 @@ func hide_ui() -> void:
 	visible = false
 
 func _update_wallets() -> void:
-	# Mock
-	p1_wallet.text = "P1: 100 Coins"
-	p2_wallet.text = "P2: 100 Coins"
+	if CoinEconomy != null:
+		p1_wallet.text = "P1: %d Coins" % CoinEconomy.get_balance(1)
+		p2_wallet.text = "P2: %d Coins" % CoinEconomy.get_balance(2)
+	else:
+		p1_wallet.text = "P1: 100 Coins"
+		p2_wallet.text = "P2: 100 Coins"
 
 # Helper for debug toggle
 func toggle() -> void:

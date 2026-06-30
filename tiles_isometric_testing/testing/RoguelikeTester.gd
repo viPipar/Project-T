@@ -160,6 +160,15 @@ func test_campfire_rest_choices() -> void:
 	print(" - Success (70%%): %d" % success_count)
 	print(" - Trap (20%%): %d" % trap_count)
 	print(" - Jackpot (10%%): %d" % jackpot_count)
+	
+	# Test RestScreen class instantiation and structure
+	var rest_screen_script = load("res://ui/roguelike/RestScreen.gd")
+	if rest_screen_script:
+		var screen = rest_screen_script.new()
+		assert(screen.OPTIONS_DATA.size() == 4, "Rest Screen must have exactly 4 choices.")
+		print("Rest Screen Instantiation Check: PASSED ✅")
+	else:
+		print("Rest Screen Instantiation Check: FAILED ❌ (Cannot load RestScreen.gd)")
 	print("")
 
 func test_contested_pick_system() -> void:
@@ -206,4 +215,3 @@ func test_shop_and_economy() -> void:
 		print("Reroll success: %s | P1 Balance now: %d" % [rerolled, CoinEconomy.get_balance(1)])
 		print("New Shop Stock: ", stock.current_stock)
 	print("")
-

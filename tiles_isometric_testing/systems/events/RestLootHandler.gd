@@ -53,6 +53,15 @@ func handle_rest_choice(player_id: int, option: int) -> void:
 				elif player_id == 2 and p2_ss != null:
 					p2_ss.restore_percent(0.5)
 					
+			if RunManager != null:
+				if player_id == 1 and RunManager.p1_saved_energy != -1:
+					var max_charges = 5
+					RunManager.p1_saved_energy = clampi(RunManager.p1_saved_energy + int(max_charges * 0.5), 0, max_charges)
+				elif player_id == 2 and RunManager.p2_saved_slots.size() == 4:
+					var max_slots = [4, 3, 2, 1]
+					for i in range(4):
+						RunManager.p2_saved_slots[i] = clampi(RunManager.p2_saved_slots[i] + int(max_slots[i] * 0.5), 0, max_slots[i])
+					
 			EventNotifier.show_message("P%d Full Rest: +50%% HP & +50%% Resources" % player_id, Color.GREEN)
 			
 		1: # PARTIAL_REST (Option B: +25% HP + +100% resource restore)
@@ -71,6 +80,12 @@ func handle_rest_choice(player_id: int, option: int) -> void:
 					p1_ec.restore_percent(1.0)
 				elif player_id == 2 and p2_ss != null:
 					p2_ss.restore_percent(1.0)
+					
+			if RunManager != null:
+				if player_id == 1:
+					RunManager.p1_saved_energy = -1
+				elif player_id == 2:
+					RunManager.p2_saved_slots.clear()
 					
 			EventNotifier.show_message("P%d Partial Rest: +25%% HP & +100%% Resources" % player_id, Color.YELLOW_GREEN)
 			
