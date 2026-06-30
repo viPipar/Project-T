@@ -28,17 +28,28 @@ class MapNode:
 
 var layers: Array = [] # Array of Arrays of MapNodes
 var nodes_by_id: Dictionary = {}
+var seed_value: int = -1
+var rng: RandomNumberGenerator = null
 
 const MIN_NODES_PER_LAYER = 2
 const MAX_NODES_PER_LAYER = 4
 const TOTAL_LAYERS = 10 # Let's say 10 floors until boss
 
-func generate() -> void:
+func generate(new_seed: int = -1) -> void:
 	layers.clear()
 	nodes_by_id.clear()
 	var current_id = 0
 	
-	print("[NodeGraph] Generating new map graph...")
+	if new_seed != -1:
+		seed_value = new_seed
+	if seed_value == -1:
+		randomize()
+		seed_value = randi()
+		
+	rng = RandomNumberGenerator.new()
+	rng.seed = seed_value
+	
+	print("[NodeGraph] Generating new map graph with seed: %d..." % seed_value)
 	
 	for layer_index in range(TOTAL_LAYERS):
 		var layer_nodes: Array[MapNode] = []
@@ -50,7 +61,7 @@ func generate() -> void:
 			nodes_by_id[current_id] = boss_node
 			current_id += 1
 		else:
-			var node_count = randi_range(MIN_NODES_PER_LAYER, MAX_NODES_PER_LAYER)
+			var node_count = rng.randi_range(MIN_NODES_PER_LAYER, MAX_NODES_PER_LAYER)
 			# First layer is always battle
 			var is_first_layer = (layer_index == 0)
 			
@@ -67,7 +78,7 @@ func generate() -> void:
 	print("[NodeGraph] Map generation complete. Nodes: %d, Layers: %d" % [nodes_by_id.size(), TOTAL_LAYERS])
 
 func _get_random_node_type() -> NodeType:
-	var roll = randf()
+	var roll = rng.randf()
 	if roll < 0.4: return NodeType.BATTLE
 	elif roll < 0.6: return NodeType.EVENT
 	elif roll < 0.75: return NodeType.REST
@@ -107,7 +118,7 @@ func _generate_paths() -> void:
 			elif j == m - 1:
 				advance_i = true
 			else:
-				var roll = randf()
+				var roll = rng.randf()
 				if roll < 0.33:
 					advance_i = true
 				elif roll < 0.66:
@@ -119,5 +130,34 @@ func _generate_paths() -> void:
 			if advance_i: i += 1
 			if advance_j: j += 1
 
+	# Connectivity Validator: ensure no isolated nodes or dead ends
+	for layer_idx in range(layers.size() - 1):
+		var current_layer = layers[layer_idx]
+		var next_layer = layers[layer_idx + 1]
+		
+		# 1. Ensure every node in current_layer has at least one outgoing path
+		for node in current_layer:
+			if node.next_nodes.is_empty():
+				var target = next_layer[rng.randi() % next_layer.size()]
+				node.next_nodes.append(target.id)
+		
+		# 2. Ensure every node in next_layer has at least one incoming path
+		for target in next_layer:
+			var has_incoming = false
+			for node in current_layer:
+				if target.id in node.next_nodes:
+					has_incoming = true
+					break
+			if not has_incoming:
+				# Connect closest index node to prevent crossing paths
+				var source_idx = clampi(int(float(target.id - next_layer[0].id) / next_layer.size() * current_layer.size()), 0, current_layer.size() - 1)
+				var source_node = current_layer[source_idx]
+				source_node.next_nodes.append(target.id)
+				
+		# Keep connections sorted for pathing consistency
+		for node in current_layer:
+			node.next_nodes.sort()
+
 func get_node_by_id(id: int) -> MapNode:
 	return nodes_by_id.get(id, null)
+

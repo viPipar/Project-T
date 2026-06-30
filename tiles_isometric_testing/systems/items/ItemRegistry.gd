@@ -7,57 +7,56 @@ enum Rarity {
 	CURSED
 }
 
-# In a real scenario, this would likely load from JSON or Custom Resources.
-# For now, it's defined in code.
-var items: Dictionary = {
-	"potion_small": {
-		"id": "potion_small",
-		"name": "Small Potion",
-		"type": "consumable",
-		"rarity": Rarity.COMMON,
-		"description": "Heals 10 HP.",
-		"effect": { "type": "heal", "amount": 10 }
-	},
-	"iron_sword": {
-		"id": "iron_sword",
-		"name": "Iron Sword",
-		"type": "equipment",
-		"rarity": Rarity.COMMON,
-		"description": "+2 Base Damage.",
-		"effect": { "type": "stat_mod", "stat": "damage", "amount": 2 }
-	},
-	"magic_ring": {
-		"id": "magic_ring",
-		"name": "Magic Ring",
-		"type": "equipment",
-		"rarity": Rarity.RARE,
-		"description": "+1 Spell Slot max.",
-		"effect": { "type": "stat_mod", "stat": "max_spell_slots", "amount": 1 }
-	},
-	"berserker_axe": {
-		"id": "berserker_axe",
-		"name": "Berserker Axe",
-		"type": "equipment",
-		"rarity": Rarity.LEGENDARY,
-		"description": "+5 Damage, but take 1 damage per turn.",
-		"effect": { "type": "stat_mod_complex", "buff": {"stat": "damage", "amount": 5}, "curse": {"type": "damage_per_turn", "amount": 1} }
-	},
-	"cursed_amulet": {
-		"id": "cursed_amulet",
-		"name": "Cursed Amulet",
-		"type": "equipment",
-		"rarity": Rarity.CURSED,
-		"description": "Lose 1 AP per turn.",
-		"effect": { "type": "stat_mod", "stat": "ap", "amount": -1 }
-	}
+const ITEM_RARITY_MAP: Dictionary = {
+	"ring_str": Rarity.COMMON,
+	"iron_armor": Rarity.COMMON,
+	"sage_charm": Rarity.RARE,
+	"swift_boots": Rarity.RARE,
+	"potion_small": Rarity.COMMON,
+	"iron_sword": Rarity.COMMON,
+	"magic_ring": Rarity.RARE,
+	"berserker_axe": Rarity.LEGENDARY,
+	"cursed_amulet": Rarity.CURSED
 }
 
+var items: Dictionary:
+	get:
+		var dict = {}
+		if StatDataDB != null:
+			for id in StatDataDB.get_item_ids():
+				dict[id] = get_item(id)
+		return dict
+
 func get_item(item_id: String) -> Dictionary:
-	return items.get(item_id, {})
+	if StatDataDB == null:
+		return {}
+		
+	var json_data = StatDataDB.get_item_data(item_id)
+	if json_data.is_empty():
+		return {}
+		
+	var item = json_data.duplicate()
+	item["id"] = item_id
+	item["name"] = json_data.get("display_name", item_id)
+	item["type"] = json_data.get("item_type", "equipment")
+	
+	# Determine rarity
+	var rarity = ITEM_RARITY_MAP.get(item_id, Rarity.COMMON)
+	item["rarity"] = rarity
+	
+	# Fallback description
+	if not item.has("description"):
+		item["description"] = "Modifies stats: " + str(json_data.get("stat_mods", {}))
+		
+	return item
 
 func get_items_by_rarity(target_rarity: Rarity) -> Array[String]:
 	var result: Array[String] = []
-	for item_id in items:
-		if items[item_id]["rarity"] == target_rarity:
+	if StatDataDB == null:
+		return result
+		
+	for item_id in StatDataDB.get_item_ids():
+		var r = ITEM_RARITY_MAP.get(item_id, Rarity.COMMON)
+		if r == target_rarity:
 			result.append(item_id)
 	return result
