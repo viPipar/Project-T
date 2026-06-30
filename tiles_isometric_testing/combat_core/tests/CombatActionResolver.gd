@@ -365,16 +365,20 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 			
 		for burst_idx in range(loop_count):
 			var current_roll_dmg = dmg_total
+			var real_dmg = current_roll_dmg
 			if is_burst:
 				current_roll_dmg = dmg_rolls[burst_idx] + fractional_mod
 				if crit and burst_idx < crit_rolls.size():
 					current_roll_dmg += crit_rolls[burst_idx]
 					
 			current_roll_dmg = maxi(0, current_roll_dmg)
+			var kb_tiles := 0
+			var dir := Vector2i.ZERO
 			
 			if is_burst and burst_idx > 0 and ("burst_retarget" in ability) and ability.burst_retarget:
+				var t: Node = null
 				for i in range(aoe_targets.size() - 1, -1, -1):
-					var t = aoe_targets[i]
+					t = aoe_targets[i]
 					if not is_instance_valid(t) or t.is_queued_for_deletion() or (t.has_method("is_dead") and t.is_dead()):
 						aoe_targets.remove_at(i)
 				
@@ -422,11 +426,11 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 						
 					ForcedMovementResolver.knockback_entity(t, abs(kb_tiles), dir, attacker)
 
-		if had_kill:
-			_slow_mo_kill()
-			if aoe_targets.is_empty():
-				break
-				
+			if had_kill:
+				_slow_mo_kill()
+				if aoe_targets.is_empty():
+					break
+					
 			if is_burst and burst_idx > 0:
 				if ability.is_projectile and target != null:
 					bridge.vfx_controller._spawn_magic_projectile(attacker, target, ability.element_tag, aoe_targets)
@@ -445,7 +449,7 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 					var applied = _apply_heal_to_target(t, real_heal, attacker)
 					print("[COMBAT] %s heal sebesar %d HP!" % [t.name, applied])
 				else:
-					var real_dmg = current_roll_dmg
+					real_dmg = current_roll_dmg
 					if not hit and ability != null and ability.aoe_type != "none":
 						real_dmg = maxi(1, floori(current_roll_dmg / 2.0))
 					
@@ -474,7 +478,7 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 						ElementSystem.resolve_elemental_hit(t, element_tag, applied)
 					
 				if hit and burst_idx == loop_count - 1:
-					var kb_tiles = 0
+					kb_tiles = 0
 					if ability != null:
 						kb_tiles = ability.knockback_tiles
 						if ability.status_effect != "":
@@ -483,7 +487,7 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 					if kb_tiles != 0 and not _knockback_done:
 						var _t_pos = t.get("grid_pos")
 						var diff = _t_pos - a_pos
-						var dir = Vector2i.RIGHT
+						dir = Vector2i.RIGHT
 						if abs(diff.x) > abs(diff.y): dir = Vector2i(sign(diff.x), 0)
 						else: dir = Vector2i(0, sign(diff.y))
 						

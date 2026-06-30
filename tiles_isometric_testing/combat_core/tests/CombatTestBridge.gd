@@ -52,7 +52,6 @@ var _p2_busy: bool = false
 
 
 const CombatVFXControllerScript = preload("res://combat_core/tests/CombatVFXController.gd")
-const CombatActionResolverScript = preload("res://combat_core/tests/CombatActionResolver.gd")
 
 var vfx_controller: Node
 var action_resolver: Node
@@ -61,7 +60,7 @@ func _ready() -> void:
 	vfx_controller = CombatVFXControllerScript.new()
 	add_child(vfx_controller)
 	
-	action_resolver = CombatActionResolverScript.new(self)
+	action_resolver = CombatActionResolver.new(self)
 	add_child(action_resolver)
 	
 	await get_tree().process_frame
