@@ -41,10 +41,13 @@ func _ready() -> void:
 func _on_damage_dealt(target: Node, amount: int, _dmg_type: String, is_crit: bool, source: Node = null) -> void:
 	if not is_instance_valid(target) or amount <= 0:
 		return
+	var raw_pos = target.get("global_position")
+	if raw_pos == null:
+		return
 	_apply_hit_impact(target, is_crit)
 
 	# Offset ke atas sprite, sedikit random agar tidak tumpuk
-	var base_pos : Vector2 = target.global_position + Vector2(0, -48)
+	var base_pos : Vector2 = raw_pos + Vector2(0, -48)
 	var type_str  := "crit" if is_crit else "damage"
 	var pid = source.get_player_id() if source and source.has_method("get_player_id") else 0
 	_spawn_number(amount, type_str, base_pos, pid)
@@ -53,15 +56,21 @@ func _on_damage_dealt(target: Node, amount: int, _dmg_type: String, is_crit: boo
 func _on_miss(_attacker: Node, target: Node) -> void:
 	if not is_instance_valid(target):
 		return
+	var raw_pos = target.get("global_position")
+	if raw_pos == null:
+		return
 	_apply_miss_impact(target)
-	var base_pos : Vector2 = target.global_position + Vector2(0, -48)
+	var base_pos : Vector2 = raw_pos + Vector2(0, -48)
 	_spawn_miss(base_pos)
 
 
 func _on_floating_text_requested(entity: Node, text: String, color: Color, type: String) -> void:
 	if not is_instance_valid(entity):
 		return
-	var base_pos : Vector2 = entity.global_position + Vector2(0, -48)
+	var raw_pos = entity.get("global_position")
+	if raw_pos == null:
+		return
+	var base_pos : Vector2 = raw_pos + Vector2(0, -48)
 	match type:
 		"heal":
 			# text berisi angka heal
