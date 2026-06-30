@@ -5,8 +5,8 @@ extends Node
 signal balance_changed(player_id: int, new_balance: int)
 
 var wallets: Dictionary = {
-	1: 0,
-	2: 0
+	1: 9999,
+	2: 9999
 }
 
 func get_balance(player_id: int) -> int:
@@ -58,7 +58,7 @@ func send_quarter(from_player: int, to_player: int) -> void:
 	send_fraction(from_player, to_player, 0.25)
 
 func reset() -> void:
-	wallets[1] = 0
-	wallets[2] = 0
-	balance_changed.emit(1, 0)
-	balance_changed.emit(2, 0)
+	wallets[1] = 9999
+	wallets[2] = 9999
+	balance_changed.emit(1, 9999)
+	balance_changed.emit(2, 9999)
