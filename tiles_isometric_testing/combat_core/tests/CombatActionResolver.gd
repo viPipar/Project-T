@@ -10,14 +10,20 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 	if attacker == null:
 		return
 	if target == null and target_pos.x < 0:
+		if not attacker.is_in_group("players"):
+			EventBus.combat_action_finished.emit(attacker)
 		return
 
 	# Tentukan player_id penyerang
 	var _pid_raw: Variant = attacker.get("player_id")
 	var pid: int = int(_pid_raw) if _pid_raw != null else 1
 
+	var is_player = attacker.is_in_group("players")
+
 	if is_instance_valid(attacker) and attacker.has_method("is_downed") and attacker.is_downed():
 		print("[COMBAT] P%d downed, action dibatalkan." % pid)
+		if not is_player:
+			EventBus.combat_action_finished.emit(attacker)
 		return
 
 	var is_magical := false
@@ -37,39 +43,41 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 		
 	if ability != null:
 		base_dice = ability.damage_dice
-		var ap_mgr = bridge._p1_ap if pid == 1 else bridge._p2_ap
-		var mana_mgr = bridge._p1_ec if pid == 1 else bridge._p2_ss
-		
-		# Validasi cukup tidaknya cost
-		var can_afford = true
-		if not ap_mgr.can_spend_ap(ability.cost_action): can_afford = false
-		if not ap_mgr.can_spend_bap(ability.cost_bonus_action): can_afford = false
-		if ability.cost_mana > 0:
-			if pid == 1 and not (mana_mgr as EnergyChargeManager).can_spend(ability.cost_mana): can_afford = false
-			elif pid == 2 and not (mana_mgr as SpellSlotManager).can_spend(1, ability.cost_mana): can_afford = false
+		if is_player:
+			var ap_mgr = bridge._p1_ap if pid == 1 else bridge._p2_ap
+			var mana_mgr = bridge._p1_ec if pid == 1 else bridge._p2_ss
 			
-		if not can_afford:
-			bridge._set_player_busy(pid, false)
-			print("[COMBAT] ⚠️ P%d — Tidak cukup AP/BAP/Mana untuk %s!" % [pid, ability.ability_name])
-			return
-			
-		# Jika cukup, baru kita spend semuanya
-		ap_mgr.spend_ap(ability.cost_action)
-		ap_mgr.spend_bap(ability.cost_bonus_action)
-		if ability.cost_mana > 0:
-			if pid == 1: (mana_mgr as EnergyChargeManager).spend_charge(ability.cost_mana)
-			elif pid == 2: (mana_mgr as SpellSlotManager).spend_slot(1, ability.cost_mana)
+			# Validasi cukup tidaknya cost
+			var can_afford = true
+			if not ap_mgr.can_spend_ap(ability.cost_action): can_afford = false
+			if not ap_mgr.can_spend_bap(ability.cost_bonus_action): can_afford = false
+			if ability.cost_mana > 0:
+				if pid == 1 and not (mana_mgr as EnergyChargeManager).can_spend(ability.cost_mana): can_afford = false
+				elif pid == 2 and not (mana_mgr as SpellSlotManager).can_spend(1, ability.cost_mana): can_afford = false
+				
+			if not can_afford:
+				bridge._set_player_busy(pid, false)
+				print("[COMBAT] ⚠️ P%d — Tidak cukup AP/BAP/Mana untuk %s!" % [pid, ability.ability_name])
+				return
+				
+			# Jika cukup, baru kita spend semuanya
+			ap_mgr.spend_ap(ability.cost_action)
+			ap_mgr.spend_bap(ability.cost_bonus_action)
+			if ability.cost_mana > 0:
+				if pid == 1: (mana_mgr as EnergyChargeManager).spend_charge(ability.cost_mana)
+				elif pid == 2: (mana_mgr as SpellSlotManager).spend_slot(1, ability.cost_mana)
 			
 		print("[COMBAT] Menggunakan Ability: %s (%s)" % [ability.ability_name, base_dice])
 	else:
 		push_warning("[COMBAT] Ability '%s' tidak ditemukan! Fallback ke 1D8." % _ability_id)
-		var has_ap := false
-		if pid == 1: has_ap = bridge._p1_ap.spend_ap(1)
-		elif pid == 2: has_ap = bridge._p2_ap.spend_ap(1)
-		if not has_ap:
-			bridge._set_player_busy(pid, false)
-			print("[COMBAT] ⚠️ P%d — Tidak ada Action Point yang tersisa!" % pid)
-			return
+		if is_player:
+			var has_ap := false
+			if pid == 1: has_ap = bridge._p1_ap.spend_ap(1)
+			elif pid == 2: has_ap = bridge._p2_ap.spend_ap(1)
+			if not has_ap:
+				bridge._set_player_busy(pid, false)
+				print("[COMBAT] ⚠️ P%d — Tidak ada Action Point yang tersisa!" % pid)
+				return
 
 	var _aname_raw: Variant = attacker.get("char_name")
 	var attacker_name: String = str(_aname_raw) if _aname_raw != null else str(attacker.name)
@@ -207,7 +215,7 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 	
 	var _played_attack := false
 	var _knockback_done := false
-	var is_player = attacker.is_in_group("players")
+	is_player = attacker.is_in_group("players")
 	
 	# Function to handle dash movement
 	var execute_dash = func():

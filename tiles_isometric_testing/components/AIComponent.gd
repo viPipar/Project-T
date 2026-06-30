@@ -42,8 +42,17 @@ func take_turn() -> void:
 		print("---")
 		print("[AIComponent] %s's turn started. Using brain: %s" % [owner.name, brain.resource_path.get_file()])
 		brain.decide_and_act(owner, self)
+		_start_failsafe_timer()
 	else:
 		push_warning("AIComponent on %s has no brain assigned! Ending turn." % owner.name)
+		end_turn()
+
+
+func _start_failsafe_timer() -> void:
+	# BG3-style Failsafe Timer: if AI takes more than 10 seconds to finish, forcefully end turn!
+	await get_tree().create_timer(10.0, false).timeout
+	if _is_taking_turn:
+		push_error("⚠️ [AI_FAILSAFE] %s's brain (%s) took too long and got stuck! Forcefully ending turn to prevent soft-lock." % [owner.name, brain.resource_path.get_file()])
 		end_turn()
 
 
