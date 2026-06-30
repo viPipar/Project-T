@@ -105,7 +105,7 @@ func _ready() -> void:
 		var btn = Button.new()
 		btn.text = "%s\n(%s)" % [data["name"], data["desc"]]
 		btn.custom_minimum_size = Vector2(350, 80)
-		var color = NeobrutalStyle.get(data["color_name"])
+		var color = NeobrutalStyle.get_color_by_name(data["color_name"])
 		NeobrutalStyle.apply_to_button(btn, color)
 		btn.pressed.connect(_on_p1_choice.bind(i))
 		p1_vbox.add_child(btn)
@@ -128,7 +128,7 @@ func _ready() -> void:
 		var btn = Button.new()
 		btn.text = "%s\n(%s)" % [data["name"], data["desc"]]
 		btn.custom_minimum_size = Vector2(350, 80)
-		var color = NeobrutalStyle.get(data["color_name"])
+		var color = NeobrutalStyle.get_color_by_name(data["color_name"])
 		NeobrutalStyle.apply_to_button(btn, color)
 		btn.pressed.connect(_on_p2_choice.bind(i))
 		p2_vbox.add_child(btn)

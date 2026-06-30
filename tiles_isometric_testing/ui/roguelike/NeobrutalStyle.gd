@@ -46,6 +46,18 @@ static var COLOR_RED := Color("#ff3131")
 static var COLOR_PURPLE := Color("#8c52ff")
 static var COLOR_GRAY := Color("#888888")
 
+static func get_color_by_name(color_name: String) -> Color:
+	match color_name:
+		"COLOR_WHITE": return COLOR_WHITE
+		"COLOR_YELLOW": return COLOR_YELLOW
+		"COLOR_PINK": return COLOR_PINK
+		"COLOR_CYAN": return COLOR_CYAN
+		"COLOR_GREEN": return COLOR_GREEN
+		"COLOR_RED": return COLOR_RED
+		"COLOR_PURPLE": return COLOR_PURPLE
+		"COLOR_GRAY": return COLOR_GRAY
+		_: return COLOR_WHITE
+
 static func apply_to_button(btn: Button, color: Color) -> void:
 	btn.add_theme_stylebox_override("normal", get_button_normal(color))
 	btn.add_theme_stylebox_override("hover", get_button_hover(color))
