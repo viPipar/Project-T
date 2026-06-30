@@ -312,6 +312,8 @@ func play_attack_sequence(
 		await tw_mod.finished
 		
 		# Benturan! Modifier terserap ke dadu
+		var am_absorb = get_node_or_null("/root/AudioManager")
+		if am_absorb != null: am_absorb.play_sfx("number_absorb")
 		_mod_label.modulate.a = 0.0
 		
 		if _dice_visual.has_node("NumberLabel"):
@@ -363,6 +365,8 @@ func play_attack_sequence(
 	await tw_charge.finished
 	
 	# BENTURAN! (Partikel dan Screen Shake)
+	var am_clash = get_node_or_null("/root/AudioManager")
+	if am_clash != null: am_clash.play_sfx("clash_impact")
 	_spawn_clash_particles(_vs_row.global_position + Vector2(130, 25))
 	
 	var tw_shake = create_tween()
@@ -409,6 +413,14 @@ func play_attack_sequence(
 	# Muncul Teks Result Besar
 	_result_lbl.text = result
 	_result_lbl.add_theme_color_override("font_color", col)
+	var am_result = get_node_or_null("/root/AudioManager")
+	if am_result != null:
+		if is_crit:
+			am_result.play_sfx("result_crit")
+		elif is_hit:
+			am_result.play_sfx("result_hit")
+		else:
+			am_result.play_sfx("result_miss")
 	var tw_res := create_tween().set_ease(Tween.EASE_OUT)
 	tw_res.tween_property(_result_lbl, "modulate:a", 1.0, 0.25)
 	tw_res.parallel().tween_property(_result_lbl, "scale", Vector2(1.2, 1.2), 0.2)
@@ -456,6 +468,8 @@ func play_attack_sequence(
 				tw_mod.tween_property(_mod_label, "position", _dice_visual.position, 0.15).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_IN)
 				await tw_mod.finished
 				
+				var am_dmg_absorb = get_node_or_null("/root/AudioManager")
+				if am_dmg_absorb != null: am_dmg_absorb.play_sfx("number_absorb")
 				_mod_label.modulate.a = 0.0
 				if _dice_visual.has_node("NumberLabel"):
 					_dice_visual.get_node("NumberLabel").text = str(dmg_rolls[i] + dmg_mod)
@@ -466,6 +480,8 @@ func play_attack_sequence(
 				await absorb_tw.finished
 
 			# Emit per-die damage agar Bridge bisa menge-track (walau apply damage nya di akhir)
+			var am_dmg_hit = get_node_or_null("/root/AudioManager")
+			if am_dmg_hit != null: am_dmg_hit.play_sfx("sword_hit")
 			dice_hit_landed.emit(i, dmg_rolls[i] + dmg_mod)
 			
 			# Jeda sangat kecil antar lemparan dadu berikutnya
@@ -474,6 +490,8 @@ func play_attack_sequence(
 
 		_total_label.text = "%d damage" % dmg_total
 		_total_label.add_theme_color_override("font_color", Color(1.0, 0.62, 0.2))
+		var am_total = get_node_or_null("/root/AudioManager")
+		if am_total != null: am_total.play_sfx("damage_total_slam")
 		var tw_dmg := create_tween().set_ease(Tween.EASE_OUT)
 		tw_dmg.tween_property(_total_label, "modulate:a", 1.0, 0.3)
 		await get_tree().create_timer(1.0).timeout

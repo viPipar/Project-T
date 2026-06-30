@@ -84,6 +84,13 @@ func _build_layout() -> void:
 	_p1_viewport_container.size_flags_horizontal  = Control.SIZE_EXPAND_FILL
 	_p1_viewport_container.size_flags_vertical    = Control.SIZE_EXPAND_FILL
 	_p1_viewport_container.stretch                = true
+	
+	var pp_shader = load("res://assets/shaders/viewport_post_process.gdshader")
+	if pp_shader != null:
+		var mat1 = ShaderMaterial.new()
+		mat1.shader = pp_shader
+		_p1_viewport_container.material = mat1
+		
 	hbox.add_child(_p1_viewport_container)
 
 	_p1_viewport = SubViewport.new()
@@ -99,6 +106,12 @@ func _build_layout() -> void:
 	_p2_viewport_container.size_flags_horizontal  = Control.SIZE_EXPAND_FILL
 	_p2_viewport_container.size_flags_vertical    = Control.SIZE_EXPAND_FILL
 	_p2_viewport_container.stretch                = true
+	
+	if pp_shader != null:
+		var mat2 = ShaderMaterial.new()
+		mat2.shader = pp_shader
+		_p2_viewport_container.material = mat2
+		
 	hbox.add_child(_p2_viewport_container)
 
 	_p2_viewport = SubViewport.new()

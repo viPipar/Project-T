@@ -211,6 +211,9 @@ func start_roll(result: int, dice_type: String = "custom", roll_duration: float 
 	
 	# Mulai efek blur
 	_is_rolling = true
+	var am = get_node_or_null("/root/AudioManager")
+	if am != null:
+		am.play_sfx("dice_roll")
 	_roll_timer = 0.0
 	_roll_frame_idx = 0
 	if _current_rolls.size() > 0:
@@ -328,6 +331,16 @@ func show_result() -> void:
 	number_label.text = str(_final_result)
 	number_label.show()
 	
+	# Play sound based on outcome when number pops up
+	var am = get_node_or_null("/root/AudioManager")
+	if am != null:
+		if _outcome == "crit":
+			am.play_sfx("reveal_legendary")
+		elif _outcome == "miss":
+			am.play_sfx("ui_error")
+		else:
+			am.play_sfx("reveal_common")
+	
 	# Trigger landing VFX
 	_play_landing_vfx(_outcome)
 	
@@ -427,6 +440,9 @@ func _apply_camera_shake(p_id: int, duration: float, amp: float, horizontal_only
 
 
 func _spawn_ripple(size_mult: float = 1.0) -> void:
+	var am = get_node_or_null("/root/AudioManager")
+	if am != null:
+		am.play_sfx("dice_bounce")
 	var ripple = Sprite2D.new()
 	var grad_tex = GradientTexture2D.new()
 	grad_tex.fill = GradientTexture2D.FILL_RADIAL

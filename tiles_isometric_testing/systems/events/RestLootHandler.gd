@@ -63,6 +63,8 @@ func handle_rest_choice(player_id: int, option: int) -> void:
 						RunManager.p2_saved_slots[i] = clampi(RunManager.p2_saved_slots[i] + int(max_slots[i] * 0.5), 0, max_slots[i])
 					
 			EventNotifier.show_message("P%d Full Rest: +50%% HP & +50%% Resources" % player_id, Color.GREEN)
+			var am = get_node_or_null("/root/AudioManager")
+			if am != null: am.play_sfx("reveal_rare")
 			
 		1: # PARTIAL_REST (Option B: +25% HP + +100% resource restore)
 			print("[RestLootHandler] P%d selected Partial Rest." % player_id)
@@ -88,6 +90,8 @@ func handle_rest_choice(player_id: int, option: int) -> void:
 					RunManager.p2_saved_slots.clear()
 					
 			EventNotifier.show_message("P%d Partial Rest: +25%% HP & +100%% Resources" % player_id, Color.YELLOW_GREEN)
+			var am = get_node_or_null("/root/AudioManager")
+			if am != null: am.play_sfx("reveal_rare")
 			
 		2: # TREASURE SEARCH (Option C: 70% safe, 20% trap, 10% jackpot)
 			print("[RestLootHandler] P%d selected Treasure Search." % player_id)
@@ -103,6 +107,8 @@ func handle_rest_choice(player_id: int, option: int) -> void:
 						InventoryManager.add_item(player_id, item)
 				print("[RestLootHandler] Treasure Search Success: found %s" % str(items))
 				EventNotifier.show_message("Success! Found: %s" % str(items), Color.GOLD)
+				var am = get_node_or_null("/root/AudioManager")
+				if am != null: am.play_sfx("reveal_rare")
 			elif roll < 0.90:
 				# TRAP: -30% HP + Gain 1 random Common item
 				if hc != null and hc.has_method("take_damage"):
@@ -116,6 +122,8 @@ func handle_rest_choice(player_id: int, option: int) -> void:
 					InventoryManager.add_item(player_id, item)
 				print("[RestLootHandler] Treasure Search TRAP: -30% HP, got %s" % item)
 				EventNotifier.show_message("TRAP! Took damage but found Common: %s" % item, Color.ORANGE_RED)
+				var am = get_node_or_null("/root/AudioManager")
+				if am != null: am.play_sfx("ui_error")
 			else:
 				# JACKPOT: Gain 1 Legendary item (safe)
 				var legendaries = ["berserker_axe"]
@@ -126,6 +134,8 @@ func handle_rest_choice(player_id: int, option: int) -> void:
 					InventoryManager.add_item(player_id, item)
 				print("[RestLootHandler] Treasure Search JACKPOT: got Legendary %s" % item)
 				EventNotifier.show_message("JACKPOT! Found Legendary: %s!" % item, Color.GOLD)
+				var am = get_node_or_null("/root/AudioManager")
+				if am != null: am.play_sfx("reveal_legendary")
 				
 		3: # CURSED ITEM REMOVAL (Option D: purge cursed item, no healing/resources)
 			print("[RestLootHandler] P%d selected Cursed Item Removal." % player_id)
@@ -138,11 +148,15 @@ func handle_rest_choice(player_id: int, option: int) -> void:
 						InventoryManager.remove_item(player_id, item_id)
 						print("[RestLootHandler] Removed cursed item %s from P%d." % [item_id, player_id])
 						EventNotifier.show_message("Cursed Item Removed: %s purged!" % item_id, Color.PURPLE)
+						var am = get_node_or_null("/root/AudioManager")
+						if am != null: am.play_sfx("ui_cancel")
 						cursed_removed = true
 						break
 			if not cursed_removed:
 				print("[RestLootHandler] No cursed items found to remove.")
 				EventNotifier.show_message("No Cursed Items found in inventory.", Color.GRAY)
+				var am = get_node_or_null("/root/AudioManager")
+				if am != null: am.play_sfx("ui_error")
 
 # ── LOOT MINIGAME ────────────────────────────────────────────────────────────
 
@@ -156,9 +170,12 @@ func resolve_loot_minigame(player_id: int, choice_index: int, correct_index: int
 		if InventoryManager != null:
 			InventoryManager.add_item(player_id, "berserker_axe")
 		EventNotifier.show_message("Minigame Won! P%d got Legendary Item", Color.GOLD)
+		var am = get_node_or_null("/root/AudioManager")
+		if am != null: am.play_sfx("reveal_legendary")
 	else:
 		print("[RestLootHandler] P%d lost the minigame! Common Reward." % player_id)
 		if InventoryManager != null:
 			InventoryManager.add_item(player_id, "potion_small")
 		EventNotifier.show_message("Minigame Lost... P%d got Potion", Color.GRAY)
-
+		var am = get_node_or_null("/root/AudioManager")
+		if am != null: am.play_sfx("ui_error")

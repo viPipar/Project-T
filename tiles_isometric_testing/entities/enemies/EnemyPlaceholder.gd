@@ -357,8 +357,29 @@ func _on_turn_started(entity: Node, _pid: int) -> void:
 	if entity == self:
 		_is_my_turn = true
 		_update_tooltip_visibility()
+		restore_turn_outline()
 
 func _on_turn_ended(entity: Node) -> void:
 	if entity == self:
 		_is_my_turn = false
 		_update_tooltip_visibility()
+		set_outline(false)
+
+func restore_turn_outline() -> void:
+	if _is_my_turn and is_alive:
+		set_outline(true, Color(1.0, 0.3, 0.3), 1.5)
+	else:
+		set_outline(false)
+
+func set_outline(enabled: bool, color: Color = Color.WHITE, width: float = 1.0) -> void:
+	if sprite == null: return
+	if enabled:
+		var mat = ShaderMaterial.new()
+		mat.shader = load("res://assets/shaders/2d_outline_inline.gdshader")
+		mat.set_shader_parameter("color", color)
+		mat.set_shader_parameter("width", width)
+		mat.set_shader_parameter("inside", false)
+		mat.set_shader_parameter("add_margins", true)
+		sprite.material = mat
+	else:
+		sprite.material = null

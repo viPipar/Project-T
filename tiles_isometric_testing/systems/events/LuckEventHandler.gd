@@ -57,6 +57,8 @@ func select_choice(player_id: int, choice_index: int) -> void:
 func _on_timer_timeout() -> void:
 	print("[LuckEventHandler] Consensus timer expired! Forcing default option...")
 	EventNotifier.show_message("Consensus Timeout! Party leaves safely.", Color.ORANGE)
+	var am = get_node_or_null("/root/AudioManager")
+	if am != null: am.play_sfx("ui_cancel")
 	# Force option 1 (Leave safely)
 	_resolve_event(1)
 
@@ -88,6 +90,8 @@ func _resolve_event(choice_index: int) -> void:
 		
 		print("[LuckEventHandler] D20 Roll: %d + LCK mod: %d = %d vs DC: %d. Success: %s" % [roll, luck_mod, total_roll, dc, success])
 		EventNotifier.show_message("Luck Roll: %d + %d = %d vs DC %d" % [roll, luck_mod, total_roll, dc], Color.AQUAMARINE)
+		var am = get_node_or_null("/root/AudioManager")
+		if am != null: am.play_sfx("dice_roll")
 		
 		if success:
 			_apply_win_outcome()
@@ -142,6 +146,8 @@ func _apply_win_outcome() -> void:
 		
 		print("[LuckEventHandler] Win Outcome: 2 random items (%s) -> %s, %s" % [battle_type, item1, item2])
 		EventNotifier.show_message("Luck Win: Found %s and %s!" % [item1, item2], Color.GOLD)
+		var am = get_node_or_null("/root/AudioManager")
+		if am != null: am.play_sfx("reveal_rare")
 		if InventoryManager != null:
 			InventoryManager.add_item(1, item1)
 			InventoryManager.add_item(2, item2)
@@ -150,6 +156,8 @@ func _apply_win_outcome() -> void:
 		# 25% -> Full HP Restore (both players 100% HP)
 		print("[LuckEventHandler] Win Outcome: Full HP Restore")
 		EventNotifier.show_message("Luck Win: Full HP Restore for both players!", Color.GREEN)
+		var am = get_node_or_null("/root/AudioManager")
+		if am != null: am.play_sfx("victory")
 		for p in get_tree().get_nodes_in_group("players"):
 			var hc = p.get_node_or_null("HealthComponent")
 			if hc != null:
@@ -163,6 +171,8 @@ func _apply_win_outcome() -> void:
 		var item = EventDropGenerator.generate_drop("boss") # boss guarantees legendary
 		print("[LuckEventHandler] Win Outcome: 1 Legendary item -> %s" % item)
 		EventNotifier.show_message("Luck Win: Found Legendary %s!" % item, Color.GOLD)
+		var am = get_node_or_null("/root/AudioManager")
+		if am != null: am.play_sfx("reveal_legendary")
 		if InventoryManager != null:
 			InventoryManager.add_item(1, item)
 			
@@ -170,6 +180,8 @@ func _apply_win_outcome() -> void:
 		# 10% -> Gold Windfall (+200 Coin each player)
 		print("[LuckEventHandler] Win Outcome: +200 Coin each")
 		EventNotifier.show_message("Luck Win: Gold Windfall! +200 Coins each!", Color.YELLOW)
+		var am = get_node_or_null("/root/AudioManager")
+		if am != null: am.play_sfx("reveal_rare")
 		if CoinEconomy != null:
 			CoinEconomy.add_coins(1, 200)
 			CoinEconomy.add_coins(2, 200)
@@ -181,6 +193,8 @@ func _apply_win_outcome() -> void:
 		var attr_display = attr.replace("_stat", "").to_upper()
 		print("[LuckEventHandler] Win Outcome: Permanent +2 to %s" % attr_display)
 		EventNotifier.show_message("Luck Win: Permanent +2 to %s for both players!" % attr_display, Color.CYAN)
+		var am = get_node_or_null("/root/AudioManager")
+		if am != null: am.play_sfx("reveal_rare")
 		for p in get_tree().get_nodes_in_group("players"):
 			var stats = p.get_node_or_null("StatsComponent")
 			if stats != null:
@@ -195,6 +209,8 @@ func _apply_lose_outcome() -> void:
 		# 35% -> HP Penalty: -50% HP (both players)
 		print("[LuckEventHandler] Lose Outcome: -50% HP Penalty")
 		EventNotifier.show_message("Luck Failure: -50% HP Penalty for both players!", Color.RED)
+		var am = get_node_or_null("/root/AudioManager")
+		if am != null: am.play_sfx("ui_error")
 		for p in get_tree().get_nodes_in_group("players"):
 			var hc = p.get_node_or_null("HealthComponent")
 			if hc != null:
@@ -212,6 +228,8 @@ func _apply_lose_outcome() -> void:
 		var item = cursed_items[randi() % cursed_items.size()]
 		print("[LuckEventHandler] Lose Outcome: Cursed Item -> %s" % item)
 		EventNotifier.show_message("Luck Failure: Received Cursed Item %s!" % item, Color.PURPLE)
+		var am = get_node_or_null("/root/AudioManager")
+		if am != null: am.play_sfx("ui_error")
 		if InventoryManager != null:
 			InventoryManager.add_item(1, item)
 			
@@ -219,12 +237,16 @@ func _apply_lose_outcome() -> void:
 		# 20% -> Surprise Elite Battle
 		print("[LuckEventHandler] Lose Outcome: Surprise Elite Battle!")
 		EventNotifier.show_message("Luck Failure: Surprise Elite Battle Ambush!", Color.DARK_RED)
+		var am = get_node_or_null("/root/AudioManager")
+		if am != null: am.play_sfx("ui_error")
 		EventBus.start_combat.emit(NodeGraph.NodeType.ELITE)
 		
 	elif roll < 0.95:
 		# 15% -> Coin Loss: -30% Coin from each wallet
 		print("[LuckEventHandler] Lose Outcome: -30% Coin Loss")
 		EventNotifier.show_message("Luck Failure: -30% Coin Loss from wallets!", Color.ORANGE)
+		var am = get_node_or_null("/root/AudioManager")
+		if am != null: am.play_sfx("ui_cancel")
 		if CoinEconomy != null:
 			var p1_bal = CoinEconomy.get_balance(1)
 			var p2_bal = CoinEconomy.get_balance(2)
@@ -238,6 +260,8 @@ func _apply_lose_outcome() -> void:
 		var attr_display = attr.replace("_stat", "").to_upper()
 		print("[LuckEventHandler] Lose Outcome: -3 Attribute Debuff to %s" % attr_display)
 		EventNotifier.show_message("Luck Failure: Debuffed -3 %s (Removable at Rest campfire)" % attr_display, Color.MAGENTA)
+		var am = get_node_or_null("/root/AudioManager")
+		if am != null: am.play_sfx("ui_error")
 		for p in get_tree().get_nodes_in_group("players"):
 			p.set_meta("luck_debuff_attr", attr)
 			p.set_meta("luck_debuff_amount", -3)

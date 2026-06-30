@@ -135,7 +135,15 @@ func _apply_hit_impact(target: Node, is_crit: bool) -> void:
 	var tw = create_tween()
 	tw.tween_interval(hold_time)
 	tw.tween_property(flash_mat, "shader_parameter/flash_modifier", 0.0, 0.1)
-	tw.tween_callback(func(): sprite.material = null)
+	tw.tween_callback(func(): 
+		if is_instance_valid(target):
+			if target.has_method("restore_turn_outline"):
+				target.restore_turn_outline()
+			else:
+				sprite.material = null
+		else:
+			sprite.material = null
+	)
 	
 	# Knockback Wiggle
 	var start_pos = sprite.position

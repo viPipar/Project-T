@@ -33,6 +33,7 @@ extends CharacterBody2D
 
 var anim_sprite: AnimatedSprite2D
 var _is_acting: bool = false
+var _is_my_turn: bool = false
 
 var _facing:  String   = "down"
 var grid_pos: Vector2i = Vector2i.ZERO
@@ -70,6 +71,10 @@ func _ready() -> void:
 	# Subscribe ke sinyal blok input dari CombatTestBridge via EventBus
 	EventBus.combat_input_blocked.connect(_on_combat_input_blocked)
 	EventBus.action_wheel_selected.connect(_on_action_wheel_selected)
+	if EventBus.has_signal("turn_started"):
+		EventBus.turn_started.connect(_on_turn_started)
+	if EventBus.has_signal("turn_ended"):
+		EventBus.turn_ended.connect(_on_turn_ended)
 
 	# Subscribe ke sinyal damaged dari HealthComponent untuk animasi hit
 	if health != null and not health.damaged.is_connected(_on_damaged):
@@ -694,3 +699,33 @@ func activate_haki_aura() -> void:
 func deactivate_haki_aura() -> void:
 	if is_instance_valid(_haki_aura) and _haki_aura.has_method("deactivate"):
 		_haki_aura.deactivate()
+
+func _on_turn_started(entity: Node, _pid: int) -> void:
+	if entity == self:
+		_is_my_turn = true
+		restore_turn_outline()
+
+func _on_turn_ended(entity: Node) -> void:
+	if entity == self:
+		_is_my_turn = false
+		set_outline(false)
+
+func restore_turn_outline() -> void:
+	if _is_my_turn and not is_downed():
+		var outline_color = Color("#5cd65c") if player_id == 1 else Color("#FFD700")
+		set_outline(true, outline_color, 1.5)
+	else:
+		set_outline(false)
+
+func set_outline(enabled: bool, color: Color = Color.WHITE, width: float = 1.0) -> void:
+	if anim_sprite == null: return
+	if enabled:
+		var mat = ShaderMaterial.new()
+		mat.shader = load("res://assets/shaders/2d_outline_inline.gdshader")
+		mat.set_shader_parameter("color", color)
+		mat.set_shader_parameter("width", width)
+		mat.set_shader_parameter("inside", false)
+		mat.set_shader_parameter("add_margins", true)
+		anim_sprite.material = mat
+	else:
+		anim_sprite.material = null

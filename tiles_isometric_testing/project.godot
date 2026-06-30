@@ -39,6 +39,8 @@ ItemEffectApplier="*res://systems/items/ItemEffectApplier.gd"
 EventNotifier="*res://autoloads/EventNotifier.gd"
 RunManager="*res://systems/progression/RunManager.gd"
 CoinEconomy="*res://systems/shop/CoinEconomy.gd"
+AudioManager="*res://autoloads/AudioManager.gd"
+
 
 [display]
 

@@ -2,3 +2,66 @@
 .godot/
 /android/
 .vscode
+
+# Ignore all files recursively in sfx_packs
+/assets/sfx_packs/**/*
+!/assets/sfx_packs/**/
+
+# But allow the following used sound assets (and their Godot .import companions):
+!/assets/sfx_packs/JDSherbert - Ultimate UI SFX Pack (FREE)/Stereo/ogg/JDSherbert - Ultimate UI SFX Pack - Cursor - 1.ogg*
+!/assets/sfx_packs/JDSherbert - Ultimate UI SFX Pack (FREE)/Stereo/ogg/JDSherbert - Ultimate UI SFX Pack - Select - 1.ogg*
+!/assets/sfx_packs/JDSherbert - Ultimate UI SFX Pack (FREE)/Stereo/ogg/JDSherbert - Ultimate UI SFX Pack - Cancel - 1.ogg*
+!/assets/sfx_packs/JDSherbert - Ultimate UI SFX Pack (FREE)/Stereo/ogg/JDSherbert - Ultimate UI SFX Pack - Popup Open - 1.ogg*
+!/assets/sfx_packs/JDSherbert - Ultimate UI SFX Pack (FREE)/Stereo/ogg/JDSherbert - Ultimate UI SFX Pack - Error - 1.ogg*
+
+!/assets/sfx_packs/Free Fantasy SFX Pack By TomMusic/OGG Files/SFX/Footsteps/Dirt/Dirt Walk 1.ogg*
+!/assets/sfx_packs/Free Fantasy SFX Pack By TomMusic/OGG Files/SFX/Footsteps/Dirt/Dirt Walk 2.ogg*
+!/assets/sfx_packs/Free Fantasy SFX Pack By TomMusic/OGG Files/SFX/Footsteps/Dirt/Dirt Walk 3.ogg*
+!/assets/sfx_packs/Free Fantasy SFX Pack By TomMusic/OGG Files/SFX/Footsteps/Dirt/Dirt Walk 4.ogg*
+!/assets/sfx_packs/Free Fantasy SFX Pack By TomMusic/OGG Files/SFX/Footsteps/Dirt/Dirt Walk 5.ogg*
+
+!/assets/sfx_packs/Free Fantasy SFX Pack By TomMusic/OGG Files/SFX/Attacks/Sword Attacks Hits and Blocks/Sword Attack 1.ogg*
+!/assets/sfx_packs/Free Fantasy SFX Pack By TomMusic/OGG Files/SFX/Attacks/Sword Attacks Hits and Blocks/Sword Impact Hit 1.ogg*
+
+!/assets/sfx_packs/Free Fantasy SFX Pack By TomMusic/OGG Files/SFX/Spells/Fireball 1.ogg*
+!/assets/sfx_packs/Free Fantasy SFX Pack By TomMusic/OGG Files/SFX/Spells/Waterspray 1.ogg*
+!/assets/sfx_packs/Free Fantasy SFX Pack By TomMusic/OGG Files/SFX/Spells/Rock Meteor Throw 1.ogg*
+!/assets/sfx_packs/Free Fantasy SFX Pack By TomMusic/OGG Files/SFX/Spells/Spell Impact 1.ogg*
+!/assets/sfx_packs/Free Fantasy SFX Pack By TomMusic/OGG Files/SFX/Spells/Rock Meteor Swarm 1.ogg*
+
+!/assets/sfx_packs/Free Fantasy SFX Pack By TomMusic/OGG Files/BGS Loops/Forest Day/Forest Day.ogg*
+!/assets/sfx_packs/Free Fantasy SFX Pack By TomMusic/OGG Files/BGS Loops/Forest Day/Forest Day Storm.ogg*
+
+!/assets/sfx_packs/400 Sound Packs/Musical Effects/8_bit_chime_quick.wav*
+!/assets/sfx_packs/400 Sound Packs/Musical Effects/grand_piano_level_complete.wav*
+!/assets/sfx_packs/400 Sound Packs/Musical Effects/grand_piano_defeated.wav*
+!/assets/sfx_packs/400 Sound Packs/Musical Effects/8_bit_chime_positive.wav*
+!/assets/sfx_packs/400 Sound Packs/Musical Effects/brass_chime_positive.wav*
+!/assets/sfx_packs/400 Sound Packs/Musical Effects/grand_piano_positive_long.wav*
+!/assets/sfx_packs/400 Sound Packs/Musical Effects/music_box_inn.wav*
+!/assets/sfx_packs/400 Sound Packs/Musical Effects/brass_chime_quick.wav*
+
+!/assets/sfx_packs/400 Sound Packs/Items/coin_collect.wav*
+!/assets/sfx_packs/400 Sound Packs/Items/coin_jingle_small.wav*
+
+!/assets/sfx_packs/400 Sound Packs/Materials/wood_small_hollow.wav*
+!/assets/sfx_packs/400 Sound Packs/Materials/metal_clang.wav*
+!/assets/sfx_packs/400 Sound Packs/Materials/glass_ping_small.wav*
+
+!/assets/sfx_packs/400 Sound Packs/UI/pop_1.wav*
+!/assets/sfx_packs/400 Sound Packs/UI/pop_3.wav*
+!/assets/sfx_packs/400 Sound Packs/UI/sci_fi_confirm.wav*
+!/assets/sfx_packs/400 Sound Packs/UI/sci_fi_error.wav*
+!/assets/sfx_packs/400 Sound Packs/UI/sci_fi_select_big.wav*
+
+!/assets/sfx_packs/Super Dialogue Audio Pack v1/Step 2 - Audio Files/7 - Damage/Female/Karen Cenon/damage_1_karen.wav*
+!/assets/sfx_packs/Super Dialogue Audio Pack v1/Step 2 - Audio Files/7 - Damage/Female/Karen Cenon/damage_2_karen.wav*
+!/assets/sfx_packs/Super Dialogue Audio Pack v1/Step 2 - Audio Files/7 - Damage/Female/Karen Cenon/damage_3_karen.wav*
+!/assets/sfx_packs/Super Dialogue Audio Pack v1/Step 2 - Audio Files/7 - Damage/Male/Sean Lenhart/damage_1_sean.wav*
+!/assets/sfx_packs/Super Dialogue Audio Pack v1/Step 2 - Audio Files/7 - Damage/Male/Sean Lenhart/damage_2_sean.wav*
+!/assets/sfx_packs/Super Dialogue Audio Pack v1/Step 2 - Audio Files/7 - Damage/Male/Sean Lenhart/damage_3_sean.wav*
+
+!/assets/sfx_packs/Super Dialogue Audio Pack v1/Step 2 - Audio Files/8 - Death/Female/Karen Cenon/death_1_karen.wav*
+!/assets/sfx_packs/Super Dialogue Audio Pack v1/Step 2 - Audio Files/8 - Death/Female/Karen Cenon/death_2_karen.wav*
+!/assets/sfx_packs/Super Dialogue Audio Pack v1/Step 2 - Audio Files/8 - Death/Male/Sean Lenhart/death_1_sean.wav*
+!/assets/sfx_packs/Super Dialogue Audio Pack v1/Step 2 - Audio Files/8 - Death/Male/Sean Lenhart/death_2_sean.wav*

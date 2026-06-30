@@ -64,6 +64,8 @@ func _apply_neobrutalism() -> void:
 
 func show_screen(screen_scene_path: String) -> void:
 	visible = true
+	var am = get_node_or_null("/root/AudioManager")
+	if am != null: am.play_sfx("ui_open")
 	
 	if current_screen != null:
 		current_screen.queue_free()
@@ -78,6 +80,8 @@ func show_screen(screen_scene_path: String) -> void:
 
 func hide_ui() -> void:
 	visible = false
+	var am = get_node_or_null("/root/AudioManager")
+	if am != null: am.play_sfx("ui_cancel")
 
 func _update_wallets() -> void:
 	if CoinEconomy != null:

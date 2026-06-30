@@ -10,6 +10,13 @@ func _ready() -> void:
 	hide()
 
 func display(value: Variant, type: String = "damage", player_id: int = 0) -> void:
+	var am = get_node_or_null("/root/AudioManager")
+	if am != null:
+		if type == "crit":
+			am.play_sfx("text_pop_crit")
+		else:
+			am.play_sfx("text_pop")
+			
 	var font = load(FONT_PATH)
 	_label = Label.new()
 	_bg_label = Label.new()

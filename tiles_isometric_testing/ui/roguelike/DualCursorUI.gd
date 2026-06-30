@@ -179,6 +179,8 @@ func _update_hover(player_id: int, pos: Vector2) -> void:
 			var other_hovered = p2_hovered_node if player_id == 1 else p1_hovered_node
 			if other_hovered != found_node:
 				_set_node_hover_state(found_node, true)
+				var am = get_node_or_null("/root/AudioManager")
+				if am != null: am.play_sfx("ui_hover")
 			
 		if player_id == 1:
 			p1_hovered_node = found_node
