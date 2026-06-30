@@ -80,21 +80,25 @@ func _ready() -> void:
 	path_handler = PathHandler.new()
 	path_handler.init(graph)
 	
-	# Precalculate positions so both maps look identical
+	# Force map contents to larger horizontal dimensions
+	map_content_p1.custom_minimum_size = Vector2(2800, 1080)
+	map_content_p2.custom_minimum_size = Vector2(2800, 1080)
+	
+	# Precalculate positions so both maps look identical (Horizontal left-to-right progression)
 	var node_positions: Dictionary = {}
-	var layer_height = 200
-	var current_y = 1800
+	var layer_width = 250
+	var current_x = 150
 	for layer in graph.layers:
 		var node_count = layer.size()
-		var spacing_x = 1920 / (node_count + 1)
+		var spacing_y = 1080 / (node_count + 1)
 		var is_boss_layer = (layer[0].type == NodeGraph.NodeType.BOSS)
 		
 		for i in range(node_count):
-			var center_x = spacing_x * (i + 1)
-			var jitter_x = randf_range(-40.0, 40.0) if not is_boss_layer else 0.0
-			var jitter_y = randf_range(-30.0, 30.0) if not is_boss_layer else 0.0
-			node_positions[layer[i].id] = Vector2(center_x + jitter_x, current_y + jitter_y)
-		current_y -= layer_height
+			var center_y = spacing_y * (i + 1)
+			var jitter_x = randf_range(-30.0, 30.0) if not is_boss_layer else 0.0
+			var jitter_y = randf_range(-40.0, 40.0) if not is_boss_layer else 0.0
+			node_positions[layer[i].id] = Vector2(current_x + jitter_x, center_y + jitter_y)
+		current_x += layer_width
 		
 	_generate_map_ui(map_content_p1, graph, node_positions, node_buttons_p1)
 	_generate_map_ui(map_content_p2, graph, node_positions, node_buttons_p2)
@@ -118,13 +122,13 @@ func _update_node_visuals() -> void:
 
 func _get_icon_for_type(type: NodeGraph.NodeType) -> String:
 	match type:
-		NodeGraph.NodeType.BATTLE: return "⚔️"
-		NodeGraph.NodeType.ELITE: return "💀"
-		NodeGraph.NodeType.BOSS: return "👹"
-		NodeGraph.NodeType.REST: return "🔥"
-		NodeGraph.NodeType.SHOP: return "💰"
-		NodeGraph.NodeType.EVENT: return "❓"
-		NodeGraph.NodeType.LOOT: return "🎁"
+		NodeGraph.NodeType.BATTLE: return "Battle"
+		NodeGraph.NodeType.ELITE: return "Elite"
+		NodeGraph.NodeType.BOSS: return "Boss"
+		NodeGraph.NodeType.REST: return "Camp"
+		NodeGraph.NodeType.SHOP: return "Shop"
+		NodeGraph.NodeType.EVENT: return "Luck\nEvent"
+		NodeGraph.NodeType.LOOT: return "Loot"
 		_: return "?"
 
 func _generate_map_ui(parent_content: Control, graph: NodeGraph, positions: Dictionary, dict: Dictionary) -> void:
@@ -138,9 +142,11 @@ func _generate_map_ui(parent_content: Control, graph: NodeGraph, positions: Dict
 			var type_name = NodeGraph.NodeType.keys()[map_node.type]
 			btn.text = _get_icon_for_type(map_node.type)
 			btn.tooltip_text = type_name
+			btn.autowrap_mode = TextServer.AUTOWRAP_WORD
 			
-			btn.custom_minimum_size = Vector2(80, 80)
+			btn.custom_minimum_size = Vector2(100, 100)
 			btn.pivot_offset = btn.custom_minimum_size / 2.0
+			btn.add_theme_font_size_override("font_size", 14)
 			
 			var node_color = NeobrutalStyle.COLOR_CYAN
 			match map_node.type:
@@ -153,9 +159,9 @@ func _generate_map_ui(parent_content: Control, graph: NodeGraph, positions: Dict
 				
 			NeobrutalStyle.apply_to_button(btn, node_color)
 			
-			# Apply precalculated position (centered)
+			# Apply precalculated position (centered on both axes)
 			var pos = positions[map_node.id]
-			btn.position = Vector2(pos.x - (btn.custom_minimum_size.x / 2.0), pos.y)
+			btn.position = pos - (btn.custom_minimum_size / 2.0)
 			
 			parent_content.add_child(btn)
 			dict[map_node.id] = btn
