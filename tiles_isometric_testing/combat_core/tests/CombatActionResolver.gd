@@ -204,35 +204,65 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 
 	# ── Mainkan Animasi Caster & UI ──
 	bridge._set_player_busy(pid, true)
-	if target != null and attacker.is_in_group("enemies"):
+	
+	var _played_attack := false
+	var _knockback_done := false
+	var is_player = attacker.is_in_group("players")
+	
+	# Function to handle dash movement
+	var execute_dash = func():
+		if hit and ability != null and ability.has_method("get_dash_destination"):
+			var dash_dest: Vector2i = ability.get_dash_destination(attacker, target)
+			if dash_dest.x >= 0:
+				var old_pos: Vector2i = attacker.get("grid_pos")
+				if old_pos != dash_dest:
+					var t_pos: Vector2i = target.get("grid_pos") if target != null else Vector2i(-1, -1)
+					# Knockback FIRST to clear the tile if we are dashing into them
+					if dash_dest == t_pos and ability.knockback_tiles > 0 and not _knockback_done:
+						ForcedMovementResolver.knockback_from_attack(attacker, target, ability.knockback_tiles)
+						_knockback_done = true
+					# Single fast blitz dash to destination
+					if is_instance_valid(GridManager) and GridManager.move_entity(old_pos, dash_dest, attacker):
+						attacker.set("grid_pos", dash_dest)
+						var end_px = IsoUtils.world_to_iso(dash_dest)
+						attacker.z_index = IsoUtils.get_depth(dash_dest)
+						var dash_tw = attacker.create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+						dash_tw.tween_property(attacker, "position", end_px, 0.15)
+						await dash_tw.finished
+						EventBus.player_moved.emit(attacker, old_pos, dash_dest)
+	
+	if not is_player and target != null:
+		# ENEMY: Attack first, dash, then dice
+		if is_instance_valid(attacker) and attacker.has_method("play_attack"):
+			attacker.play_attack(_base_ability_id)
+			_played_attack = true
+			await get_tree().create_timer(0.6, false).timeout
+		
+		await execute_dash.call()
 		await bridge.vfx_controller._play_enemy_dice_sequence(attacker, raw, total, thresh, hit_modifier, hit, crit, pid)
 
-	var is_player = attacker.is_in_group("players")
 	if is_player:
+		# PLAYER: Dice overlay first
 		var overlay = bridge._overlay_p1 if pid == 1 else bridge._overlay_p2
 		if overlay != null:
 			if target != null:
 				await overlay.play_attack_sequence(attacker, target, hit_result, dmg_rolls, dmg_total, _dmg_formula, dmg_mod)
 			else:
 				await overlay.play_attack_sequence(attacker, attacker, hit_result, dmg_rolls, dmg_total, _dmg_formula, dmg_mod)
-				
-		var char_sprite = attacker.get_node_or_null("CharacterSprite")
-		if char_sprite and char_sprite.has_method("play_attack"):
-			if ability == null or not ability.is_projectile:
-				var is_dash = false
-				if ability != null and ability.has_method("get_dash_destination"):
-					var dash_dest = ability.get_dash_destination(attacker, target)
-					if dash_dest.x >= 0:
-						is_dash = true
-				char_sprite.play_attack(is_dash)
-				await char_sprite.attack_finished
+		
+		# Then Attack & Dash
+		if not _played_attack and is_instance_valid(attacker) and attacker.has_method("play_attack"):
+			attacker.play_attack(_base_ability_id)
+			_played_attack = true
+			await get_tree().create_timer(0.6, false).timeout
+			
+		await execute_dash.call()
 
+	# Projectile VFX
 	if ability != null and ability.is_projectile:
-		if is_player:
-			var char_sprite = attacker.get_node_or_null("CharacterSprite")
-			if char_sprite and char_sprite.has_method("play_attack"):
-				char_sprite.play_attack(false)
-				await get_tree().create_timer(0.2).timeout
+		if not _played_attack and is_instance_valid(attacker) and attacker.has_method("play_attack"):
+			attacker.play_attack(_base_ability_id)
+			await get_tree().create_timer(0.2).timeout
 		if target != null:
 			await bridge.vfx_controller._spawn_magic_projectile(attacker, target, ability.element_tag)
 
@@ -281,7 +311,7 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 					if ability.status_effect != "":
 						EventBus.on_status_applied.emit(t, ability.status_effect, ability.status_duration, ability.status_stacks)
 				
-				if kb_tiles != 0:
+				if kb_tiles != 0 and not _knockback_done:
 					var _t_pos = t.get("grid_pos")
 					var diff = _t_pos - a_pos
 					var dir = Vector2i.RIGHT
