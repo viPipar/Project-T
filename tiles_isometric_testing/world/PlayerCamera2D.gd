@@ -26,18 +26,19 @@ extends Camera2D
 ## Batas pan dari titik asal (0 = tidak terbatas)
 @export var max_pan_distance: float = 2000.0
 
-# Target posisi kamera (smooth lerp ke sini)
 var _target_pos: Vector2 = Vector2.ZERO
-
-# Posisi asal (saat kamera di-spawn)
 var _origin: Vector2 = Vector2.ZERO
+
+var _shake_tween: Tween
+var _shake_offset: Vector2 = Vector2.ZERO
+var _trauma: float = 0.0
+var _trauma_decay: float = 3.0
 
 
 func _ready() -> void:
 	process_priority = -10
 	_origin = position
 	_target_pos = position
-	# Nonaktifkan dulu — SplitScreenManager yang akan make_current()
 	enabled = false
 
 
@@ -45,8 +46,26 @@ func _process(delta: float) -> void:
 	if not enabled:
 		return
 	_handle_pan_input(delta)
-	# Smooth lerp ke target
-	position = position.lerp(_target_pos, lerp_speed * delta)
+	var smooth_pos = position.lerp(_target_pos, lerp_speed * delta)
+
+	if _trauma > 0.01:
+		var shake_power = _trauma * _trauma * 80.0
+		_shake_offset = Vector2(
+			randf_range(-shake_power, shake_power),
+			randf_range(-shake_power, shake_power)
+		)
+		_trauma = maxf(0, _trauma - _trauma_decay * delta)
+		offset = _shake_offset
+	else:
+		_trauma = 0.0
+		offset = offset.lerp(Vector2.ZERO, delta * 15.0)
+
+	position = smooth_pos
+
+
+func shake(intensity: float = 0.5, duration: float = 0.3) -> void:
+	_trauma = clampf(_trauma + intensity, 0.0, 1.0)
+	_trauma_decay = 1.0 / duration if duration > 0 else 3.0
 
 
 func _handle_pan_input(delta: float) -> void:

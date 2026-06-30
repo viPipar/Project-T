@@ -65,3 +65,9 @@
 !/assets/sfx_packs/Super Dialogue Audio Pack v1/Step 2 - Audio Files/8 - Death/Female/Karen Cenon/death_2_karen.wav*
 !/assets/sfx_packs/Super Dialogue Audio Pack v1/Step 2 - Audio Files/8 - Death/Male/Sean Lenhart/death_1_sean.wav*
 !/assets/sfx_packs/Super Dialogue Audio Pack v1/Step 2 - Audio Files/8 - Death/Male/Sean Lenhart/death_2_sean.wav*
+
+# Unused music (loaded by BGM_PATHS but never played)
+/assets/music/Victory.mp3
+/assets/music/Death.mp3
+/assets/music/Complete.mp3
+/assets/music/Strange.mp3

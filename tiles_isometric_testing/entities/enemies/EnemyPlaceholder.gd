@@ -28,6 +28,7 @@ var grid_pos: Vector2i = Vector2i.ZERO
 var current_hp: int = 30
 var is_alive: bool = true
 var _death_started: bool = false
+var _noise_tex: NoiseTexture2D = null
 var _hovering_players: Dictionary = {} # int -> bool
 var _is_my_turn: bool = false
 
@@ -203,13 +204,41 @@ func _die(killer: Node = null, emit_bus: bool = true) -> void:
 	print("[%s] Kalah." % enemy_name)
 	if emit_bus and EventBus != null:
 		EventBus.entity_died.emit(self, killer)
-	if sprite != null:
-		sprite.modulate = Color(0.3, 0.3, 0.3, 0.5)
 	if GridManager.get_entity_at(grid_pos) == self:
 		GridManager.unregister_entity(grid_pos)
 	remove_from_group("enemies")
-	await get_tree().create_timer(0.8).timeout
+
+	if sprite != null:
+		_play_dissolve_death()
+		await get_tree().create_timer(1.2).timeout
+	else:
+		await get_tree().create_timer(0.4).timeout
 	queue_free()
+
+
+func _play_dissolve_death() -> void:
+	if sprite == null:
+		return
+	var mat = ShaderMaterial.new()
+	mat.shader = load("res://assets/shaders/2d_dissolve_with_burn_edge.gdshader")
+	
+	if _noise_tex == null:
+		var noise = FastNoiseLite.new()
+		noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+		noise.frequency = 0.08
+		_noise_tex = NoiseTexture2D.new()
+		_noise_tex.noise = noise
+		_noise_tex.width = 256
+		_noise_tex.height = 256
+	mat.set_shader_parameter("dissolve_texture", _noise_tex)
+	mat.set_shader_parameter("dissolve_value", 0.0)
+	mat.set_shader_parameter("burn_size", 0.06)
+	mat.set_shader_parameter("burn_color", Color(1.0, 0.3, 0.0, 1.0))
+	sprite.material = mat
+	
+	var tw = create_tween()
+	tw.tween_method(func(v): mat.set_shader_parameter("dissolve_value", v), 0.0, 1.0, 0.9).set_ease(Tween.EASE_IN)
+	tw.parallel().tween_method(func(v): mat.set_shader_parameter("burn_color", Color(1.0, 0.3, 0.0, 1.0 - v * 0.8)), 0, 1, 0.9)
 
 
 # -----------------------------------------------------------------------------
@@ -246,6 +275,11 @@ func _update_tooltip_visibility() -> void:
 			ap = stats.get_action_points()
 			mp = stats.get_stat("mov")
 		tooltip.show_for(enemy_name, current_hp, max_hp, armor, ap, mp, layer_mask)
+
+
+func apply_wind_sway(strength: float = 60.0) -> void:
+	if sprite == null: return
+	ShaderEffects.apply_wind_sway(sprite, strength)
 
 
 func play_attack(ability_id: String) -> void:
@@ -357,29 +391,8 @@ func _on_turn_started(entity: Node, _pid: int) -> void:
 	if entity == self:
 		_is_my_turn = true
 		_update_tooltip_visibility()
-		restore_turn_outline()
 
 func _on_turn_ended(entity: Node) -> void:
 	if entity == self:
 		_is_my_turn = false
 		_update_tooltip_visibility()
-		set_outline(false)
-
-func restore_turn_outline() -> void:
-	if _is_my_turn and is_alive:
-		set_outline(true, Color(1.0, 0.3, 0.3), 1.5)
-	else:
-		set_outline(false)
-
-func set_outline(enabled: bool, color: Color = Color.WHITE, width: float = 1.0) -> void:
-	if sprite == null: return
-	if enabled:
-		var mat = ShaderMaterial.new()
-		mat.shader = load("res://assets/shaders/2d_outline_inline.gdshader")
-		mat.set_shader_parameter("color", color)
-		mat.set_shader_parameter("width", width)
-		mat.set_shader_parameter("inside", false)
-		mat.set_shader_parameter("add_margins", true)
-		sprite.material = mat
-	else:
-		sprite.material = null

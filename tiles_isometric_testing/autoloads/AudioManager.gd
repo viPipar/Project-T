@@ -60,39 +60,37 @@ const SFX_PATHS = {
 }
 
 const BGM_PATHS = {
-	"menu_map": "res://assets/sfx_packs/Free Fantasy SFX Pack By TomMusic/OGG Files/BGS Loops/Forest Day/Forest Day.ogg",
-	"combat": "res://assets/sfx_packs/Free Fantasy SFX Pack By TomMusic/OGG Files/BGS Loops/Forest Day/Forest Day Storm.ogg",
-	"shop_rest": "res://assets/sfx_packs/400 Sound Packs/Musical Effects/music_box_inn.wav"
+	"victory": "res://assets/music/Victory.mp3",
+	"death_track": "res://assets/music/Death.mp3",
+	"complete": "res://assets/music/Complete.mp3",
+	"strange": "res://assets/music/Strange.mp3"
 }
 
+var ambient_tracks: Array[String] = []
+var action_tracks: Array[String] = []
+var light_ambient_tracks: Array[String] = []
+var night_ambient_tracks: Array[String] = []
+
 func _ready() -> void:
-	# Keep playing when scene transitions or tree changes
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	
-	# Instantiate BGM player
+
 	bgm_player = AudioStreamPlayer.new()
 	bgm_player.name = "BGMPlayer"
 	add_child(bgm_player)
-	
-	# Instantiate SFX players pool
+
 	for i in range(pool_size):
 		var p = AudioStreamPlayer.new()
 		p.name = "SFXPlayer_%d" % i
 		add_child(p)
 		sfx_pool.append(p)
-		
-	# Preload all sounds
+
 	_load_resources()
-	
-	# Connect to global events
 	_connect_event_bus()
-	
-	# Hook globally to UI buttons
+
 	get_tree().node_added.connect(_on_node_added)
 	_hook_existing_buttons(get_tree().root)
-	
-	# Start playing default menu/map BGM
-	play_bgm("menu_map")
+
+	play_random_ambient()
 
 func _load_resources() -> void:
 	for key in SFX_PATHS.keys():
@@ -101,13 +99,42 @@ func _load_resources() -> void:
 			sound_effects[key] = load(path)
 		else:
 			push_warning("[AudioManager] SFX path not found: %s" % path)
-			
+
 	for key in BGM_PATHS.keys():
 		var path = BGM_PATHS[key]
 		if ResourceLoader.exists(path):
 			bgm_tracks[key] = load(path)
 		else:
 			push_warning("[AudioManager] BGM path not found: %s" % path)
+
+	for i in range(1, 11):
+		var name_str = "Ambient %d.mp3" % i
+		if i == 10:
+			name_str = "Ambient 10 .mp3"
+		var path = "res://assets/music/" + name_str
+		if ResourceLoader.exists(path):
+			var key = "ambient_%d" % i
+			bgm_tracks[key] = load(path)
+			ambient_tracks.append(key)
+	for i in range(1, 6):
+		var path = "res://assets/music/Light Ambient %d (Loop).mp3" % i
+		if ResourceLoader.exists(path):
+			var key = "light_ambient_%d" % i
+			bgm_tracks[key] = load(path)
+			light_ambient_tracks.append(key)
+	for i in range(1, 6):
+		var suffix = ".mp3" if i == 1 else " (Loop).mp3"
+		var path = "res://assets/music/Night Ambient %d%s" % [i, suffix]
+		if ResourceLoader.exists(path):
+			var key = "night_ambient_%d" % i
+			bgm_tracks[key] = load(path)
+			night_ambient_tracks.append(key)
+	for i in range(1, 6):
+		var path = "res://assets/music/Action %d (Loop).mp3" % i
+		if ResourceLoader.exists(path):
+			var key = "action_%d" % i
+			bgm_tracks[key] = load(path)
+			action_tracks.append(key)
 
 func play_sfx(sound_name: String) -> void:
 	if not sound_effects.has(sound_name):
@@ -140,13 +167,18 @@ func play_bgm(track_name: String, fade_sec: float = 0.5) -> void:
 	if stream == null:
 		return
 		
-	# Loop setting for BGM
-	if stream is AudioStreamOggVorbis:
+	if stream is AudioStreamMP3:
 		stream.loop = true
+		stream.loop_offset = 0.0
+	elif stream is AudioStreamOggVorbis:
+		stream.loop = true
+		stream.loop_offset = 0.0
 	elif stream.has_method("set_loop_mode"):
-		stream.set_loop_mode(1) # LOOP_FORWARD
+		stream.set_loop_mode(1)
 	elif "loop_mode" in stream:
 		stream.set("loop_mode", 1)
+	elif "loop" in stream:
+		stream.set("loop", true)
 		
 	if bgm_player.playing and bgm_player.stream == stream:
 		return # Already playing this track
@@ -163,6 +195,23 @@ func play_bgm(track_name: String, fade_sec: float = 0.5) -> void:
 		bgm_player.stream = stream
 		bgm_player.volume_db = 0.0
 		bgm_player.play()
+
+func play_random_ambient() -> void:
+	var pool = ambient_tracks + light_ambient_tracks + night_ambient_tracks
+	if pool.is_empty():
+		push_warning("[AudioManager] No ambient tracks loaded")
+		return
+	var key = pool[randi() % pool.size()]
+	play_bgm(key)
+
+
+func play_random_action() -> void:
+	if action_tracks.is_empty():
+		push_warning("[AudioManager] No action tracks loaded")
+		return
+	var key = action_tracks[randi() % action_tracks.size()]
+	play_bgm(key)
+
 
 func stop_bgm(fade_sec: float = 0.5) -> void:
 	if fade_sec > 0 and bgm_player.playing:
@@ -222,15 +271,14 @@ func _connect_event_bus() -> void:
 		coin_econ.balance_changed.connect(_on_coin_balance_changed)
 
 func _on_combat_started(_combatants: Array) -> void:
-	play_bgm("combat")
+	play_random_action()
 
 func _on_combat_ended(result: String) -> void:
 	if result.to_lower() == "victory":
 		play_sfx("victory")
 	else:
 		play_sfx("defeat")
-	# Return to map music after a short delay
-	get_tree().create_timer(4.0).timeout.connect(func(): play_bgm("menu_map"))
+	get_tree().create_timer(4.0).timeout.connect(func(): play_random_ambient())
 
 func _on_player_moved(_entity: Node, _from: Vector2i, _to: Vector2i) -> void:
 	# Random dirt footstep sound

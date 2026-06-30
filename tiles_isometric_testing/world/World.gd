@@ -30,16 +30,18 @@ func get_party_centroid() -> Vector2:
 		sum += p.position
 	return sum / players.size()
 
-# Spawn entity ke Entities node
 func spawn_entity(scene: PackedScene, grid_pos: Vector2i, data := {}) -> Node:
 	var entity = scene.instantiate()
-	# 🔥 SET DATA SEBELUM add_child
 	for key in data:
 		entity.set(key, data[key])
 	entities.add_child(entity)
 	entity.position = IsoUtils.world_to_iso(grid_pos)
 	entity.z_index  = IsoUtils.get_depth(grid_pos)
 	GridManager.register_entity(grid_pos, entity)
+
+	var tw = create_tween()
+	tw.tween_property(entity, "scale", Vector2(1.2, 1.2), 0.15).set_ease(Tween.EASE_OUT)
+	tw.tween_property(entity, "scale", Vector2.ONE, 0.2).set_delay(0.15).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 
 	if entity.is_in_group("players"):
 		players.append(entity)

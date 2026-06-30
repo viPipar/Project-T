@@ -23,6 +23,8 @@ var _show_debug_panel:  bool = false
 var _show_dice_sandbox: bool = false
 var _show_debug_grid:   bool = false
 var _show_f3_debug:     bool = false
+var _show_squiggles:    bool = false
+var _squiggle_noise:    NoiseTexture2D = null
 var _split_screen: SplitScreenManager = null
 var _stat_debug_panel: StatDebugPanel = null  # Debug stat manipulator (F1)
 var roguelike_ui_shell: CanvasLayer = null
@@ -113,7 +115,56 @@ func _ready() -> void:
 	# ── Battle Action Wheel Overlay ──────────────────────────────────────────
 	_spawn_action_wheel_overlay()
 
+	_setup_god_rays()
+
 	_apply_debug_visibility()
+
+
+func _setup_god_rays() -> void:
+	var shader_path := "res://assets/shaders/god_rays.gdshader"
+	var shader_res = load(shader_path) as Shader
+	if shader_res == null:
+		push_warning("[Main] God rays shader not found: %s" % shader_path)
+		return
+	
+	var mat = ShaderMaterial.new()
+	mat.shader = shader_res
+	mat.set_shader_parameter("angle", -0.25)
+	mat.set_shader_parameter("position", -0.3)
+	mat.set_shader_parameter("spread", 0.45)
+	mat.set_shader_parameter("cutoff", 0.05)
+	mat.set_shader_parameter("falloff", 0.35)
+	mat.set_shader_parameter("edge_fade", 0.2)
+	mat.set_shader_parameter("speed", 0.8)
+	mat.set_shader_parameter("ray1_density", 6.0)
+	mat.set_shader_parameter("ray2_density", 25.0)
+	mat.set_shader_parameter("ray2_intensity", 0.25)
+	mat.set_shader_parameter("color", Color(0.9, 0.85, 0.6, 0.5))
+	mat.set_shader_parameter("hdr", false)
+	mat.set_shader_parameter("seed", 3.0)
+
+	var canvas = CanvasLayer.new()
+	canvas.layer = 1
+	canvas.name = "EffectsLayer"
+
+	var rect = ColorRect.new()
+	rect.name = "GodRays"
+	rect.anchors_preset = Control.PRESET_FULL_RECT
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rect.color = Color(1, 1, 1, 1)
+	rect.material = mat
+	rect.visible = false
+
+	canvas.add_child(rect)
+	add_child(canvas)
+
+	await get_tree().process_frame
+	if mat.get_shader_parameter("angle") != null:
+		rect.visible = true
+		print("[Main] God rays overlay active")
+	else:
+		push_warning("[Main] God rays shader compile failed — removed")
+		rect.queue_free()
 
 
 func _spawn_player_from_json(
@@ -237,12 +288,52 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_F4:
 				if _stat_debug_panel != null:
 					_stat_debug_panel.visible = not _stat_debug_panel.visible
+			KEY_F5:
+				_show_squiggles = not _show_squiggles
+				_toggle_squigglevision(_show_squiggles)
 			KEY_T:
 				print("--- 'T' KEY DETECTED ---")
 				_run_all_tests()
 			_:
 				return
 		_apply_debug_visibility()
+
+func _toggle_squigglevision(enabled: bool) -> void:
+	var entities := get_tree().get_nodes_in_group("players")
+	entities.append_array(get_tree().get_nodes_in_group("enemies"))
+	if enabled:
+		if _squiggle_noise == null:
+			var noise = FastNoiseLite.new()
+			noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+			_squiggle_noise = NoiseTexture2D.new()
+			_squiggle_noise.noise = noise
+			_squiggle_noise.width = 64
+			_squiggle_noise.height = 64
+		for e in entities:
+			var sp = _get_entity_sprite(e)
+			if sp:
+				var mat = ShaderMaterial.new()
+				mat.shader = load("res://assets/shaders/squigglevision.gdshader")
+				mat.set_shader_parameter("noise", _squiggle_noise)
+				mat.set_shader_parameter("strength", 1.2)
+				mat.set_shader_parameter("fps", 6.0)
+				sp.material = mat
+		print("[Main] Squigglevision ON")
+	else:
+		for e in entities:
+			var sp = _get_entity_sprite(e)
+			if sp and sp.material and sp.material is ShaderMaterial and sp.material.shader.resource_path == "res://assets/shaders/squigglevision.gdshader":
+				sp.material = null
+		print("[Main] Squigglevision OFF")
+
+
+func _get_entity_sprite(entity: Node) -> CanvasItem:
+	if entity.get("anim_sprite"): return entity.get("anim_sprite")
+	if entity.get("sprite"): return entity.get("sprite")
+	if entity.has_node("AnimatedSprite2D"): return entity.get_node("AnimatedSprite2D")
+	if entity.has_node("Sprite2D"): return entity.get_node("Sprite2D")
+	return null
+
 
 func _run_all_tests() -> void:
 	print("\n\n>>> RUNNING ALL SYSTEM TESTS FROM DEBUG MENU <<<")

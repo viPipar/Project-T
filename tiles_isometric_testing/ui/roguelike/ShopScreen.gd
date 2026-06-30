@@ -18,7 +18,7 @@ func _ready() -> void:
 	# Add Coin Display
 	coins_label = Label.new()
 	coins_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	coins_label.position = Vector2(-250, 20)
+	coins_label.position = Vector2(-380, 20)
 	coins_label.add_theme_font_size_override("font_size", 36)
 	coins_label.add_theme_color_override("font_color", Color.BLACK)
 	add_child(coins_label)

@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://cicqdcrmmp3fj"
+path="res://.godot/imported/Night Ambient 2 (Loop).mp3-7b8a431a8baed7c7fe63fa6ef9036ceb.mp3str"
+
+[deps]
+
+source_file="res://assets/music/Night Ambient 2 (Loop).mp3"
+dest_files=["res://.godot/imported/Night Ambient 2 (Loop).mp3-7b8a431a8baed7c7fe63fa6ef9036ceb.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

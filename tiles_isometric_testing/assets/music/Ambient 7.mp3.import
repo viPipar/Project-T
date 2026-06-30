@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://ceqll4h6qg8ol"
+path="res://.godot/imported/Ambient 7.mp3-5c23efa6007a18410053b4152fcf8bff.mp3str"
+
+[deps]
+
+source_file="res://assets/music/Ambient 7.mp3"
+dest_files=["res://.godot/imported/Ambient 7.mp3-5c23efa6007a18410053b4152fcf8bff.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

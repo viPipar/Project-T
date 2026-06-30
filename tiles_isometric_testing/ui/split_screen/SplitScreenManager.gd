@@ -248,14 +248,15 @@ func _attach_cameras(world_node: Node2D) -> void:
 	_cam_p1.player_id = 1
 	_cam_p1.pan_speed = 600.0
 	_cam_p1.zoom      = Vector2(0.5, 0.5)
+	_cam_p1.add_to_group("cameras")
 	_p1_viewport.add_child(_cam_p1)
 
-	# Buat Camera P2 — ada di P2 SubViewport
 	_cam_p2 = PlayerCamera2D.new()
 	_cam_p2.name      = "Camera_P2"
 	_cam_p2.player_id = 2
 	_cam_p2.pan_speed = 600.0
 	_cam_p2.zoom      = Vector2(0.5, 0.5)
+	_cam_p2.add_to_group("cameras")
 	_p2_viewport.add_child(_cam_p2)
 
 	# Aktifkan kamera — posisi awal di tengah map (sama dengan Camera2D lama)

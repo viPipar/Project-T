@@ -620,6 +620,23 @@ func _on_revived() -> void:
 		anim_sprite.modulate = Color(1, 1, 1, 1)
 
 
+func play_teleport(from_pos: Vector2i, to_pos: Vector2i) -> void:
+	if anim_sprite == null:
+		return
+	ShaderEffects.teleport(anim_sprite, 0.4)
+	var mid := (IsoUtils.world_to_iso(from_pos) + IsoUtils.world_to_iso(to_pos)) * 0.5
+	var tw = create_tween()
+	tw.tween_property(self, "position", mid, 0.2).set_ease(Tween.EASE_IN)
+	tw.tween_property(self, "position", IsoUtils.world_to_iso(to_pos), 0.2).set_ease(Tween.EASE_OUT)
+	await tw.finished
+
+
+func apply_wind_sway(strength: float = 60.0) -> void:
+	if anim_sprite == null:
+		return
+	ShaderEffects.apply_wind_sway(anim_sprite, strength)
+
+
 func play_attack(ability_id: String) -> void:
 	if is_downed():
 		return
@@ -703,29 +720,7 @@ func deactivate_haki_aura() -> void:
 func _on_turn_started(entity: Node, _pid: int) -> void:
 	if entity == self:
 		_is_my_turn = true
-		restore_turn_outline()
 
 func _on_turn_ended(entity: Node) -> void:
 	if entity == self:
 		_is_my_turn = false
-		set_outline(false)
-
-func restore_turn_outline() -> void:
-	if _is_my_turn and not is_downed():
-		var outline_color = Color("#5cd65c") if player_id == 1 else Color("#FFD700")
-		set_outline(true, outline_color, 1.5)
-	else:
-		set_outline(false)
-
-func set_outline(enabled: bool, color: Color = Color.WHITE, width: float = 1.0) -> void:
-	if anim_sprite == null: return
-	if enabled:
-		var mat = ShaderMaterial.new()
-		mat.shader = load("res://assets/shaders/2d_outline_inline.gdshader")
-		mat.set_shader_parameter("color", color)
-		mat.set_shader_parameter("width", width)
-		mat.set_shader_parameter("inside", false)
-		mat.set_shader_parameter("add_margins", true)
-		anim_sprite.material = mat
-	else:
-		anim_sprite.material = null

@@ -124,27 +124,9 @@ func _apply_hit_impact(target: Node, is_crit: bool) -> void:
 	var sprite = _get_target_sprite(target)
 	if not sprite: return
 	
-	# Hit Flash Shader
-	var flash_mat = ShaderMaterial.new()
-	flash_mat.shader = load("res://assets/shaders/hit_flash.gdshader")
-	flash_mat.set_shader_parameter("flash_color", Color.WHITE)
-	flash_mat.set_shader_parameter("flash_modifier", 1.0)
-	sprite.material = flash_mat
-	
 	var hold_time = 0.05 if is_crit else 0.02
-	var tw = create_tween()
-	tw.tween_interval(hold_time)
-	tw.tween_property(flash_mat, "shader_parameter/flash_modifier", 0.0, 0.1)
-	tw.tween_callback(func(): 
-		if is_instance_valid(target):
-			if target.has_method("restore_turn_outline"):
-				target.restore_turn_outline()
-			else:
-				sprite.material = null
-		else:
-			sprite.material = null
-	)
-	
+	ShaderEffects.hit_flash(sprite, Color.WHITE, hold_time + 0.1)
+
 	# Knockback Wiggle
 	var start_pos = sprite.position
 	var knock_dir = -1 if randf() < 0.5 else 1

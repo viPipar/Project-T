@@ -64,19 +64,24 @@ func _populate_cards() -> void:
 	for i in range(_cards.size()):
 		var card = Button.new()
 		card.custom_minimum_size = Vector2(250, 350)
-		card.pivot_offset = Vector2(125, 175)
 		card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		card.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		NeobrutalStyle.apply_to_button(card, NeobrutalStyle.COLOR_GRAY)
+		
+		var vbox = VBoxContainer.new()
+		vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
+		vbox.add_theme_constant_override("separation", 8)
+		card.add_child(vbox)
 		
 		var label = Label.new()
 		label.text = "???\n\nPick a Card"
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		label.set_anchors_preset(Control.PRESET_FULL_RECT)
+		label.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		label.add_theme_color_override("font_color", Color.BLACK)
 		label.add_theme_font_size_override("font_size", 24)
-		card.add_child(label)
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD
+		vbox.add_child(label)
 		
 		card.pressed.connect(_on_card_clicked.bind(i))
 		grid.add_child(card)
@@ -93,33 +98,51 @@ func _on_card_clicked(idx: int) -> void:
 		var card = children[i] as Button
 		var data = _cards[i]["data"]
 		var rarity = _cards[i]["rarity"]
-		
+
 		var color = NeobrutalStyle.COLOR_WHITE
 		if rarity == ItemRegistry.Rarity.COMMON: color = NeobrutalStyle.COLOR_CYAN
 		if rarity == ItemRegistry.Rarity.LEGENDARY: color = NeobrutalStyle.COLOR_YELLOW
-		
+
 		NeobrutalStyle.apply_to_button(card, color)
-		
-		var label = card.get_child(0) as Label
-		label.text = "%s\n%s" % [data.name, ItemRegistry.Rarity.keys()[rarity]]
-		label.autowrap_mode = TextServer.AUTOWRAP_WORD
-		
-		# Add a visual icon to the card upon reveal
+
+		var vbox = card.get_child(0) as VBoxContainer
+		for c in vbox.get_children():
+			c.queue_free()
+
 		var rect = TextureRect.new()
 		var placeholder_tex = load("res://assets/ui_assets/placeholder.jpeg")
 		rect.texture = placeholder_tex
 		rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		rect.custom_minimum_size = Vector2(80, 80)
-		rect.position = Vector2(85, 80)
-		card.add_child(rect)
-		
-		# Position text below the icon
-		label.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-		label.position.y = 180
-		
+		rect.custom_minimum_size = Vector2(90, 90)
+		rect.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		vbox.add_child(rect)
+
+		var label = Label.new()
+		label.text = "%s\n" % data.name
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD
+		label.add_theme_color_override("font_color", Color.BLACK)
+		label.add_theme_font_size_override("font_size", 20)
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		vbox.add_child(label)
+
+		var rarity_label = Label.new()
+		rarity_label.text = ItemRegistry.Rarity.keys()[rarity]
+		rarity_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		rarity_label.add_theme_color_override("font_color", Color(0.3, 0.3, 0.3))
+		rarity_label.add_theme_font_size_override("font_size", 16)
+		vbox.add_child(rarity_label)
+
 		if i == idx:
-			label.text += "\n(ACQUIRED!)"
+			var acquired_label = Label.new()
+			acquired_label.text = "(ACQUIRED!)"
+			acquired_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			acquired_label.add_theme_color_override("font_color", Color(0, 0.6, 0))
+			acquired_label.add_theme_font_size_override("font_size", 18)
+			vbox.add_child(acquired_label)
+
 			var picker := 1
 			if card.has_meta("last_clicked_by_player"):
 				picker = card.get_meta("last_clicked_by_player")

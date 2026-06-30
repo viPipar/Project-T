@@ -8,8 +8,8 @@ class_name DualCursorUI
 var selectable_nodes: Array[Control] = []
 var cursor_speed: float = 1200.0
 
-var p1_map_pos: Vector2 = Vector2(150, 540 - 80)
-var p2_map_pos: Vector2 = Vector2(150, 540 + 80)
+var p1_map_pos: Vector2 = Vector2(1920/2.0 - 150, 1800)
+var p2_map_pos: Vector2 = Vector2(1920/2.0 + 150, 1800)
 
 var split_mode: bool = false
 var split_factor: float = 0.0 # 0.0 = shared, 1.0 = split
@@ -43,7 +43,7 @@ func _process(delta: float) -> void:
 			is_map_active = true
 			
 	var screen_size = get_viewport().get_visible_rect().size
-	var map_size = Vector2(2800, 1080)
+	var map_size = Vector2(1920, 2800)
 			
 	# Move P1
 	if cursor_p1 and not InputManager.is_player_blocked(1):
@@ -110,30 +110,27 @@ func _process(delta: float) -> void:
 		var sep = map_screen.get_node_or_null("Separator")
 		
 		if view_p1 and view_p2 and map1 and map2:
-			var full_h = screen_size.y
-			var split_h = screen_size.y / 2.0
-			var current_v1_h = lerp(full_h, split_h, split_factor)
-			var current_v2_h = lerp(0.0, split_h, split_factor)
+			var full_w = screen_size.x
+			var split_w = screen_size.x / 2.0
+			var current_v1_w = lerp(full_w, split_w, split_factor)
+			var current_v2_w = lerp(0.0, split_w, split_factor)
 			
-			# Force anchors to top-left to prevent layout engine shifting viewports
 			view_p1.set_anchors_preset(Control.PRESET_TOP_LEFT, true)
 			view_p2.set_anchors_preset(Control.PRESET_TOP_LEFT, true)
 			
-			view_p1.position = Vector2(0, 0)
-			view_p1.size = Vector2(screen_size.x, current_v1_h)
-			
-			view_p2.position = Vector2(0, full_h - current_v2_h)
-			view_p2.size = Vector2(screen_size.x, current_v2_h)
+			view_p1.size = Vector2(current_v1_w, screen_size.y)
+			view_p2.position = Vector2(full_w - current_v2_w, 0)
+			view_p2.size = Vector2(current_v2_w, screen_size.y)
 			
 			if sep:
 				sep.set_anchors_preset(Control.PRESET_TOP_LEFT, true)
 				sep.visible = (split_factor > 0.01)
 				sep.modulate.a = split_factor
-				sep.size = Vector2(screen_size.x, 6)
-				sep.position = Vector2(0, current_v1_h - 3)
+				sep.size = Vector2(6, screen_size.y)
+				sep.position = Vector2(current_v1_w - 3, 0)
 				
-			var center1 = Vector2(screen_size.x / 2.0, current_v1_h / 2.0)
-			var center2 = Vector2(screen_size.x / 2.0, current_v2_h / 2.0)
+			var center1 = Vector2(current_v1_w / 2.0, screen_size.y / 2.0)
+			var center2 = Vector2(current_v2_w / 2.0, screen_size.y / 2.0)
 			
 			var shared_cam = (p1_map_pos + p2_map_pos) / 2.0
 			var cam1 = shared_cam.lerp(p1_map_pos, split_factor)
@@ -142,7 +139,7 @@ func _process(delta: float) -> void:
 			cam1.x = clamp(cam1.x, center1.x, map_size.x - center1.x)
 			cam1.y = clamp(cam1.y, center1.y, map_size.y - center1.y)
 			
-			if current_v2_h > 1.0:
+			if current_v2_w > 1.0:
 				cam2.x = clamp(cam2.x, center2.x, map_size.x - center2.x)
 				cam2.y = clamp(cam2.y, center2.y, map_size.y - center2.y)
 			

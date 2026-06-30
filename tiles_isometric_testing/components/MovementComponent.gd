@@ -160,6 +160,7 @@ func get_reachable_tiles() -> Array[Vector2i]:
 func _begin_travel(path: Array[Vector2i], cost: int) -> void:
 	var from: Vector2i = _owner_grid_pos()
 	var to:   Vector2i = path[path.size() - 1]
+	owner.scale = Vector2.ONE
 
 	# Commit to grid immediately so other systems see the new position
 	if not GridManager.move_entity(from, to, owner):
@@ -191,22 +192,21 @@ func _process(delta: float) -> void:
 	_travel_t += delta * walk_speed
 
 	if _travel_t >= 1.0:
-		# Snap to end of this step
 		owner.position = _step_target
+		_land_squash()
 		_path_index += 1
 
 		if _path_index >= _path.size() - 1:
-			# Reached the final tile
 			_is_moving = false
 			var dest: Vector2i = _path[_path.size() - 1]
 			move_finished.emit(_path[0], dest)
 			EventBus.player_moved.emit(owner, _path[0], dest)
 		else:
-			# Advance to next step
 			_travel_t -= 1.0
 			_start_step(_path_index)
 	else:
-		owner.position = _bezier(_step_origin, _ctrl_offset, _step_target, _travel_t)
+		var eased_t = _ease_out_back(_travel_t)
+		owner.position = _bezier(_step_origin, _ctrl_offset, _step_target, eased_t)
 
 
 func _start_step(index: int) -> void:
@@ -225,6 +225,18 @@ func _start_step(index: int) -> void:
 func _bezier(p0: Vector2, p1: Vector2, p2: Vector2, t: float) -> Vector2:
 	var u := 1.0 - t
 	return u * u * p0 + 2.0 * u * t * p1 + t * t * p2
+
+
+func _land_squash() -> void:
+	var tw = create_tween().set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	tw.tween_property(owner, "scale", Vector2(1.1, 0.9), 0.08)
+	tw.parallel().tween_property(owner, "scale", Vector2(1.0, 1.0), 0.25).set_delay(0.08)
+
+
+static func _ease_out_back(t: float) -> float:
+	var c1 = 1.70158
+	var c3 = c1 + 1.0
+	return 1.0 + c3 * pow(t - 1.0, 3) + c1 * pow(t - 1.0, 2)
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

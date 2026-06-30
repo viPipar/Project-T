@@ -274,7 +274,14 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 		if target != null:
 			await bridge.vfx_controller._spawn_magic_projectile(attacker, target, ability.element_tag)
 
+	var had_kill := false
+
 	if hit or (ability != null and ability.aoe_type != "none" and not aoe_targets.is_empty()):
+		await _impact_freeze(0.1 if not crit else 0.18)
+		ScreenEffects.impact_flash(Color(1, 0.9, 0.7, 1), 0.7, 0.3)
+		_shake_cameras(8.0 if not crit else 15.0)
+		_hit_label(attacker, bool(crit))
+
 		for t in aoe_targets:
 			var is_heal = false
 			if ability != null:
@@ -299,6 +306,8 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 				
 				var applied = _apply_damage_to_target(t, real_dmg, attacker, "magical" if is_magical else "physical")
 				print("[COMBAT] %s menerima %d damage! (Total DMG)" % [t.name, applied])
+				if is_instance_valid(t) and t.has_method("is_dead") and t.is_dead():
+					had_kill = true
 				
 				if is_instance_valid(t) and t.has_method("play_hurt"):
 					t.play_hurt()
@@ -330,6 +339,9 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 						dir = -dir
 						
 					ForcedMovementResolver.knockback_entity(t, abs(kb_tiles), dir, attacker)
+
+		if had_kill:
+			_slow_mo_kill()
 	else:
 		print("[COMBAT] Serangan meleset!")
 
@@ -379,3 +391,42 @@ func _get_damage_modifier(attacker: Node, is_magical: bool) -> int:
 		if is_magical: return StatSystem.get_magical_damage_modifier(attacker)
 		else: return StatSystem.get_physical_damage_modifier(attacker)
 	return 0
+
+
+func _impact_freeze(duration: float = 0.05) -> void:
+	Engine.time_scale = 0.05
+	await get_tree().create_timer(duration, false, false, true).timeout
+	Engine.time_scale = 1.0
+
+
+func _shake_cameras(power: float = 3.0) -> void:
+	for c in get_tree().get_nodes_in_group("cameras"):
+		if c.has_method("shake"):
+			c.shake(power * 0.08, 0.2)
+
+
+func _slow_mo_kill() -> void:
+	Engine.time_scale = 0.15
+	await get_tree().create_timer(0.3, false, false, true).timeout
+	var tw = create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tw.tween_method(func(v): Engine.time_scale = v, 0.15, 1.0, 0.6)
+	await tw.finished
+
+
+func _hit_label(attacker: Node, is_crit: bool) -> void:
+	if not is_instance_valid(attacker) or not is_instance_valid(bridge.vfx_controller):
+		return
+	var label = Label.new()
+	label.text = "CRIT!" if is_crit else "HIT!"
+	label.add_theme_color_override("font_color", Color(1, 0.8, 0) if is_crit else Color(1, 0.3, 0.3))
+	label.add_theme_font_size_override("font_size", 48 if is_crit else 32)
+	label.add_theme_constant_override("outline_size", 2)
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	bridge.vfx_controller.add_child(label)
+	label.global_position = attacker.global_position + Vector2(0, -100)
+	var tw = create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(label, "global_position:y", label.global_position.y - 60, 0.6)
+	tw.parallel().tween_property(label, "modulate:a", 0.0, 0.5).set_delay(0.2)
+	await tw.finished
+	if is_instance_valid(label):
+		label.queue_free()

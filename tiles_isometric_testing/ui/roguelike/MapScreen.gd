@@ -80,30 +80,41 @@ func _ready() -> void:
 	path_handler = PathHandler.new()
 	path_handler.init(graph)
 	
-	# Force map contents to larger horizontal dimensions
-	map_content_p1.custom_minimum_size = Vector2(2800, 1080)
-	map_content_p2.custom_minimum_size = Vector2(2800, 1080)
+	# Force map contents to larger dimensions (vertical progression)
+	var content_w := 1920
+	var content_h := 2800
+	map_content_p1.custom_minimum_size = Vector2(content_w, content_h)
+	map_content_p2.custom_minimum_size = Vector2(content_w, content_h)
 	
-	# Precalculate positions so both maps look identical (Horizontal left-to-right progression)
+	# Precalculate positions: bottom-to-top progression
 	var node_positions: Dictionary = {}
-	var layer_width = 250
-	var current_x = 150
+	var layer_height := 280
+	var current_y := content_h - 200  # start near bottom
+	var first_layer_y := 0.0
 	for layer in graph.layers:
 		var node_count = layer.size()
-		var spacing_y = 1080 / (node_count + 1)
+		var spacing_x: float = float(content_w) / (node_count + 1)
 		var is_boss_layer = (layer[0].type == NodeGraph.NodeType.BOSS)
 		
 		for i in range(node_count):
-			var center_y = spacing_y * (i + 1)
-			var jitter_x = randf_range(-30.0, 30.0) if not is_boss_layer else 0.0
-			var jitter_y = randf_range(-40.0, 40.0) if not is_boss_layer else 0.0
-			node_positions[layer[i].id] = Vector2(current_x + jitter_x, center_y + jitter_y)
-		current_x += layer_width
+			var center_x := spacing_x * (i + 1)
+			var jitter_x := randf_range(-30.0, 30.0) if not is_boss_layer else 0.0
+			var jitter_y := randf_range(-40.0, 40.0) if not is_boss_layer else 0.0
+			node_positions[layer[i].id] = Vector2(center_x + jitter_x, current_y + jitter_y)
+		if first_layer_y == 0.0:
+			first_layer_y = current_y
+		current_y -= layer_height
 		
 	_generate_map_ui(map_content_p1, graph, node_positions, node_buttons_p1)
 	_generate_map_ui(map_content_p2, graph, node_positions, node_buttons_p2)
 	
 	_update_node_visuals()
+	
+	# Scroll to show first layer centered in viewport
+	var viewport_h := 540
+	var scroll_y := viewport_h / 2.0 - first_layer_y
+	map_content_p1.position.y = scroll_y
+	map_content_p2.position.y = scroll_y
 
 func _update_node_visuals() -> void:
 	var unlocked = path_handler.get_unlocked_nodes()
