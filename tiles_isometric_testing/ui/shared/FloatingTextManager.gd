@@ -153,4 +153,3 @@ func _apply_miss_impact(target: Node) -> void:
 	var tw = create_tween()
 	tw.tween_property(sprite, "scale", start_scale * Vector2(1.04, 1.04), 0.06).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tw.tween_property(sprite, "scale", start_scale, 0.06).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-
