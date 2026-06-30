@@ -45,7 +45,7 @@ func add_bap_bonus(amount: int) -> void:
 	bap_changed.emit(current_bap, max_bap)
 
 
-var infinite_ap: bool = false
+var infinite_ap: bool = true
 
 # ── SPEND ─────────────────────────────────────────────────────────────────────
 
