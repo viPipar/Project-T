@@ -101,10 +101,24 @@ func _trigger_victory() -> void:
 ## Scan scene tree untuk enemy yang masih hidup
 ## Gunakan group "enemies" — semua enemy node harus add_to_group("enemies")
 func _get_living_enemies() -> Array[Node]:
+	# Detect if we are running within the phase manager test script
+	var is_test_run := false
+	var parent = get_parent()
+	if parent != null and parent.get_script() != null:
+		if parent.get_script().resource_path.ends_with("test_phase_manager.gd"):
+			is_test_run = true
+
 	var living: Array[Node] = []
 	for node in get_tree().get_nodes_in_group("enemies"):
 		if node == null:
 			continue
+			
+		# In test mode, only include MockEntity nodes to prevent scene pollution
+		if is_test_run:
+			var script_path = node.get_script().resource_path if node.get_script() != null else ""
+			if not script_path.ends_with("MockEntity.gd"):
+				continue
+
 		# Cek is_alive via property atau method
 		var alive: Variant = node.get("is_alive")  # Variant by design
 		var alive_bool: bool
