@@ -127,3 +127,16 @@ func _on_card_clicked(idx: int) -> void:
 				EventBus.item_revealed.emit(rarity)
 		else:
 			card.modulate = Color(0.6, 0.6, 0.6)
+			
+	call_deferred("_trigger_cursor_rescan")
+
+func _trigger_cursor_rescan() -> void:
+	var current = get_parent()
+	var shell = null
+	while current and current != get_tree().get_root():
+		if "RoguelikeUIShell" in current.name or current.has_method("show_screen"):
+			shell = current
+			break
+		current = current.get_parent()
+	if shell and shell.get("dual_cursor") != null:
+		shell.dual_cursor.rescan()

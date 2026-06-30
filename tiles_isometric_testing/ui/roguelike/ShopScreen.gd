@@ -169,6 +169,19 @@ func _populate_shop() -> void:
 		
 		item_card.pressed.connect(_on_buy_clicked.bind(i))
 		grid.add_child(item_card)
+		
+	call_deferred("_trigger_cursor_rescan")
+
+func _trigger_cursor_rescan() -> void:
+	var current = get_parent()
+	var shell = null
+	while current and current != get_tree().get_root():
+		if "RoguelikeUIShell" in current.name or current.has_method("show_screen"):
+			shell = current
+			break
+		current = current.get_parent()
+	if shell and shell.get("dual_cursor") != null:
+		shell.dual_cursor.rescan()
 
 func _on_buy_clicked(index: int) -> void:
 	var stock = _current_stock[index]
