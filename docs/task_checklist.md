@@ -97,13 +97,13 @@
 | Ilham | Item System | Item Effect Applier (Stat/Resource/Cross-class modifiers) | Critical | To Do | Item Registry, Action Economy (Tapip) | #10 |
 | Ilham | Item System | Rarity Reveal Handler (White/Blue/Gold glow - after pick) | Medium | To Do | UI - Rarity FX (Rapit) | #4 |
 | Ilham | Item System | Item Pool Generator per battle type (Normal/Elite/Boss) | High | To Do | Item Registry | #4 |
-| Ilham | Item System | Cursed Item Handler (negative passive) | Medium | To Do | Item Effect Applier | - |
-| Ilham | Item System | Inventory Manager (per player) | High | To Do | Item Effect Applier | - |
-| 🆕 Ilham | Item System | Contested Pick System — Simultaneous Selection Detector | High | To Do | Item Pool Generator | #4 |
-| 🆕 Ilham | Item System | Contested Pick — Tiebreaker Roll Handler (D20 + LCK/5, reroll on tie) | High | To Do | Contested Pick Detector, RNG (Tapip) | #4 |
-| 🆕 Ilham | Item System | Contested Pick — Result Broadcaster (winner gets item, loser picks again) | High | To Do | Tiebreaker Handler | #4 |
-| Ilham | Shop | Stock Manager (7 slots, Rarity Resolver, Reroll 100 coins) | Medium | To Do | Item Registry | - |
-| Ilham | Shop | Coin Economy (Wallet, Send 1/2, Send 1/4) | Medium | To Do | - | - |
+| Ilham | Item System | Cursed Item Handler (negative passive) | Medium | Done | Item Effect Applier | - |
+| Ilham | Item System | Inventory Manager (per player) | High | Done | Item Effect Applier | - |
+| 🆕 Ilham | Item System | Contested Pick System — Simultaneous Selection Detector | High | Done | Item Pool Generator | #4 |
+| 🆕 Ilham | Item System | Contested Pick — Tiebreaker Roll Handler (D20 + LCK/5, reroll on tie) | High | Done | Contested Pick Detector, RNG (Tapip) | #4 |
+| 🆕 Ilham | Item System | Contested Pick — Result Broadcaster (winner gets item, loser picks again) | High | Done | Tiebreaker Handler | #4 |
+| Ilham | Shop | Stock Manager (7 slots, Rarity Resolver, Reroll 100 coins) | Medium | Done | Item Registry | - |
+| Ilham | Shop | Coin Economy (Wallet, Send 1/2, Send 1/4) | Medium | Done | - | - |
 
 ## Rapit - UI System
 
