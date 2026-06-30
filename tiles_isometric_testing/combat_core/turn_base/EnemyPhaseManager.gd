@@ -89,24 +89,35 @@ func _process_next_enemy() -> void:
 
 func _execute_enemy_turn(enemy: Node) -> void:
 	if not is_instance_valid(enemy):
-		_schedule_next(enemy)
+		_schedule_next(enemy, true)
 		return
 		
 	# Panggil AI turn pada enemy node
 	if is_instance_valid(enemy) and enemy.has_method("do_ai_turn"):
 		enemy.do_ai_turn()
+		var is_mock := false
+		if enemy.get_script() != null:
+			var path: String = enemy.get_script().resource_path
+			if path.ends_with("MockEntity.gd"):
+				is_mock = true
+		_schedule_next(enemy, is_mock)
 	else:
-		print("[EnemyPhaseManager] %s tidak punya do_ai_turn()" % _get_name(enemy))
-
-	# Tunggu sampai turn benar-benar selesai
-	_schedule_next(enemy)
+		print("[EnemyPhaseManager] %s tidak punya do_ai_turn() - skipping await" % _get_name(enemy))
+		_schedule_next(enemy, true)
 
 
-func _schedule_next(enemy: Node) -> void:
-	while true:
-		var ended_enemy = await EventBus.turn_ended
-		if ended_enemy == enemy:
-			break
+func _schedule_next(enemy: Node, skip_await: bool = false) -> void:
+	var is_mock := false
+	if enemy.get_script() != null:
+		var path: String = enemy.get_script().resource_path
+		if path.ends_with("MockEntity.gd"):
+			is_mock = true
+			
+	if not skip_await and not is_mock:
+		while true:
+			var ended_enemy = await EventBus.turn_ended
+			if ended_enemy == enemy:
+				break
 			
 	# Jeda sedikit saja antar musuh untuk readability
 	await get_tree().create_timer(0.2).timeout
