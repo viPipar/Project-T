@@ -200,7 +200,7 @@ func _on_action_wheel_selected(pid: int, action_name: String) -> void:
 
 	# Abilities that don't need manual target selection skip the cursor
 	if not _loaded_ability.requires_target_selection():
-		if _loaded_ability.is_untargeted_aoe:
+		if _loaded_ability.aoe_type == "self_radius":
 			var tiles = _loaded_ability.get_target_tiles(grid_pos)
 			var has_target := false
 			for t in tiles:
@@ -286,14 +286,17 @@ func _on_targeting_confirm() -> void:
 	if occupant == null:
 		if _can_target_empty_tile():
 			print("[Player P%d] TARGET TILE CONFIRMED: %s at %s" % [player_id, _loaded_ability.ability_name, target_tile])
+			
+			_update_facing_from_to(grid_pos, target_tile)
+			_begin_action_resolution()
+			EventBus.attackcam_started.emit(self, null, selected_ability_id, target_tile)
+			
 			EventBus.resource_blink_requested.emit(player_id, "stop_all")
-			if EventBus != null:
-				EventBus.ability_executed.emit(self, [], {
-					"ability_id": selected_ability_id,
-					"target_tile": target_tile,
-					"is_empty_tile": true,
-				})
-			_finish_action_resolution()
+			if player_id == 1:
+				AttackCam.play(true, false)
+			elif player_id == 2:
+				AttackCam.play(false, true)
+			
 			return
 		print("[Player P%d] No target entity at tile %s" % [player_id, target_tile])
 		return

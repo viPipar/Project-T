@@ -71,9 +71,21 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 		var affected_tiles = ability.get_affected_tiles(a_pos, t_pos)
 		for t in affected_tiles:
 			var ent = GridManager.get_entity_at(t)
-			if ent != null and ent.has_method("get_armor") and ent != attacker:
+			if ent != null and ent.has_method("get_armor"):
 				var pid_ent = ent.get("player_id")
-				if (attacker.is_in_group("enemies") != ent.is_in_group("enemies")) or (pid_ent != null and pid != null and pid_ent != pid):
+				var is_enemy = (attacker.is_in_group("enemies") != ent.is_in_group("enemies")) or (pid_ent != null and pid != null and pid_ent != pid)
+				var is_valid_target = false
+				
+				if ability.target_alignment == 3: # ANY
+					is_valid_target = true
+				elif ability.target_alignment == 1: # ALLY_ONLY
+					is_valid_target = not is_enemy
+				elif ability.target_alignment == 2: # SELF_ONLY
+					is_valid_target = (ent == attacker)
+				else: # ENEMY_ONLY (0)
+					is_valid_target = is_enemy and ent != attacker
+					
+				if is_valid_target:
 					if not aoe_targets.has(ent):
 						aoe_targets.append(ent)
 		
@@ -213,29 +225,41 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 
 	if hit or (ability != null and ability.aoe_type != "none" and not aoe_targets.is_empty()):
 		for t in aoe_targets:
-			var real_dmg = dmg_total
-			if not hit and ability != null and ability.aoe_type != "none":
-				real_dmg = maxi(1, floori(dmg_total / 2.0))
-			
-			var cond = StatSystem.get_condition_component(t) if StatSystem != null else t.get_node_or_null("ConditionComponent")
-			if is_instance_valid(cond) and cond.has_method("has_condition") and cond.has_condition("vulnerable") and not is_magical:
-				real_dmg = maxi(1, floori(real_dmg * 1.5))
-				print("[COMBAT] %s is VULNERABLE! Damage increased to %d" % [t.name, real_dmg])
-			
-			var applied = _apply_damage_to_target(t, real_dmg, attacker, "magical" if is_magical else "physical")
-			print("[COMBAT] %s menerima %d damage! (Total DMG)" % [t.name, applied])
-			
-			if is_instance_valid(t) and t.has_method("play_hurt"):
-				t.play_hurt()
-			
-			var element_tag = "physical"
+			var is_heal = false
 			if ability != null:
-				element_tag = ability.element_tag
-			if is_magical and ability == null:
-				element_tag = "arcane"
+				is_heal = ability.is_heal
+
+			if is_heal:
+				var real_heal = dmg_total
+				if not hit and ability != null and ability.aoe_type != "none":
+					real_heal = maxi(1, floori(dmg_total / 2.0))
+					
+				var applied = _apply_heal_to_target(t, real_heal, attacker)
+				print("[COMBAT] %s heal sebesar %d HP!" % [t.name, applied])
+			else:
+				var real_dmg = dmg_total
+				if not hit and ability != null and ability.aoe_type != "none":
+					real_dmg = maxi(1, floori(dmg_total / 2.0))
 				
-			if ElementSystem != null:
-				ElementSystem.resolve_elemental_hit(t, element_tag, applied)
+				var cond = StatSystem.get_condition_component(t) if StatSystem != null else t.get_node_or_null("ConditionComponent")
+				if is_instance_valid(cond) and cond.has_method("has_condition") and cond.has_condition("vulnerable") and not is_magical:
+					real_dmg = maxi(1, floori(real_dmg * 1.5))
+					print("[COMBAT] %s is VULNERABLE! Damage increased to %d" % [t.name, real_dmg])
+				
+				var applied = _apply_damage_to_target(t, real_dmg, attacker, "magical" if is_magical else "physical")
+				print("[COMBAT] %s menerima %d damage! (Total DMG)" % [t.name, applied])
+				
+				if is_instance_valid(t) and t.has_method("play_hurt"):
+					t.play_hurt()
+				
+				var element_tag = "physical"
+				if ability != null:
+					element_tag = ability.element_tag
+				if is_magical and ability == null:
+					element_tag = "arcane"
+					
+				if ElementSystem != null:
+					ElementSystem.resolve_elemental_hit(t, element_tag, applied)
 				
 			if hit:
 				var kb_tiles = 0
@@ -244,14 +268,17 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 					if ability.status_effect != "":
 						EventBus.on_status_applied.emit(t, ability.status_effect, ability.status_duration, ability.status_stacks)
 				
-				if kb_tiles > 0:
+				if kb_tiles != 0:
 					var _t_pos = t.get("grid_pos")
 					var diff = _t_pos - a_pos
 					var dir = Vector2i.RIGHT
 					if abs(diff.x) > abs(diff.y): dir = Vector2i(sign(diff.x), 0)
 					else: dir = Vector2i(0, sign(diff.y))
 					
-					ForcedMovementResolver.knockback_entity(t, kb_tiles, dir, attacker)
+					if kb_tiles < 0:
+						dir = -dir
+						
+					ForcedMovementResolver.knockback_entity(t, abs(kb_tiles), dir, attacker)
 	else:
 		print("[COMBAT] Serangan meleset!")
 
@@ -277,6 +304,22 @@ func _apply_damage_to_target(target: Node, amount: int, attacker: Node, damage_t
 		bridge.vfx_controller.add_child(lbl)
 	
 	EventBus.damage_dealt.emit(target, applied, damage_type, false, null)
+	return applied
+
+
+func _apply_heal_to_target(target: Node, amount: int, source: Node) -> int:
+	var applied := 0
+	if StatSystem != null and StatSystem.has_method("apply_heal"):
+		applied = StatSystem.apply_heal(target, amount, source)
+	else:
+		if target.has_method("add_hp"):
+			applied = target.add_hp(amount, source)
+	
+	if applied > 0:
+		var lbl = bridge.vfx_controller._make_world_label("+" + str(applied), 40, Color.GREEN)
+		lbl.global_position = target.global_position + Vector2(0, -60)
+		bridge.vfx_controller.add_child(lbl)
+	
 	return applied
 
 

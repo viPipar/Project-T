@@ -1,0 +1,26 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://combat_core/abilities/BaseAbility.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+ability_name = "Chain Dagger"
+ability_tag = "pull-single-test"
+ability_type = 0
+element_tag = "physical"
+target_alignment = 0
+ally_targeting_dc = 10
+range_type = "diamond"
+range_size = 3
+is_projectile = true
+aoe_type = "none"
+aoe_size = 0
+damage_dice = "1D12"
+is_heal = false
+knockback_tiles = -3
+status_effect = "lacerate"
+status_duration = 2
+status_stacks = 1
+cost_action = 1
+cost_bonus_action = 0
+cost_mana = 1

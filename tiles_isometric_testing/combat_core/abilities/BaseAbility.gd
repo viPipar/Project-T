@@ -61,7 +61,7 @@ func get_target_tiles(caster_pos: Vector2i) -> Array[Vector2i]:
 			# Manhattan distance filter for diamond shape
 			for dx in range(-range_size, range_size + 1):
 				for dy in range(-range_size, range_size + 1):
-					if dx == 0 and dy == 0:
+					if dx == 0 and dy == 0 and target_alignment == TargetAlignment.ENEMY_ONLY:
 						continue
 					if abs(dx) + abs(dy) <= range_size:
 						tiles.append(caster_pos + Vector2i(dx, dy))
@@ -84,7 +84,7 @@ func get_target_tiles(caster_pos: Vector2i) -> Array[Vector2i]:
 			# NxN box centered on caster (Chebyshev distance / King shape)
 			for dx in range(-range_size, range_size + 1):
 				for dy in range(-range_size, range_size + 1):
-					if dx == 0 and dy == 0:
+					if dx == 0 and dy == 0 and target_alignment == TargetAlignment.ENEMY_ONLY:
 						continue
 					var tile := caster_pos + Vector2i(dx, dy)
 					tiles.append(tile)
