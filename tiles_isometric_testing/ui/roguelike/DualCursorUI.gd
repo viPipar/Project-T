@@ -200,6 +200,7 @@ func _click_under_cursor(player_id: int, pos: Vector2) -> void:
 		if is_instance_valid(btn) and btn.is_visible_in_tree():
 			if btn.get_global_rect().has_point(pos):
 				print("[DualCursorUI] P%d clicked %s" % [player_id, btn.name])
+				btn.set_meta("last_clicked_by_player", player_id)
 				if btn is Button:
 					if not btn.disabled:
 						btn.pressed.emit()

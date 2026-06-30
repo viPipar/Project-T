@@ -187,36 +187,54 @@ func _on_buy_clicked(index: int) -> void:
 	var stock = _current_stock[index]
 	if stock.purchased: return
 	
-	# Try P1 first, then P2 (mocking simple purchase logic, in a real game we'd have explicit P1/P2 buy buttons)
+	var item_card = grid.get_child(index) as Button
 	var buyer = 0
-	if CoinEconomy != null:
-		if CoinEconomy.get_balance(1) >= stock.cost: buyer = 1
-		elif CoinEconomy.get_balance(2) >= stock.cost: buyer = 2
+	if item_card != null and item_card.has_meta("last_clicked_by_player"):
+		buyer = item_card.get_meta("last_clicked_by_player")
+		item_card.remove_meta("last_clicked_by_player")
+		
+	if buyer <= 0:
+		if CoinEconomy != null:
+			if CoinEconomy.get_balance(1) >= stock.cost: buyer = 1
+			elif CoinEconomy.get_balance(2) >= stock.cost: buyer = 2
 	
 	if buyer > 0:
-		if CoinEconomy.deduct_coins(buyer, stock.cost):
-			stock.purchased = true
-			if InventoryManager != null:
-				InventoryManager.add_item(buyer, stock.id)
+		if CoinEconomy.get_balance(buyer) >= stock.cost:
+			if CoinEconomy.deduct_coins(buyer, stock.cost):
+				stock.purchased = true
+				if InventoryManager != null:
+					InventoryManager.add_item(buyer, stock.id)
+				if EventNotifier != null:
+					EventNotifier.show_message("P%d Bought: %s" % [buyer, stock.data.name], Color.GREEN)
+				_populate_shop()
+		else:
 			if EventNotifier != null:
-				EventNotifier.show_message("P%d Bought: %s" % [buyer, stock.data.name], Color.GREEN)
-			_populate_shop()
+				EventNotifier.show_message("P%d needs %d Coins!" % [buyer, stock.cost], Color.RED)
 	else:
 		if EventNotifier != null:
 			EventNotifier.show_message("Not enough coins!", Color.RED)
 
 func _on_reroll_pressed() -> void:
 	var reroller = 0
-	if CoinEconomy != null:
-		if CoinEconomy.get_balance(1) >= REROLL_COST: reroller = 1
-		elif CoinEconomy.get_balance(2) >= REROLL_COST: reroller = 2
+	if reroll_btn.has_meta("last_clicked_by_player"):
+		reroller = reroll_btn.get_meta("last_clicked_by_player")
+		reroll_btn.remove_meta("last_clicked_by_player")
+		
+	if reroller <= 0:
+		if CoinEconomy != null:
+			if CoinEconomy.get_balance(1) >= REROLL_COST: reroller = 1
+			elif CoinEconomy.get_balance(2) >= REROLL_COST: reroller = 2
 		
 	if reroller > 0:
-		if CoinEconomy.deduct_coins(reroller, REROLL_COST):
+		if CoinEconomy.get_balance(reroller) >= REROLL_COST:
+			if CoinEconomy.deduct_coins(reroller, REROLL_COST):
+				if EventNotifier != null:
+					EventNotifier.show_message("Shop Rerolled by P%d!" % reroller, Color.ORANGE)
+				_generate_stock()
+				_populate_shop()
+		else:
 			if EventNotifier != null:
-				EventNotifier.show_message("Shop Rerolled!", Color.ORANGE)
-			_generate_stock()
-			_populate_shop()
+				EventNotifier.show_message("P%d needs %d Coins to Reroll!" % [reroller, REROLL_COST], Color.RED)
 	else:
 		if EventNotifier != null:
 			EventNotifier.show_message("Need %d Coins to Reroll!" % REROLL_COST, Color.RED)

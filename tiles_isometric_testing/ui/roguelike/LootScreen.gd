@@ -120,8 +120,11 @@ func _on_card_clicked(idx: int) -> void:
 		
 		if i == idx:
 			label.text += "\n(ACQUIRED!)"
+			var picker := 1
+			if card.has_meta("last_clicked_by_player"):
+				picker = card.get_meta("last_clicked_by_player")
 			if InventoryManager != null:
-				InventoryManager.add_item(1, data.id)
+				InventoryManager.add_item(picker, data.id)
 			card.scale = Vector2(1.1, 1.1)
 			if EventBus != null:
 				EventBus.item_revealed.emit(rarity)
