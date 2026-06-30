@@ -219,14 +219,13 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 		var char_sprite = attacker.get_node_or_null("CharacterSprite")
 		if char_sprite and char_sprite.has_method("play_attack"):
 			if ability == null or not ability.is_projectile:
-				if hit or (ability != null and ability.aoe_type != "none"):
-					var is_dash = false
-					if ability != null and ability.has_method("get_dash_destination"):
-						var dash_dest = ability.get_dash_destination(attacker, target)
-						if dash_dest.x >= 0:
-							is_dash = true
-					char_sprite.play_attack(is_dash)
-					await char_sprite.attack_finished
+				var is_dash = false
+				if ability != null and ability.has_method("get_dash_destination"):
+					var dash_dest = ability.get_dash_destination(attacker, target)
+					if dash_dest.x >= 0:
+						is_dash = true
+				char_sprite.play_attack(is_dash)
+				await char_sprite.attack_finished
 
 	if ability != null and ability.is_projectile:
 		if is_player:
