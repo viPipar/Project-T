@@ -5,6 +5,7 @@
 [resource]
 script = ExtResource("1")
 ability_name = "Elbow Smash"
+ability_description = "+ Knockback 1 Tiles"
 ability_tag = "knockback-test"
 ability_type = 0
 element_tag = "physical"

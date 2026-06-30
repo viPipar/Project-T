@@ -5,6 +5,7 @@
 [resource]
 script = ExtResource("1")
 ability_name = "Dagger Throw"
+ability_description = "Weakened (-2 Armor)"
 ability_tag = "armor-reduct-status"
 ability_type = 0
 element_tag = "physical"

@@ -8,27 +8,16 @@ const PAGE_SIZE := 4
 const DEFAULT_SLOT_KEYS := ["W", "A", "S", "D"]
 const SLOT_DIRECTIONS := ["UP", "LEFT", "DOWN", "RIGHT"]
 const SLOT_DRAW_ORDER := [0, 3, 2, 1]
-const LABEL_OFFSETS := [
-	Vector2(0, -132),
-	Vector2(-132, 0),
-	Vector2(0, 132),
-	Vector2(132, 0),
+const LABEL_OFFSETS = [
+	Vector2(0, -200),
+	Vector2(-200, 0),
+	Vector2(0, 200),
+	Vector2(200, 0),
 ]
 
-@export var actions: PackedStringArray = [
-	"Move",
-	"Attack",
-	"Skill",
-	"Guard",
-	"Item",
-	"Reload",
-	"Scan",
-	"Wait",
-	"Test 8",
-	"Test 9",
-	"Test 10",
-	"Test 11",
-]
+@export var actions: PackedStringArray = []
+var abilities: Array[BaseAbility] = []
+var affordabilities: Array[bool] = []
 @export var title_text: String = "Action Wheel"
 @export var subtitle_text: String = "WASD arah, Double Tap/Hold A/D geser page, F confirm"
 @export var starts_visible: bool = true
@@ -48,8 +37,8 @@ const LABEL_OFFSETS := [
 @export var _page_index: int = 0
 @export var _hovered_slot: int = 0
 @export var _center: Vector2 = Vector2.ZERO
-@export var _outer_radius: float = 180.0
-@export var _inner_radius: float = 56.0
+@export var _outer_radius: float = 250.0
+@export var _inner_radius: float = 130.0
 @export var _hover_time: float = 0.0
 @export var _transition_from_page: int = 0
 @export var _slide_direction: int = 0
@@ -78,8 +67,7 @@ var _last_synced_visible: bool = false
 
 @export var _title_label: Label
 @export var _subtitle_label: Label
-@export var _page_label: Label
-@export var _hint_label: Label
+var _tooltip_rtlabel: RichTextLabel
 
 
 func _ready() -> void:
@@ -168,11 +156,19 @@ func _process(_delta: float) -> void:
 	queue_redraw()
 
 
-func set_actions(new_actions: PackedStringArray) -> void:
-	actions = new_actions
+func set_abilities(new_abilities: Array[BaseAbility]) -> void:
+	abilities = new_abilities
+	affordabilities.resize(abilities.size())
+	affordabilities.fill(true)
 	_page_index = clampi(_page_index, 0, _get_page_count() - 1)
 	_normalize_hovered_slot()
 	_refresh()
+
+func set_action_affordable(index: int, affordable: bool) -> void:
+	if index >= 0 and index < affordabilities.size():
+		if affordabilities[index] != affordable:
+			affordabilities[index] = affordable
+			queue_redraw()
 
 
 func get_hovered_action() -> Dictionary:
@@ -189,13 +185,11 @@ func _build_ui() -> void:
 	_subtitle_label.position = Vector2(0, 44)
 	add_child(_subtitle_label)
 
-	_page_label = _make_label(15, HORIZONTAL_ALIGNMENT_CENTER)
-	add_child(_page_label)
-
-	_hint_label = _make_label(13, HORIZONTAL_ALIGNMENT_CENTER)
-	_hint_label.modulate = Color(0.82, 0.86, 0.92, 0.88)
-	_hint_label.text = "Double Tap/Hold Kiri/Kanan pindah page | Confirm pilih action"
-	add_child(_hint_label)
+	_tooltip_rtlabel = RichTextLabel.new()
+	_tooltip_rtlabel.bbcode_enabled = true
+	_tooltip_rtlabel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_tooltip_rtlabel.scroll_active = false
+	add_child(_tooltip_rtlabel)
 
 	_center = size * 0.5 + Vector2(0, 18)
 	_position_labels()
@@ -207,10 +201,11 @@ func _position_labels() -> void:
 
 	_title_label.size = Vector2(size.x, 32)
 	_subtitle_label.size = Vector2(size.x, 24)
-	_page_label.position = Vector2(0, size.y - 52)
-	_page_label.size = Vector2(size.x, 22)
-	_hint_label.position = Vector2(0, size.y - 28)
-	_hint_label.size = Vector2(size.x, 20)
+	
+	if _tooltip_rtlabel != null:
+		var tooltip_size = Vector2(260, 160)
+		_tooltip_rtlabel.size = tooltip_size
+		_tooltip_rtlabel.position = _center - Vector2(tooltip_size.x * 0.5, tooltip_size.y * 0.5)
 
 
 func _refresh() -> void:
@@ -219,10 +214,53 @@ func _refresh() -> void:
 
 	_title_label.text = title_text
 	_subtitle_label.text = subtitle_text
-	_page_label.text = "Wheel %d / %d" % [_page_index + 1, _get_page_count()]
 
 	queue_redraw()
+	_update_tooltip()
 	_emit_hovered()
+
+func _update_tooltip() -> void:
+	if _tooltip_rtlabel == null: return
+	
+	var action = _get_action_data(_hovered_slot)
+	if not action["valid"] or action.get("ability") == null:
+		_tooltip_rtlabel.text = ""
+		return
+		
+	var ability: BaseAbility = action["ability"]
+	var text = "[center]"
+	text += "[font_size=14][b]" + ability.ability_name + "[/b][/font_size]\n"
+	
+	if ability.damage_dice != "":
+		var dice_parts = ability.damage_dice.to_lower().split("d")
+		if dice_parts.size() == 2:
+			var min_val = int(dice_parts[0])
+			var max_val = int(dice_parts[0]) * int(dice_parts[1])
+			if ability.is_heal:
+				text += "[font_size=12][%s] %d-%d Heal[/font_size]\n" % [ability.damage_dice.to_upper(), min_val, max_val]
+			else:
+				text += "[font_size=12][%s] %d-%d %s[/font_size]\n" % [ability.damage_dice.to_upper(), min_val, max_val, ability.element_tag.capitalize()]
+	
+	if ability.ability_description != "":
+		text += "[font_size=12]%s[/font_size]\n" % ability.ability_description
+		
+	var costs = []
+	if ability.cost_action > 0: costs.append("[color=#80e633]%d Action[/color]" % ability.cost_action)
+	if ability.cost_bonus_action > 0: costs.append("[color=#e6cc33]%d Bonus Action[/color]" % ability.cost_bonus_action)
+	if ability.cost_mana > 0:
+		if player_id == 1:
+			costs.append("[color=#d93326]%d Charge[/color]" % ability.cost_mana)
+		else:
+			costs.append("[color=#3366e6]%d Spell Slot[/color]" % ability.cost_mana)
+	
+	if costs.size() > 0:
+		text += "[font_size=12]{%s}[/font_size]" % " + ".join(costs)
+		
+	text += "[/center]"
+	_tooltip_rtlabel.text = text
+	
+	# Perfectly center the tooltip vertically based on the actual height of the text
+	_tooltip_rtlabel.position.y = _center.y - (_tooltip_rtlabel.get_content_height() * 0.5)
 
 
 func _draw() -> void:
@@ -254,17 +292,11 @@ func _draw() -> void:
 			_draw_wheel(_get_preview_page(_page_index + _slide_direction), incoming_preview_pos, incoming_preview_alpha, false, -1)
 		_draw_wheel(_transition_from_page, old_main_pos, old_main_alpha, false, -1)
 		_draw_wheel(_page_index, new_main_pos, new_main_alpha, true, _hovered_slot)
-		
-		# Fade text
-		_page_label.self_modulate.a = _slide_progress
 	else:
 		if show_page_previews:
 			_draw_wheel(_get_preview_page(_page_index - 1), _center + Vector2(-preview_spacing, 0), 0.30, false, -1)
 			_draw_wheel(_get_preview_page(_page_index + 1), _center + Vector2(preview_spacing, 0), 0.30, false, -1)
 		_draw_wheel(_page_index, _center, 1.0, true, _hovered_slot)
-		
-		# Reset text alpha
-		_page_label.self_modulate.a = 1.0
 
 
 func _draw_wheel(page_index: int, wheel_center: Vector2, alpha: float, is_active: bool, hovered_slot: int) -> void:
@@ -275,21 +307,18 @@ func _draw_wheel(page_index: int, wheel_center: Vector2, alpha: float, is_active
 	for slot_index in range(PAGE_SIZE):
 		var action := _get_action_data_for_page(page_index, slot_index)
 		var has_action := action["valid"] as bool
+		var is_affordable := action.get("affordable", true) as bool
 		_draw_slice(
 			wheel_center,
 			slot_index,
 			is_active and slot_index == hovered_slot,
 			has_action,
+			is_affordable,
 			alpha
 		)
 
 	draw_circle(wheel_center, _inner_radius + 8.0, Color(0.95, 0.79, 0.37, 0.88 * alpha))
 	draw_circle(wheel_center, _inner_radius, Color(0.10, 0.12, 0.18, 0.98 * alpha))
-
-	var page_label := "PAGE"
-	var page_value := str(page_index + 1)
-	draw_string(get_theme_default_font(), wheel_center + Vector2(-22, -2), page_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(0.79, 0.83, 0.90, 0.92 * alpha))
-	draw_string(get_theme_default_font(), wheel_center + Vector2(-9, 18), page_value, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color(0.98, 0.94, 0.82, alpha))
 
 	# Draw text for each slot
 	var font := get_theme_default_font()
@@ -298,18 +327,22 @@ func _draw_wheel(page_index: int, wheel_center: Vector2, alpha: float, is_active
 		var has_action := action["valid"] as bool
 		var is_hovered := is_active and slot_index == hovered_slot
 		
+		var is_affordable := action.get("affordable", true) as bool
+		
 		var anchor: Vector2 = wheel_center + LABEL_OFFSETS[slot_index]
 		
 		var key_text := "%s  %s" % [_get_slot_key_label(slot_index), SLOT_DIRECTIONS[slot_index]]
 		var key_color := Color(0.12, 0.14, 0.19, alpha) if is_hovered else Color(0.92, 0.95, 0.99, 0.94 * alpha)
+		if not is_affordable: key_color.a *= 0.5
 		draw_string(font, anchor + Vector2(-46, -14), key_text, HORIZONTAL_ALIGNMENT_CENTER, 92, 14, key_color)
 		
 		var action_text := action["name"] as String if has_action else "Empty"
 		var label_color := Color(0.12, 0.14, 0.19, alpha) if is_hovered else (Color(1, 1, 1, alpha) if has_action else Color(0.58, 0.63, 0.71, 0.92 * alpha))
+		if not is_affordable: label_color = Color(0.4, 0.4, 0.4, alpha)
 		draw_multiline_string(font, anchor + Vector2(-66, 8), action_text, HORIZONTAL_ALIGNMENT_CENTER, 132, 17, -1, label_color)
 
 
-func _draw_slice(wheel_center: Vector2, slot_index: int, is_hovered: bool, has_action: bool, alpha: float) -> void:
+func _draw_slice(wheel_center: Vector2, slot_index: int, is_hovered: bool, has_action: bool, is_affordable: bool, alpha: float) -> void:
 	var draw_slot_index: int = SLOT_DRAW_ORDER[slot_index]
 	var start_angle := -PI * 0.75 + draw_slot_index * (PI * 0.5)
 	var end_angle := start_angle + (PI * 0.5)
@@ -335,6 +368,8 @@ func _draw_slice(wheel_center: Vector2, slot_index: int, is_hovered: bool, has_a
 	var fill := Color(0.17, 0.22, 0.31, 0.95) if has_action else Color(0.11, 0.13, 0.17, 0.86)
 	if is_hovered:
 		fill = Color(0.97, 0.82, 0.38, 0.98)
+	if not is_affordable:
+		fill = fill.lerp(Color(0.1, 0.1, 0.1), 0.6)
 	fill.a *= alpha
 	draw_colored_polygon(points, fill)
 
@@ -397,6 +432,8 @@ func _emit_selected() -> void:
 	var action := _get_action_data(_hovered_slot)
 	if not (action["valid"] as bool):
 		return
+	if not action.get("affordable", true):
+		return
 	action_selected.emit(action["name"], action["action_index"], _page_index, _hovered_slot)
 	if EventBus != null:
 		EventBus.action_wheel_selected.emit(player_id, action["name"])
@@ -421,22 +458,27 @@ func _get_action_data(slot_index: int) -> Dictionary:
 
 func _get_action_data_for_page(page_index: int, slot_index: int) -> Dictionary:
 	var action_index := page_index * PAGE_SIZE + slot_index
-	if action_index < 0 or action_index >= actions.size():
+	if action_index < 0 or action_index >= abilities.size():
 		return {
 			"valid": false,
+			"ability": null,
 			"name": "",
 			"action_index": -1,
 		}
 
+	var ability = abilities[action_index]
+	var is_affordable = affordabilities[action_index] if action_index < affordabilities.size() else true
 	return {
 		"valid": true,
-		"name": actions[action_index],
+		"ability": ability,
+		"name": ability.ability_name,
 		"action_index": action_index,
+		"affordable": is_affordable,
 	}
 
 
 func _get_page_count() -> int:
-	return maxi(1, int(ceil(float(actions.size()) / float(PAGE_SIZE))))
+	return maxi(1, int(ceil(float(abilities.size()) / float(PAGE_SIZE))))
 
 
 func _get_preview_page(page_index: int) -> int:

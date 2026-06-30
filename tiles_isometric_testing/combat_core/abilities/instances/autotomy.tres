@@ -5,6 +5,7 @@
 [resource]
 script = ExtResource("1")
 ability_name = "Autotomy"
+ability_description = "-20% Health, +4 Armor"
 ability_tag = "self-damage-test"
 ability_type = 0
 element_tag = "physical"

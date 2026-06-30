@@ -5,6 +5,7 @@
 [resource]
 script = ExtResource("1")
 ability_name = "Great Bash"
+ability_description = "Stun Enemy"
 ability_tag = "stun-single-test"
 ability_type = 0
 element_tag = "physical"

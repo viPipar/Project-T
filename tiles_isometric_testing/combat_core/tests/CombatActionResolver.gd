@@ -37,14 +37,28 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 		
 	if ability != null:
 		base_dice = ability.damage_dice
-		# Overrides cost
-		var has_ap := false
-		if pid == 1: has_ap = bridge._p1_ap.spend_ap(ability.cost_action)
-		elif pid == 2: has_ap = bridge._p2_ap.spend_ap(ability.cost_action)
-		if not has_ap:
+		var ap_mgr = bridge._p1_ap if pid == 1 else bridge._p2_ap
+		var mana_mgr = bridge._p1_ec if pid == 1 else bridge._p2_ss
+		
+		# Validasi cukup tidaknya cost
+		var can_afford = true
+		if not ap_mgr.can_spend_ap(ability.cost_action): can_afford = false
+		if not ap_mgr.can_spend_bap(ability.cost_bonus_action): can_afford = false
+		if ability.cost_mana > 0:
+			if pid == 1 and not (mana_mgr as EnergyChargeManager).can_spend(ability.cost_mana): can_afford = false
+			elif pid == 2 and not (mana_mgr as SpellSlotManager).can_spend(1, ability.cost_mana): can_afford = false
+			
+		if not can_afford:
 			bridge._set_player_busy(pid, false)
-			print("[COMBAT] ⚠️ P%d — AP Tidak Cukup untuk %s!" % [pid, ability.ability_name])
+			print("[COMBAT] ⚠️ P%d — Tidak cukup AP/BAP/Mana untuk %s!" % [pid, ability.ability_name])
 			return
+			
+		# Jika cukup, baru kita spend semuanya
+		ap_mgr.spend_ap(ability.cost_action)
+		ap_mgr.spend_bap(ability.cost_bonus_action)
+		if ability.cost_mana > 0:
+			if pid == 1: (mana_mgr as EnergyChargeManager).spend_charge(ability.cost_mana)
+			elif pid == 2: (mana_mgr as SpellSlotManager).spend_slot(1, ability.cost_mana)
 			
 		print("[COMBAT] Menggunakan Ability: %s (%s)" % [ability.ability_name, base_dice])
 	else:

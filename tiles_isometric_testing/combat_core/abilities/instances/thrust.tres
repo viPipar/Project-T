@@ -5,6 +5,7 @@
 [resource]
 script = ExtResource("1")
 ability_name = "Thrust"
+ability_description = "AoE, Vulnerable to Enemy Hit"
 ability_tag = "vulnerable-single-test"
 ability_type = 0
 element_tag = "physical"

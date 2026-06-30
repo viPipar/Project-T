@@ -5,6 +5,7 @@
 [resource]
 script = ExtResource("1")
 ability_name = "Kitin Bomb"
+ability_description = "Throw Heal Bomb, Heal All Unit in Area"
 ability_tag = "kitin-bomb"
 ability_type = 0
 element_tag = "physical"

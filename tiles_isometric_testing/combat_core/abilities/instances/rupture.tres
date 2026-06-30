@@ -5,6 +5,7 @@
 [resource]
 script = ExtResource("1")
 ability_name = "Rupture"
+ability_description = "Bleeding (DoT 1-4 per Turn)"
 ability_tag = "dot-status-test"
 ability_type = 0
 element_tag = "physical"

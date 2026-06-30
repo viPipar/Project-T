@@ -5,6 +5,7 @@
 [resource]
 script = ExtResource("1")
 ability_name = "Slash Flash"
+ability_description = "+ Dash Toward Tiles"
 ability_tag = "dash-attack-test"
 ability_type = 0
 element_tag = "physical"

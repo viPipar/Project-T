@@ -5,7 +5,7 @@
 [resource]
 script = ExtResource("1")
 ability_name = "Divine Departure"
-ability_description = "A devastating ultimate strike that cleaves through reality."
+ability_description = "AoE + Knockback"
 ability_tag = "divine-departure-test"
 ability_type = 0
 element_tag = "physical"

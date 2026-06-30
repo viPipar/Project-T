@@ -5,6 +5,7 @@
 [resource]
 script = ExtResource("1")
 ability_name = "Cleave"
+ability_description = "Area of Effect"
 ability_tag = "aoe-attack-test"
 ability_type = 0
 element_tag = "physical"

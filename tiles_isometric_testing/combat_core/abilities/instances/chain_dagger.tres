@@ -5,6 +5,7 @@
 [resource]
 script = ExtResource("1")
 ability_name = "Chain Dagger"
+ability_description = "Single, Pull Enemy to Self, Lacerate to Enemy"
 ability_tag = "pull-single-test"
 ability_type = 0
 element_tag = "physical"

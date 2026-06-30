@@ -126,12 +126,12 @@ func _setup_combat_core() -> void:
 	_p2_ss.setup(p2_att)
 
 	# --- DEBUG INFINITE RESOURCES FOR TESTING ---
-	_p1_ap.max_ap += 99; _p1_ap.current_ap += 99
-	_p2_ap.max_ap += 99; _p2_ap.current_ap += 99
-	_p1_ec.max_charges += 99; _p1_ec.current_charges += 99
-	for i in range(4):
-		_p2_ss.max_slots[i] += 99
-		_p2_ss.current_slots[i] += 99
+	#_p1_ap.max_ap += 99; _p1_ap.current_ap += 99
+	#_p2_ap.max_ap += 99; _p2_ap.current_ap += 99
+	#_p1_ec.max_charges += 99; _p1_ec.current_charges += 99
+	#for i in range(4):
+	#	_p2_ss.max_slots[i] += 99
+	#	_p2_ss.current_slots[i] += 99
 	# Mana cross-converter
 	_mana = ManaConverter.new(); add_child(_mana)
 	_mana.setup(_p1_ec, _p2_ss)
