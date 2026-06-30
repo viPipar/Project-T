@@ -85,7 +85,7 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 	var a_pos: Vector2i = attacker.get("grid_pos")
 	# --- AOE Multi-Target Logic ---
 	var aoe_targets: Array[Node] = []
-	if ability != null:
+	if ability != null and ability.get("aoe_type") != null and ability.aoe_type != "none":
 		var t_pos: Vector2i = target_pos
 		if t_pos.x < 0:
 			t_pos = target.get("grid_pos") if target != null else a_pos
@@ -162,6 +162,63 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 
 	var defense_label := "Resist" if is_magical else "Armor"
 	print("[COMBAT] D20: %d (raw) + %d → %d  vs  %s: %d" % [raw, hit_modifier, total, defense_label, thresh])
+
+	# ── Intercept untuk Position Switch Utility ──
+	var is_pos_switch = ability != null and ("is_position_switch" in ability) and ability.is_position_switch
+	if is_pos_switch:
+		if target != null and is_instance_valid(GridManager):
+			bridge._set_player_busy(pid, true)
+			if is_instance_valid(attacker) and attacker.has_method("play_attack"):
+				attacker.play_attack(_base_ability_id)
+				await get_tree().create_timer(0.2).timeout
+				
+			var a_grid = attacker.get("grid_pos")
+			var t_grid = target.get("grid_pos")
+			
+			if GridManager.swap_entities(a_grid, t_grid):
+				attacker.set("grid_pos", t_grid)
+				target.set("grid_pos", a_grid)
+				
+				# IsoUtils is an autoload or utility. We might need to ensure it's available.
+				# Assuming IsoUtils is a global singleton since it's used elsewhere.
+				var a_px = IsoUtils.world_to_iso(t_grid)
+				var t_px = IsoUtils.world_to_iso(a_grid)
+				
+				attacker.z_index = IsoUtils.get_depth(t_grid)
+				target.z_index = IsoUtils.get_depth(a_grid)
+				
+				# Play sweeping teleport tween
+				var tw = create_tween().set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+				tw.tween_property(attacker, "position", a_px, 0.5)
+				tw.tween_property(target, "position", t_px, 0.5)
+				
+				# Add a small hop effect
+				var hop_a = attacker.position.y - 40
+				var hop_t = target.position.y - 40
+				tw.tween_property(attacker, "position:y", hop_a, 0.25).set_ease(Tween.EASE_OUT)
+				tw.tween_property(target, "position:y", hop_t, 0.25).set_ease(Tween.EASE_OUT)
+				
+				await tw.finished
+				
+				EventBus.player_moved.emit(attacker, a_grid, t_grid)
+				EventBus.player_moved.emit(target, t_grid, a_grid)
+			else:
+				print("[COMBAT] Gagal menukar posisi di GridManager!")
+				
+			if attacker.is_in_group("players"):
+				EventBus.attackcam_finished.emit(attacker)
+			else:
+				EventBus.combat_action_finished.emit(attacker)
+			bridge._set_player_busy(pid, false)
+		else:
+			print("[COMBAT] Target missed atau invalid untuk Position Switch.")
+			if attacker.is_in_group("players"):
+				EventBus.attackcam_finished.emit(attacker)
+			else:
+				EventBus.combat_action_finished.emit(attacker)
+			bridge._set_player_busy(pid, false)
+		return
+
 
 	# ── Siapkan data damage ────
 	var _dmg_formula := base_dice

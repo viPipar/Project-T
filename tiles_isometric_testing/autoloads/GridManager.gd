@@ -151,6 +151,24 @@ func move_entity(from: Vector2i, to: Vector2i, entity: Node) -> bool:
 	return true
 
 
+func swap_entities(pos_a: Vector2i, pos_b: Vector2i) -> bool:
+	var slot_a = _entities.get(pos_a)
+	var slot_b = _entities.get(pos_b)
+	
+	if slot_a == null or slot_b == null:
+		return false
+		
+	# Unregister both temporarily
+	unregister_entity(pos_a)
+	unregister_entity(pos_b)
+	
+	# Register in swapped positions
+	register_entity(pos_b, slot_a.node, slot_a.type as EntityType)
+	register_entity(pos_a, slot_b.node, slot_b.type as EntityType)
+	
+	return true
+
+
 func get_entity_at(pos: Vector2i) -> Node:
 	var slot = _entities.get(pos, null)
 	if slot:

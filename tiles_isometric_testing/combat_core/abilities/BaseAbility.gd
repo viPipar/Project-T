@@ -29,6 +29,9 @@ enum TargetAlignment { ENEMY_ONLY, ALLY_ONLY, SELF_ONLY, ANY }
 @export var damage_dice     : String = "1D6"
 @export var is_heal         : bool   = false
 
+@export_group("Utility Mechanics")
+@export var is_position_switch : bool = false
+
 @export_group("Effects")
 @export var knockback_tiles : int    = 0
 @export var status_effect   : String = ""
@@ -47,6 +50,8 @@ func is_self_target() -> bool:
 
 
 func requires_target_selection() -> bool:
+	if is_position_switch:
+		return false
 	return aoe_type != "self_radius" and not is_self_target()
 
 
