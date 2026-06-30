@@ -217,6 +217,11 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 			if not hit and ability != null and ability.aoe_type != "none":
 				real_dmg = maxi(1, floori(dmg_total / 2.0))
 			
+			var cond = StatSystem.get_condition_component(t) if StatSystem != null else t.get_node_or_null("ConditionComponent")
+			if is_instance_valid(cond) and cond.has_method("has_condition") and cond.has_condition("vulnerable") and not is_magical:
+				real_dmg = maxi(1, floori(real_dmg * 1.5))
+				print("[COMBAT] %s is VULNERABLE! Damage increased to %d" % [t.name, real_dmg])
+			
 			var applied = _apply_damage_to_target(t, real_dmg, attacker, "magical" if is_magical else "physical")
 			print("[COMBAT] %s menerima %d damage! (Total DMG)" % [t.name, applied])
 			
@@ -232,17 +237,21 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 			if ElementSystem != null:
 				ElementSystem.resolve_elemental_hit(t, element_tag, applied)
 				
-			var kb_tiles = 0
-			if ability != null:
-				kb_tiles = ability.knockback_tiles
-			if kb_tiles > 0:
-				var _t_pos = t.get("grid_pos")
-				var diff = _t_pos - a_pos
-				var dir = Vector2i.RIGHT
-				if abs(diff.x) > abs(diff.y): dir = Vector2i(sign(diff.x), 0)
-				else: dir = Vector2i(0, sign(diff.y))
+			if hit:
+				var kb_tiles = 0
+				if ability != null:
+					kb_tiles = ability.knockback_tiles
+					if ability.status_effect != "":
+						EventBus.on_status_applied.emit(t, ability.status_effect, ability.status_duration, ability.status_stacks)
 				
-				ForcedMovementResolver.knockback_entity(t, kb_tiles, dir, attacker)
+				if kb_tiles > 0:
+					var _t_pos = t.get("grid_pos")
+					var diff = _t_pos - a_pos
+					var dir = Vector2i.RIGHT
+					if abs(diff.x) > abs(diff.y): dir = Vector2i(sign(diff.x), 0)
+					else: dir = Vector2i(0, sign(diff.y))
+					
+					ForcedMovementResolver.knockback_entity(t, kb_tiles, dir, attacker)
 	else:
 		print("[COMBAT] Serangan meleset!")
 
