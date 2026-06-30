@@ -58,7 +58,7 @@ func decide_and_act(entity: Node, ai_component: AIComponent) -> void:
 func _perform_attack_and_end(entity: Node, ai_component: AIComponent, target: Node) -> void:
 	# Trigger the exact same attack pipeline the Player uses!
 	# We use main_attack.tres as the default enemy melee ability.
-	EventBus.attackcam_started.emit(entity, target, "main_attack")
+	EventBus.attackcam_started.emit(entity, target, "main_attack", target.get("grid_pos"))
 	
 	# Wait for the combat resolution to finish completely
 	await EventBus.combat_action_finished

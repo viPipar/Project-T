@@ -84,7 +84,7 @@ func decide_and_act(entity: Node, ai_component: AIComponent) -> void:
 
 func _perform_attack_and_end(entity: Node, ai_component: AIComponent, target: Node) -> void:
 	# Trigger the exact same attack pipeline the Player uses!
-	EventBus.attackcam_started.emit(entity, target, ranged_ability.ability_tag)
+	EventBus.attackcam_started.emit(entity, target, ranged_ability.ability_tag, target.get("grid_pos"))
 	
 	# Wait for the combat resolution to finish completely
 	await EventBus.combat_action_finished

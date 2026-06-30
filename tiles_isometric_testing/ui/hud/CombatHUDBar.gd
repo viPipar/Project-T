@@ -55,7 +55,7 @@ func _ready() -> void:
 	if EventBus.has_signal("resource_blink_requested"):
 		EventBus.resource_blink_requested.connect(_on_resource_blink_requested)
 	if EventBus.has_signal("attackcam_started"):
-		EventBus.attackcam_started.connect(func(_a, _b, _c): _blink_keys.clear())
+		EventBus.attackcam_started.connect(func(_a, _b, _c, _d): _blink_keys.clear())
 	if EventBus.has_signal("action_wheel_visibility_changed"):
 		EventBus.action_wheel_visibility_changed.connect(_on_action_wheel_visibility_changed)
 
@@ -138,10 +138,10 @@ func _on_resource_blink_requested(pid: int, res_type: String) -> void:
 		"movement":      _blink_keys["mov"] = true
 
 
-func _on_action_wheel_visibility_changed(pid: int, is_visible: bool) -> void:
+func _on_action_wheel_visibility_changed(pid: int, wheel_visible: bool) -> void:
 	if pid != player_id:
 		return
-	_action_wheel_visible = is_visible
+	_action_wheel_visible = wheel_visible
 	queue_redraw()
 
 

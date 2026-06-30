@@ -138,22 +138,6 @@ func _on_confirm() -> void:
 			GridManager.EntityType.ENEMY:
 				print("[Player P%d] Pilih ability dari action wheel dulu sebelum menyerang." % player_id)
 				return
-				print("Player ", player_id, " menyerang musuh: ", occupant.name)
-				var shot = ProjectileLine.cast(grid_pos, target)
-				match shot.result:
-					"hit_entity":
-						_begin_action_resolution()
-						# Emit signal supaya CombatTestBridge bisa resolve hit/miss/crit
-						EventBus.attackcam_started.emit(self, occupant, selected_ability_id)
-						if player_id == 1:
-							AttackCam.play(true, false)
-						elif player_id == 2:
-							AttackCam.play(false, true)
-						print("Hit entity at ", shot.tile)
-					"hit_wall":
-						print("Blocked by wall at ", shot.tile)
-					"miss":
-						print("Nothing in the way — projectile flies through")
 
 			GridManager.EntityType.NPC:
 				print("Player ", player_id, " bicara dengan NPC: ", occupant.name)
@@ -162,19 +146,6 @@ func _on_confirm() -> void:
 			GridManager.EntityType.PLAYER:
 				print("[Player P%d] Target player butuh ability/revive flow, bukan direct confirm." % player_id)
 				return
-				print("Player ", player_id, " Interaksi Player : ", occupant.player_id)
-				var shot = ProjectileLine.cast(grid_pos, target)
-				match shot.result:
-					"hit_entity":
-						if player_id == 1:
-							AttackCam.play(true, false)
-						elif player_id == 2:
-							AttackCam.play(false, true)
-						print("Hit entity at ", shot.tile)
-					"hit_wall":
-						print("Blocked by wall at ", shot.tile)
-					"miss":
-						print("Nothing in the way — projectile flies through")
 				# TODO: co-op / pass turn
 	elif not walkable:
 		movement.interact_move_to(target)
@@ -227,11 +198,28 @@ func _on_action_wheel_selected(pid: int, action_name: String) -> void:
 		push_warning("[Player P%d] Ability resource '%s' tidak ditemukan!" % [player_id, path])
 		return
 
-	# Self-targeting abilities skip the cursor entirely
-	if _loaded_ability.is_self_target():
-		print("[Player P%d] Self-target: %s — executing immediately" % [player_id, _loaded_ability.ability_name])
+	# Abilities that don't need manual target selection skip the cursor
+	if not _loaded_ability.requires_target_selection():
+		if _loaded_ability.is_untargeted_aoe:
+			var tiles = _loaded_ability.get_target_tiles(grid_pos)
+			var has_target := false
+			for t in tiles:
+				var ent = GridManager.get_entity_at(t)
+				if ent != null and ent != self and ent.has_method("get_armor"):
+					var pid_ent = ent.get("player_id")
+					var pid_att = self.get("player_id")
+					if (self.is_in_group("enemies") != ent.is_in_group("enemies")) or (pid_ent != null and pid_att != null and pid_ent != pid_att):
+						has_target = true
+						break
+			
+			if not has_target:
+				print("[Player P%d] Tidak ada target di area AOE, membatalkan skill." % player_id)
+				_loaded_ability = null
+				return
+
+		print("[Player P%d] Auto-targeting: %s — executing immediately" % [player_id, _loaded_ability.ability_name])
 		_begin_action_resolution()
-		EventBus.attackcam_started.emit(self, self, selected_ability_id)
+		EventBus.attackcam_started.emit(self, self, selected_ability_id, grid_pos)
 		return
 
 	# Enter targeting mode — show grid, hide wheel
@@ -315,7 +303,7 @@ func _on_targeting_confirm() -> void:
 	# Fire the ability
 	_update_facing_from_to(grid_pos, target_tile)
 	_begin_action_resolution()
-	EventBus.attackcam_started.emit(self, occupant, selected_ability_id)
+	EventBus.attackcam_started.emit(self, occupant, selected_ability_id, target_tile)
 	EventBus.resource_blink_requested.emit(player_id, "stop_all")
 	if player_id == 1:
 		AttackCam.play(true, false)
@@ -383,7 +371,7 @@ func _clear_targeting_highlights() -> void:
 func _can_target_empty_tile() -> bool:
 	if _loaded_ability == null:
 		return false
-	return _loaded_ability.range_type == "aoe" or _loaded_ability.target_alignment == BaseAbility.TargetAlignment.ANY
+	return _loaded_ability.aoe_type != "none" or _loaded_ability.target_alignment == BaseAbility.TargetAlignment.ANY
 
 
 func get_grid_pos() -> Vector2i:

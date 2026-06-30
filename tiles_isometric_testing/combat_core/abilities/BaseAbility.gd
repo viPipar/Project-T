@@ -14,9 +14,13 @@ enum TargetAlignment { ENEMY_ONLY, ALLY_ONLY, SELF_ONLY, ANY }
 @export_group("Targeting & Range")
 @export var target_alignment: TargetAlignment = TargetAlignment.ENEMY_ONLY
 @export var ally_targeting_dc : int  = 10 # DC to hit when targeting an ally (bypasses ally armor)
-@export var range_type      : String = "adjacent" # "adjacent", "line", "aoe"
+@export var range_type      : String = "diamond" # "diamond", "square", "line"
 @export var range_size      : int    = 1
 @export var is_projectile   : bool   = false
+
+@export_group("Area of Effect")
+@export_enum("none", "self_radius", "target_radius", "directional_line") var aoe_type: String = "none"
+@export var aoe_size        : int    = 0
 
 @export_group("Output")
 @export var damage_dice     : String = "1D6"
@@ -39,6 +43,10 @@ func is_self_target() -> bool:
 	return target_alignment == TargetAlignment.SELF_ONLY
 
 
+func requires_target_selection() -> bool:
+	return aoe_type != "self_radius" and not is_self_target()
+
+
 ## Compute which grid tiles are valid targets from the caster's position.
 ## Returns Array[Vector2i].
 func get_target_tiles(caster_pos: Vector2i) -> Array[Vector2i]:
@@ -49,13 +57,12 @@ func get_target_tiles(caster_pos: Vector2i) -> Array[Vector2i]:
 		return tiles
 
 	match range_type:
-		"adjacent":
-			# Cardinal neighbors within range_size steps
+		"diamond":
+			# Manhattan distance filter for diamond shape
 			for dx in range(-range_size, range_size + 1):
 				for dy in range(-range_size, range_size + 1):
 					if dx == 0 and dy == 0:
 						continue
-					# Manhattan distance filter for "adjacent" feel
 					if abs(dx) + abs(dy) <= range_size:
 						tiles.append(caster_pos + Vector2i(dx, dy))
 
@@ -70,12 +77,15 @@ func get_target_tiles(caster_pos: Vector2i) -> Array[Vector2i]:
 						break # Wall blocked the line of sight
 					tiles.append(next_tile)
 					if is_instance_valid(GridManager) and GridManager.has_entity_at(next_tile):
-						break # Stop expanding the line (can hit this entity, but nothing behind it)
+						if aoe_type != "directional_line":
+							break # Stop expanding the line if it doesn't pierce
 
-		"aoe":
-			# NxN box centered on caster (range_size = radius)
+		"square":
+			# NxN box centered on caster (Chebyshev distance / King shape)
 			for dx in range(-range_size, range_size + 1):
 				for dy in range(-range_size, range_size + 1):
+					if dx == 0 and dy == 0:
+						continue
 					var tile := caster_pos + Vector2i(dx, dy)
 					tiles.append(tile)
 
@@ -89,6 +99,41 @@ func get_target_tiles(caster_pos: Vector2i) -> Array[Vector2i]:
 	return tiles
 
 
+## Returns the tiles affected by the ability's AOE once fired at target_pos.
+func get_affected_tiles(caster_pos: Vector2i, target_pos: Vector2i) -> Array[Vector2i]:
+	var tiles: Array[Vector2i] = []
+	match aoe_type:
+		"self_radius":
+			for dx in range(-aoe_size, aoe_size + 1):
+				for dy in range(-aoe_size, aoe_size + 1):
+					if abs(dx) + abs(dy) <= aoe_size:
+						var t = caster_pos + Vector2i(dx, dy)
+						if t != caster_pos:
+							tiles.append(t)
+		"target_radius":
+			for dx in range(-aoe_size, aoe_size + 1):
+				for dy in range(-aoe_size, aoe_size + 1):
+					if abs(dx) + abs(dy) <= aoe_size:
+						tiles.append(target_pos + Vector2i(dx, dy))
+		"directional_line":
+			var diff = target_pos - caster_pos
+			var dir = Vector2i.ZERO
+			if abs(diff.x) > abs(diff.y): dir = Vector2i(sign(diff.x), 0)
+			elif diff.y != 0: dir = Vector2i(0, sign(diff.y))
+			else: dir = Vector2i(1, 0)
+			
+			for step in range(1, aoe_size + 1):
+				var next_tile = caster_pos + dir * step
+				if is_instance_valid(GridManager) and not GridManager.is_terrain_walkable(next_tile):
+					break
+				tiles.append(next_tile)
+		_:
+			if target_pos.x >= 0 and target_pos.y >= 0:
+				tiles.append(target_pos)
+	return tiles
+
+
+
 ## Override this in custom abilities (like SlashFlashAbility) to define pre-attack dash movement.
 ## Returns Vector2i(-1, -1) if no dash is required.
 func get_dash_destination(_caster: Node, _target: Node) -> Vector2i:
@@ -99,7 +144,7 @@ func get_dash_destination(_caster: Node, _target: Node) -> Vector2i:
 func get_highlight_type() -> String:
 	if is_self_target():
 		return "skill"   # green/purple for self
-	if range_type == "aoe" and target_alignment == TargetAlignment.ANY:
+	if range_type == "square" and (target_alignment == TargetAlignment.ANY or aoe_type != "none"):
 		return "attack"  # red for AoE
 	return "attack"      # yellow/red for targeted
 
