@@ -47,16 +47,16 @@ func _ready() -> void:
 	bg.add_theme_stylebox_override("panel", NeobrutalStyle.get_panel(NeobrutalStyle.COLOR_WHITE))
 	add_child(bg)
 	
-	# Main layout VBox
+	# CenterContainer for dynamic centering under any viewport size
+	var center_container = CenterContainer.new()
+	center_container.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(center_container)
+	
+	# Main layout VBox inside CenterContainer
 	var main_vbox = VBoxContainer.new()
-	main_vbox.set_anchors_preset(Control.PRESET_CENTER)
-	main_vbox.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	main_vbox.grow_vertical = Control.GROW_DIRECTION_BOTH
-	main_vbox.custom_minimum_size = Vector2(1000, 750)
-	main_vbox.position = Vector2(960 - 500, 540 - 375)
 	main_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	main_vbox.add_theme_constant_override("separation", 20)
-	add_child(main_vbox)
+	center_container.add_child(main_vbox)
 	
 	# Title
 	title_lbl = Label.new()
@@ -85,7 +85,7 @@ func _ready() -> void:
 	# Columns HBox
 	columns_hbox = HBoxContainer.new()
 	columns_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	columns_hbox.add_theme_constant_override("separation", 100)
+	columns_hbox.add_theme_constant_override("separation", 40)
 	main_vbox.add_child(columns_hbox)
 	
 	# Player 1 Column
