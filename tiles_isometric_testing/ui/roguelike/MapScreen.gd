@@ -110,15 +110,14 @@ func _update_node_visuals() -> void:
 	for dict in [node_buttons_p1, node_buttons_p2]:
 		for node_id in dict:
 			var btn = dict[node_id]
+			btn.disabled = false # DEBUG CHEAT: Always enabled/clickable
+			
 			if node_id in unlocked:
 				btn.modulate.a = 1.0
-				btn.disabled = false
 			elif node_id == path_handler.current_node_id:
 				btn.modulate.a = 0.8
-				btn.disabled = true
 			else:
-				btn.modulate.a = 0.3
-				btn.disabled = true
+				btn.modulate.a = 0.5 # Visually dimmer but still clickable
 
 func _get_icon_for_type(type: NodeGraph.NodeType) -> String:
 	match type:
