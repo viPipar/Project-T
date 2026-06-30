@@ -111,16 +111,26 @@ Game
 │   │   ├── Physical Abilities  [instances in tiles_isometric_testing/combat_core/abilities/instances/]
 │   │   │   ├── Main Attack (.tres)
 │   │   │   ├── Elbow Smash (.tres)
-│   │   │   ├── Slash Flash (SlashFlashAbility.gd)
+│   │   │   ├── Slash Flash (.tres) — directional_line AOE, 3-tile piercing
 │   │   │   ├── Cleave (.tres)
 │   │   │   ├── Dagger Throw (.tres)
 │   │   │   ├── Rupture (.tres)
 │   │   │   ├── Epimorphic (.tres)
-│   │   │   └── Autotomy (AutotomyAbility.gd)
-│   │   ├── Magic Abilities  [implements IAbility]
-│   │   │   ├── Spell Slot Consumer
-│   │   │   └── Scholar / Wizard Skill Set (TBD)
-│   │   └── Friendly Fire Handler  [built into IAbility]  ← #11 (merged, not separate)
+│   │   │   ├── Autotomy (AutotomyAbility.gd)
+│   │   │   ├── Divine Departure (.tres) — 2-tile piercing line, 2D20, Stun, Knockback 2
+│   │   │   ├── Great Bash (.tres) — 1-tile rook, 3D20, Stun
+│   │   │   ├── Thrust (.tres) — 2-tile piercing line, 2D12, Vulnerable
+│   │   │   ├── Chain Dagger (.tres) — 3-tile diamond, 1D12, Pull 3 tiles, Lacerate
+│   │   │   └── Kitin Bomb (.tres) — 3-tile diamond + 3×3 target_radius, 2D12 Heal, targets ALL units
+│   │   ├── Magic Abilities  [instances in tiles_isometric_testing/combat_core/abilities/instances/]
+│   │   │   ├── Fireball (.tres)
+│   │   │   ├── Water Blast (.tres)
+│   │   │   ├── Earth Spike (.tres)
+│   │   │   ├── Gust of Wind (.tres)
+│   │   │   ├── Staff Bonk (.tres)
+│   │   │   └── Generic Ranged Placeholder (.tres)
+│   │   └── Friendly Fire Handler  [built into BaseAbility]  ← #11 (merged, not separate)
+│   │       ├── TargetAlignment enum: ENEMY_ONLY / ALLY_ONLY / SELF_ONLY / ANY
 │   │       ├── Ally Damage Resolver
 │   │       └── Enemy Heal / Buff Resolver
 │   │
@@ -150,11 +160,11 @@ Game
 │   │   │   ├── Air
 │   │   │   └── Earth
 │   │   ├── Physical Status Effects
-│   │   │   ├── Bleeding (DoT)
-│   │   │   ├── Stun (skip turn)
-│   │   │   ├── Lacerate (movement −)
-│   │   │   ├── Weakened (armor −)
-│   │   │   └── Vulnerable (damage +)
+│   │   │   ├── Bleeding (DoT — 1 dmg/turn, 3 turns)
+│   │   │   ├── Stun (skip turn — 1 turn, blocks_action)
+│   │   │   ├── Lacerate (DoT — 2 dmg/turn, 2 turns)
+│   │   │   ├── Weakened (armor −2, 2 turns)
+│   │   │   └── Vulnerable (physical damage ×1.5, 2 turns)
 │   │   ├── Elemental Combo Resolver
 │   │   │   ├── Fire + Earth → Magma (DoT)
 │   │   │   ├── Earth + Water → Mud (movement −)
@@ -404,13 +414,13 @@ All enemies dead?
 
 ### Physical Status Effects
 
-| Status | Effect | Trigger |
-|--------|--------|---------|
-| Bleeding | Damage Over Time (DoT) | Physical attacks |
-| Stun | Delay enemy turn for 1 round | Physical attacks |
-| Lacerate | Movement Reduction | Physical attacks |
-| Weakened | Armor Reduction | Physical attacks |
-| Vulnerable | Damage Increase [+] | Physical attacks |
+| Status | Effect | Duration | Trigger |
+|--------|--------|----------|---------|
+| Bleeding | DoT: 1 damage per turn per stack | 3 turns | Rupture |
+| Stun | Skip next turn (blocks_action) | 1 turn | Great Bash, Divine Departure |
+| Lacerate | DoT: 2 damage per turn per stack | 2 turns | Chain Dagger |
+| Weakened | −2 Armor per stack | 2 turns | Dagger Throw |
+| Vulnerable | Physical damage received ×1.5 | 2 turns | Thrust |
 
 ### Elements
 
@@ -461,8 +471,12 @@ Full action economy per turn (AP, Bonus AP, Spell Slots / Energy Charge, Movemen
 ### 3. RNG Hit/Miss & Damage Pipeline (The "Terima Jadi" Architecture)
 The damage pipeline is strictly divided into three phases to prevent overlapping code:
 1. **Hit/Miss Check (Tapip):** `HitMissResolver` rolls `D20 + floor(ACC/2)` vs. target `Armor`. If the roll is higher, it connects. (Armor acts as Evasion, not Damage Reduction).
-2. **Raw Output & Multipliers (Gilang):** `BaseAbility` rolls the raw damage dice (e.g. `1D6`). It then queries the Status System for multipliers (like `Vulnerable` or `Vapor` combo) and multiplies the raw damage.
-3. **Application / "Terima Jadi" (Candra):** Candra's `StatSystem.apply_damage()` simply receives the final, fully-calculated integer and directly subtracts it from HP. No math or mitigation happens here.
+2. **Raw Output & Multipliers (Gilang):** `CombatActionResolver` rolls the raw damage dice (e.g. `1D6`). It queries the `ConditionComponent` for multipliers (`Vulnerable` → ×1.5 physical damage). For AOE misses, damage is halved (graze).
+3. **Application / "Terima Jadi" (Candra):** Candra's `StatSystem.apply_damage()` / `StatSystem.apply_heal()` simply receives the final, fully-calculated integer and directly subtracts/adds HP. No math or mitigation happens here.
+
+> **Controller-Based Architecture:** Combat logic is now split into `CombatActionResolver.gd` (rule processing, damage/knockback/status resolution) and `CombatVFXController.gd` (animation sequencing and UI feedback), both managed by `CombatTestBridge.gd`.
+>
+> **Pull Mechanic:** Negative `knockback_tiles` values reverse the knockback direction, pulling the target toward the caster. The `ForcedMovementResolver` handles collision detection in both directions.
 
 ### 4. Friendly Fire (Built into Ability System) ← #11
 - Friendly fire logic is part of the `BaseAbility` (IAbility) interface — not a separate system.
@@ -550,12 +564,17 @@ Item rarity is revealed via a light effect **after** the player picks the item (
 |---|-----------|--------|--------|------|-----------|
 | 1 | **Main Attack** | `basic-attack-test` | [1D10] 1–10 Physical | 1 Action | 4 adjacent tiles (↑↓←→) — 🟡 Yellow |
 | 2 | **Elbow Smash** | `knockback-test` | [1D4] 1–4 Physical + Knockback 1 Tile | 1 Bonus Action | 4 adjacent tiles (↑↓←→) — 🟡 Yellow |
-| 3 | **Slash Flash** | `dash-attack-test` | [1D6] 1–6 Physical + Dash Toward Target | 1 Action + 1 Bonus Action + 1 Charge | Straight line 3 tiles × 4 directions — 🟡 Yellow |
+| 3 | **Slash Flash** | `dash-attack-test` | [1D6] 1–6 Physical + 3-tile directional line (piercing) | 1 Action + 1 Bonus Action + 1 Charge | Straight line 3 tiles × 4 directions — 🟡 Yellow |
 | 4 | **Cleave** | `aoe-attack-test` | [1D8] 1–8 Physical AoE | 1 Action + 2 Charge | 3×3 box around character — 🔴 Red (AoE) |
-| 5 | **Dagger Throw** | `armor-reduct-status` | [1D4] 1–4 Physical + Weakened (−2 Armor) | 1 Bonus Action + 1 Charge | 5×5 box around character — 🟡 Yellow |
-| 6 | **Rupture** | `dot-status-test` | [1D6] 1–6 Physical + Bleeding (DoT 1–4/turn) | 1 Action + 2 Charge | 3×3 box around character — 🟡 Yellow |
+| 5 | **Dagger Throw** | `armor-reduct-status` | [1D4] 1–4 Physical + Weakened (−2 Armor, 2 turns) | 1 Bonus Action + 1 Charge | 5×5 box around character — 🟡 Yellow |
+| 6 | **Rupture** | `dot-status-test` | [1D6] 1–6 Physical + Bleeding (1 DoT/turn, 3 turns) | 1 Action + 2 Charge | 3×3 box around character — 🟡 Yellow |
 | 7 | **Epimorphic** | `self-heal-test` | [1D8] 1–8 Heal (Self) | 1 Bonus Action + 1 Charge | Self tile only — 🟢 Green |
 | 8 | **Autotomy** | `self-damage-test` | −20% HP, +4 Armor (Self) | 1 Action + 2 Charge | Self tile only — 🟢 Green |
+| 9 | **Divine Departure** | `divine-departure` | [2D20] 2–40 Physical + Stun (1 turn) + Knockback 2 tiles, piercing line AOE | 1 Action + 3 Charge | 2-tile line × 4 directions — 🟡 Yellow |
+| 10 | **Great Bash** | `great-bash` | [3D20] 3–60 Physical + Stun (1 turn) | 1 Action + 3 Charge | 1-tile rook (↑↓←→) — 🟡 Yellow |
+| 11 | **Thrust** | `thrust` | [2D12] 2–24 Physical + Vulnerable (×1.5 phys, 2 turns), piercing line AOE | 1 Action + 2 Charge | 2-tile line × 4 directions — 🟡 Yellow |
+| 12 | **Chain Dagger** | `pull-single-test` | [1D12] 1–12 Physical + Pull 3 tiles + Lacerate (2 DoT/turn, 2 turns) | 1 Action + 1 Charge | 3-tile diamond — 🟡 Yellow |
+| 13 | **Kitin Bomb** | `kitin-bomb` | [2D12] 2–24 Heal (ALL units in radius, including enemies) | 1 Action + 2 Charge | 3-tile diamond → 3×3 target_radius — 🟢 Green |
 
 ### Grid Area Legend
 
@@ -767,4 +786,4 @@ After selecting a skill:
 
 ---
 
-*Last updated: April 2026 — Architecture revisions 1–15 applied.*
+*Last updated: June 2026 — Architecture revisions 1–15 applied. Combat controller refactor, new abilities (Divine Departure, Great Bash, Thrust, Chain Dagger, Kitin Bomb), pull mechanic, vulnerable damage multiplier, and AOE heal/target alignment system added.*

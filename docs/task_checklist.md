@@ -27,13 +27,18 @@
 | Gilang | Ability System | Implement Physical Abilities (Main Attack, Elbow Smash, Slash Flash, Cleave, Dagger Throw, Rupture, Epimorphic, Autotomy) | Critical | Done | Ability Base Class | #9 |
 | Gilang | Ability System | Tambahin deskripsi ability field. Sama divine departure ketinggalan. | Critical | Done | Ability Base Class | #9 |
 | Gilang | Ability System | Calculate Damage Multipliers (Vulnerable/Vapor) in BaseAbility before sending to Candra | High | Done | Status Effects | #9 |
+| Gilang | Ability System | Implement new abilities: Divine Departure, Great Bash, Thrust, Chain Dagger, Kitin Bomb | High | Done | Ability Base Class, AOE System | #9 |
+| Gilang | Ability System | Implement Pull mechanic (negative knockback_tiles) in CombatActionResolver | High | Done | ForcedMovementResolver | #13 |
+| Gilang | Ability System | Implement AOE Heal resolution in CombatActionResolver | High | Done | HealthComponent | #9 |
+| Gilang | Ability System | Implement TargetAlignment-aware AOE collection (ENEMY_ONLY/ALLY_ONLY/SELF_ONLY/ANY) | High | Done | Ability Base Class | #11 |
 | Gilang | Ability System | Implement Magic Abilities & Spell Slot Consumer | High | Done | Ability Base Class, Spell Slot Mgr (Tapip) | - |
 | Gilang | Friendly Fire | Build Ally Damage Resolver (inside IAbility) | High | Done | Ability Base Class | #11 |
 | Gilang | Friendly Fire | Build Enemy Heal/Buff Resolver (inside IAbility) | Medium | Done | Ability Base Class | #11 |
 | Gilang | Elemental System | Element Tag Manager (True/Fire/Water/Air/Earth) | High | Done | - | - |
 | Gilang | Elemental System | Elemental Combo Resolver (6 combos: Magma/Mud/Vapor/Mist/Erosion/Conflagration) | High | Done | Element Tag Mgr | - |
 | Gilang | Status Effects | Physical Status Effects (Bleeding/Stun/Lacerate/Weakened/Vulnerable) | High | Done | SignalBus | - |
-| Gilang | Status Effects | DoT / Persistent Effect Ticker | Medium | To Do | Status Effects | - |
+| Gilang | Status Effects | DoT / Persistent Effect Ticker | Medium | Done | Status Effects | - |
+| Gilang | Status Effects | Vulnerable damage multiplier (×1.5 phys) in CombatActionResolver | High | Done | ConditionComponent | #9 |
 | Gilang | Status Particle FX | Per-entity particle emitter (attach to entity node) | Medium | To Do | Status Effects | #15 |
 | Gilang | Status Particle FX | Particle sets: Bleeding/Stun/Fire/Water/Earth/Air/Magma/Mud/Mist/Conflagration | Low | To Do | Particle Emitter | #15 |
 | Gilang | Status Effects | Implement `autotomy_armor_buff` (+4 Armor for 1 turn) from Autotomy | Medium | Done | Status Effects | #9 |
@@ -49,7 +54,7 @@
 | Candra | Grid System | Isometric Grid Manager | Critical | To Do | - | - |
 | Candra | Grid System | Pathfinding (A* or similar) | Critical | To Do | Grid Manager | - |
 | Candra | Movement System | Movement System integration (tile-based) | High | To Do | Grid, Movement Pt (Tapip) | - |
-| Candra | Movement System | Knockback Resolver - wall collision bonus damage | High | To Do | SignalBus (Gilang), Grid | #13 |
+| Candra | Movement System | Knockback Resolver - wall collision bonus damage | High | Done | SignalBus (Gilang), Grid | #13 |
 | Candra | Movement System | Environmental Interaction Handler | Low | To Do | Grid | - |
 | Candra | Projectile System | Projectile Spawner | High | To Do | Grid | #12 |
 | Candra | Projectile System | Projectile Mover (grid-step / physics) | High | To Do | Spawner | #12 |
@@ -113,6 +118,7 @@
 | Programmer | System | Task | Priority | Status | Depends On | Ref # |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | Gilang | Combat Animation | Combat Action Queue / Animation Sync (CombatTestBridge) | Critical | Done | EventBus | - |
+| Gilang | Combat Core | Split combat logic into dedicated scripts: CombatActionResolver (damage/status/knockback) + CombatVFXController (animations/UI) | Critical | Done | CombatTestBridge | - |
 | TBD | Game Loop | Scene Transition Flow (Node Graph -> Combat Scene -> Win/Lose) | Critical | To Do | Node Graph | - |
 | TBD | UI System | Core Menus (Main Menu, Pause, Settings, Game Over Screen) | High | To Do | - | - |
 | TBD | Save System | Run State & Meta-Progression Persistence (Save/Load) | High | To Do | Data structures | - |
