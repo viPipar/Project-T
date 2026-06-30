@@ -1,6 +1,6 @@
 extends RefCounted
 
-func run_all_tests() -> void:
+func run_all_tests(context: Node = null) -> void:
 	print("\n==============================================")
 	print("🚀 ROGUELIKE SYSTEM TEST STARTING...")
 	print("==============================================\n")
@@ -8,7 +8,7 @@ func run_all_tests() -> void:
 	test_seeded_node_graph()
 	test_node_graph_connectivity()
 	test_luck_event_pools()
-	test_campfire_rest_choices()
+	test_campfire_rest_choices(context)
 	test_contested_pick_system()
 	test_shop_and_economy()
 	
@@ -141,7 +141,7 @@ func test_luck_event_pools() -> void:
 	print(" - Stat Debuff (5%%): %d" % lose_counts["stat_debuff"])
 	print("")
 
-func test_campfire_rest_choices() -> void:
+func test_campfire_rest_choices(context: Node = null) -> void:
 	print("--- 🔥 TESTING CAMPFIRE REST SITE ---")
 	var handler = RestLootHandler.new()
 	
@@ -166,6 +166,13 @@ func test_campfire_rest_choices() -> void:
 	if rest_screen_script:
 		var screen = rest_screen_script.new()
 		assert(screen.OPTIONS_DATA.size() == 4, "Rest Screen must have exactly 4 choices.")
+		
+		# If context is provided and in tree, add child to force _ready() execution
+		if context and context.is_inside_tree():
+			context.add_child(screen)
+			context.remove_child(screen)
+			screen.queue_free()
+			
 		print("Rest Screen Instantiation Check: PASSED ✅")
 	else:
 		print("Rest Screen Instantiation Check: FAILED ❌ (Cannot load RestScreen.gd)")

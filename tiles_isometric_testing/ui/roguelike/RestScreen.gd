@@ -55,7 +55,7 @@ func _ready() -> void:
 	main_vbox.custom_minimum_size = Vector2(1000, 750)
 	main_vbox.position = Vector2(960 - 500, 540 - 375)
 	main_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	main_vbox.theme_override_constants_add("separation", 20)
+	main_vbox.add_theme_constant_override("separation", 20)
 	add_child(main_vbox)
 	
 	# Title
@@ -85,12 +85,12 @@ func _ready() -> void:
 	# Columns HBox
 	columns_hbox = HBoxContainer.new()
 	columns_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	columns_hbox.theme_override_constants_add("separation", 100)
+	columns_hbox.add_theme_constant_override("separation", 100)
 	main_vbox.add_child(columns_hbox)
 	
 	# Player 1 Column
 	var p1_vbox = VBoxContainer.new()
-	p1_vbox.theme_override_constants_add("separation", 15)
+	p1_vbox.add_theme_constant_override("separation", 15)
 	columns_hbox.add_child(p1_vbox)
 	
 	var p1_title = Label.new()
@@ -107,13 +107,13 @@ func _ready() -> void:
 		btn.custom_minimum_size = Vector2(350, 80)
 		var color = NeobrutalStyle.get_color_by_name(data["color_name"])
 		NeobrutalStyle.apply_to_button(btn, color)
-		btn.pressed.connect(_on_p1_choice.bind(i))
+		btn.pressed.connect(_on_p1_choice.bind(i))	
 		p1_vbox.add_child(btn)
 		p1_buttons.append(btn)
 		
 	# Player 2 Column
 	var p2_vbox = VBoxContainer.new()
-	p2_vbox.theme_override_constants_add("separation", 15)
+	p2_vbox.add_theme_constant_override("separation", 15)
 	columns_hbox.add_child(p2_vbox)
 	
 	var p2_title = Label.new()

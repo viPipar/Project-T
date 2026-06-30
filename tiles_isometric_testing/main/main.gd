@@ -250,7 +250,7 @@ func _run_all_tests() -> void:
 	# Roguelike Tests
 	var roguelike_tester = load("res://testing/RoguelikeTester.gd").new()
 	if is_instance_valid(roguelike_tester) and roguelike_tester.has_method("run_all_tests"):
-		roguelike_tester.run_all_tests()
+		roguelike_tester.run_all_tests(self)
 	
 	# Combat Tests
 	var ae_test = load("res://combat_core/tests/test_action_economy.gd").new()
