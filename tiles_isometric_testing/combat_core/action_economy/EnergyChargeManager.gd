@@ -18,7 +18,7 @@ extends Node
 ## Emitted ke HUD — Rapit connect ke signal ini
 signal charge_changed(current: int, max_charges: int)
 
-const BASE_CHARGES := 5
+const BASE_CHARGES := 99
 
 var max_charges    : int = BASE_CHARGES
 var current_charges: int = BASE_CHARGES

@@ -189,7 +189,7 @@ func _play_enemy_dice_sequence(
 	await tw_out.finished
 	container.queue_free()
 
-func _spawn_magic_projectile(attacker: Node, target: Node, element: String) -> void:
+func _spawn_magic_projectile(attacker: Node, target: Node, element: String, tracking_array: Array = []) -> void:
 	print("[COMBAT] 🌠 Merender efek sihir elemen: %s" % element)
 	
 	var orb = Polygon2D.new()
@@ -208,13 +208,18 @@ func _spawn_magic_projectile(attacker: Node, target: Node, element: String) -> v
 		_: orb.color = Color.MEDIUM_PURPLE
 		
 	var start_pos = attacker.global_position + Vector2(0, -32)
-	var end_pos = target.global_position + Vector2(0, -32)
-	
 	orb.global_position = start_pos
+	
+	orb.set_script(preload("res://combat_core/tests/HomingProjectile.gd"))
+	orb.set("tracking_array", tracking_array)
+	orb.set("fallback_target", target)
+	
+	if is_instance_valid(target):
+		var init_dir = (target.global_position + Vector2(0, -32) - start_pos).normalized()
+		# Massive random spread (up to 120 degrees sideways)
+		var spread_angle = randf_range(-PI/1.5, PI/1.5) 
+		init_dir = init_dir.rotated(spread_angle)
+		orb.set("current_velocity", init_dir * randf_range(1200.0, 1800.0))
+		
 	add_child(orb)
-	
-	var tween = create_tween()
-	tween.tween_property(orb, "global_position", end_pos, 0.3).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	await tween.finished
-	
-	orb.queue_free()
+	await orb.tree_exited

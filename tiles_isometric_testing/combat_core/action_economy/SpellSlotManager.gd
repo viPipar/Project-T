@@ -31,10 +31,10 @@ func setup(att_stat: int) -> void:
 	#   Lv2 = 2 + floor(ATT/10)
 	#   Lv3 = 1 + floor(ATT/15)
 	#   Lv4 = 0  (item only)
-	max_slots[0] = 2 + floori(att_stat / 5.0)
-	max_slots[1] = 2 + floori(att_stat / 10.0)
-	max_slots[2] = 1 + floori(att_stat / 15.0)
-	max_slots[3] = 0  # hanya dari item
+	max_slots[0] = 99
+	max_slots[1] = 99
+	max_slots[2] = 99
+	max_slots[3] = 99
 	reset_all()
 
 func setup_from_stats(stats: StatsComponent) -> void:

@@ -224,7 +224,19 @@ func _on_action_wheel_selected(pid: int, action_name: String) -> void:
 
 		print("[Player P%d] Auto-targeting: %s — executing immediately" % [player_id, _loaded_ability.ability_name])
 		_begin_action_resolution()
-		EventBus.attackcam_started.emit(self, self, selected_ability_id, grid_pos)
+		
+		var auto_target: Node = self
+		var target_pos: Vector2i = grid_pos
+		
+		if _loaded_ability.get("is_position_switch"):
+			var all_players = get_tree().get_nodes_in_group("players")
+			for p in all_players:
+				if p != self:
+					auto_target = p
+					target_pos = p.get("grid_pos")
+					break
+					
+		EventBus.attackcam_started.emit(self, auto_target, selected_ability_id, target_pos)
 		return
 
 	# Enter targeting mode — show grid, hide wheel

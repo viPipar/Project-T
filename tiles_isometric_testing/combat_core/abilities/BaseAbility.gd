@@ -17,14 +17,20 @@ enum TargetAlignment { ENEMY_ONLY, ALLY_ONLY, SELF_ONLY, ANY }
 @export var range_type      : String = "diamond" # "diamond", "square", "line"
 @export var range_size      : int    = 1
 @export var is_projectile   : bool   = false
-
 @export_group("Area of Effect")
-@export_enum("none", "self_radius", "target_radius", "directional_line") var aoe_type: String = "none"
+@export_enum("none", "self_radius", "target_radius", "directional_line", "self_square", "target_square") var aoe_type: String = "none"
 @export var aoe_size        : int    = 0
+
+@export_group("Burst Mechanics")
+@export var is_burst_attack : bool   = false
+@export var burst_retarget  : bool   = false
 
 @export_group("Output")
 @export var damage_dice     : String = "1D6"
 @export var is_heal         : bool   = false
+
+@export_group("Utility Mechanics")
+@export var is_position_switch : bool = false
 
 @export_group("Effects")
 @export var knockback_tiles : int    = 0
@@ -44,6 +50,8 @@ func is_self_target() -> bool:
 
 
 func requires_target_selection() -> bool:
+	if is_position_switch:
+		return false
 	return aoe_type != "self_radius" and not is_self_target()
 
 
@@ -115,6 +123,16 @@ func get_affected_tiles(caster_pos: Vector2i, target_pos: Vector2i) -> Array[Vec
 				for dy in range(-aoe_size, aoe_size + 1):
 					if abs(dx) + abs(dy) <= aoe_size:
 						tiles.append(target_pos + Vector2i(dx, dy))
+		"self_square":
+			for dx in range(-aoe_size, aoe_size + 1):
+				for dy in range(-aoe_size, aoe_size + 1):
+					var t = caster_pos + Vector2i(dx, dy)
+					if t != caster_pos:
+						tiles.append(t)
+		"target_square":
+			for dx in range(-aoe_size, aoe_size + 1):
+				for dy in range(-aoe_size, aoe_size + 1):
+					tiles.append(target_pos + Vector2i(dx, dy))
 		"directional_line":
 			var diff = target_pos - caster_pos
 			var dir = Vector2i.ZERO

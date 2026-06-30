@@ -1,0 +1,27 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://combat_core/abilities/BaseAbility.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+ability_name = "Glacias"
+ability_description = "Single Target + AoE"
+ability_tag = "glacias"
+ability_type = 1
+element_tag = "water"
+target_alignment = 0
+ally_targeting_dc = 10
+range_type = "diamond"
+range_size = 4
+is_projectile = true
+aoe_type = "target_square"
+aoe_size = 1
+damage_dice = "3D20"
+is_heal = false
+knockback_tiles = 0
+status_effect = ""
+status_duration = 0
+status_stacks = 1
+cost_action = 1
+cost_bonus_action = 0
+cost_mana = 4

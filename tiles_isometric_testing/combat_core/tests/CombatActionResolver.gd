@@ -85,7 +85,7 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 	var a_pos: Vector2i = attacker.get("grid_pos")
 	# --- AOE Multi-Target Logic ---
 	var aoe_targets: Array[Node] = []
-	if ability != null:
+	if ability != null and ability.get("aoe_type") != null and ability.aoe_type != "none":
 		var t_pos: Vector2i = target_pos
 		if t_pos.x < 0:
 			t_pos = target.get("grid_pos") if target != null else a_pos
@@ -163,9 +163,67 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 	var defense_label := "Resist" if is_magical else "Armor"
 	print("[COMBAT] D20: %d (raw) + %d → %d  vs  %s: %d" % [raw, hit_modifier, total, defense_label, thresh])
 
+	# ── Intercept untuk Position Switch Utility ──
+	var is_pos_switch = ability != null and ("is_position_switch" in ability) and ability.is_position_switch
+	if is_pos_switch:
+		if target != null and is_instance_valid(GridManager):
+			bridge._set_player_busy(pid, true)
+			if is_instance_valid(attacker) and attacker.has_method("play_attack"):
+				attacker.play_attack(_base_ability_id)
+				await get_tree().create_timer(0.2).timeout
+				
+			var a_grid = attacker.get("grid_pos")
+			var t_grid = target.get("grid_pos")
+			
+			if GridManager.swap_entities(a_grid, t_grid):
+				attacker.set("grid_pos", t_grid)
+				target.set("grid_pos", a_grid)
+				
+				# IsoUtils is an autoload or utility. We might need to ensure it's available.
+				# Assuming IsoUtils is a global singleton since it's used elsewhere.
+				var a_px = IsoUtils.world_to_iso(t_grid)
+				var t_px = IsoUtils.world_to_iso(a_grid)
+				
+				attacker.z_index = IsoUtils.get_depth(t_grid)
+				target.z_index = IsoUtils.get_depth(a_grid)
+				
+				# Play sweeping teleport tween
+				var tw = create_tween().set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
+				tw.tween_property(attacker, "position", a_px, 0.5)
+				tw.tween_property(target, "position", t_px, 0.5)
+				
+				# Add a small hop effect
+				var hop_a = attacker.position.y - 40
+				var hop_t = target.position.y - 40
+				tw.tween_property(attacker, "position:y", hop_a, 0.25).set_ease(Tween.EASE_OUT)
+				tw.tween_property(target, "position:y", hop_t, 0.25).set_ease(Tween.EASE_OUT)
+				
+				await tw.finished
+				
+				EventBus.player_moved.emit(attacker, a_grid, t_grid)
+				EventBus.player_moved.emit(target, t_grid, a_grid)
+			else:
+				print("[COMBAT] Gagal menukar posisi di GridManager!")
+				
+			if attacker.is_in_group("players"):
+				EventBus.attackcam_finished.emit(attacker)
+			else:
+				EventBus.combat_action_finished.emit(attacker)
+			bridge._set_player_busy(pid, false)
+		else:
+			print("[COMBAT] Target missed atau invalid untuk Position Switch.")
+			if attacker.is_in_group("players"):
+				EventBus.attackcam_finished.emit(attacker)
+			else:
+				EventBus.combat_action_finished.emit(attacker)
+			bridge._set_player_busy(pid, false)
+		return
+
+
 	# ── Siapkan data damage ────
 	var _dmg_formula := base_dice
 	var dmg_rolls   : Array = []
+	var crit_rolls  : Array = []
 	var dmg_total   : int = 0
 	
 	var dmg_mod := _get_damage_modifier(attacker, is_magical)
@@ -180,7 +238,7 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 
 		if crit:
 			var extra_detail: Dictionary = bridge._dice_roller.roll_detailed(base_dice)
-			dmg_rolls.append_array(extra_detail["rolls"])
+			crit_rolls = extra_detail["rolls"]
 			dmg_total = base_detail["total"] + extra_detail["total"] + dmg_mod
 		else:
 			dmg_total = base_detail["total"] + dmg_mod
@@ -272,7 +330,12 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 			attacker.play_attack(_base_ability_id)
 			await get_tree().create_timer(0.2).timeout
 		if target != null:
-			await bridge.vfx_controller._spawn_magic_projectile(attacker, target, ability.element_tag)
+			var is_burst_check = ability.get("is_burst_attack") if "is_burst_attack" in ability else false
+			if is_burst_check:
+				bridge.vfx_controller._spawn_magic_projectile(attacker, target, ability.element_tag, aoe_targets)
+				await get_tree().create_timer(0.15, false).timeout
+			else:
+				await bridge.vfx_controller._spawn_magic_projectile(attacker, target, ability.element_tag)
 
 	var had_kill := false
 
@@ -291,13 +354,29 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 				var real_heal = dmg_total
 				if not hit and ability != null and ability.aoe_type != "none":
 					real_heal = maxi(1, floori(dmg_total / 2.0))
+		var is_burst = ability != null and ("is_burst_attack" in ability) and ability.is_burst_attack
+		var loop_count = 1
+		if is_burst:
+			var split_dice = ability.damage_dice.to_lower().split("d")
+			if split_dice.size() > 0:
+				loop_count = int(split_dice[0])
+				
+		var fractional_mod = floori(float(dmg_mod) / float(loop_count)) if is_burst and loop_count > 0 else 0
+			
+		for burst_idx in range(loop_count):
+			var current_roll_dmg = dmg_total
+			if is_burst:
+				current_roll_dmg = dmg_rolls[burst_idx] + fractional_mod
+				if crit and burst_idx < crit_rolls.size():
+					current_roll_dmg += crit_rolls[burst_idx]
 					
-				var applied = _apply_heal_to_target(t, real_heal, attacker)
-				print("[COMBAT] %s heal sebesar %d HP!" % [t.name, applied])
-			else:
-				var real_dmg = dmg_total
-				if not hit and ability != null and ability.aoe_type != "none":
-					real_dmg = maxi(1, floori(dmg_total / 2.0))
+			current_roll_dmg = maxi(0, current_roll_dmg)
+			
+			if is_burst and burst_idx > 0 and ("burst_retarget" in ability) and ability.burst_retarget:
+				for i in range(aoe_targets.size() - 1, -1, -1):
+					var t = aoe_targets[i]
+					if not is_instance_valid(t) or t.is_queued_for_deletion() or (t.has_method("is_dead") and t.is_dead()):
+						aoe_targets.remove_at(i)
 				
 				var cond = StatSystem.get_condition_component(t) if StatSystem != null else t.get_node_or_null("ConditionComponent")
 				if is_instance_valid(cond) and cond.has_method("has_condition") and cond.has_condition("vulnerable") and not is_magical:
@@ -317,31 +396,101 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 					element_tag = ability.element_tag
 				if is_magical and ability == null:
 					element_tag = "arcane"
+				if aoe_targets.is_empty():
+					var best_target: Node = null
+					var min_dist = 9999
+					var search_pos = target_pos if target_pos.x >= 0 else a_pos
 					
-				if ElementSystem != null:
-					ElementSystem.resolve_elemental_hit(t, element_tag, applied)
-				
-			if hit:
-				var kb_tiles = 0
-				if ability != null:
-					kb_tiles = ability.knockback_tiles
-					if ability.status_effect != "":
-						EventBus.on_status_applied.emit(t, ability.status_effect, ability.status_duration, ability.status_stacks)
-				
-				if kb_tiles != 0 and not _knockback_done:
-					var _t_pos = t.get("grid_pos")
-					var diff = _t_pos - a_pos
-					var dir = Vector2i.RIGHT
-					if abs(diff.x) > abs(diff.y): dir = Vector2i(sign(diff.x), 0)
-					else: dir = Vector2i(0, sign(diff.y))
+					var all_entities = attacker.get_tree().get_nodes_in_group("enemies") if is_player else attacker.get_tree().get_nodes_in_group("players")
+					for ent in all_entities:
+						if is_instance_valid(ent) and not ent.is_queued_for_deletion() and not (ent.has_method("is_dead") and ent.is_dead()):
+							var e_pos = ent.get("grid_pos")
+							if e_pos != null:
+								var dist = abs(e_pos.x - search_pos.x) + abs(e_pos.y - search_pos.y)
+								if dist < min_dist:
+									min_dist = dist
+									best_target = ent
 					
-					if kb_tiles < 0:
-						dir = -dir
+					if best_target != null:
+						aoe_targets.append(best_target)
+						target_pos = best_target.get("grid_pos")
+						target = best_target
+						print("[COMBAT] Burst retargeting to %s!" % best_target.name)
+					else:
+						print("[COMBAT] No more valid targets for burst.")
+						break
 						
 					ForcedMovementResolver.knockback_entity(t, abs(kb_tiles), dir, attacker)
 
 		if had_kill:
 			_slow_mo_kill()
+			if aoe_targets.is_empty():
+				break
+				
+			if is_burst and burst_idx > 0:
+				if ability.is_projectile and target != null:
+					bridge.vfx_controller._spawn_magic_projectile(attacker, target, ability.element_tag, aoe_targets)
+				await attacker.get_tree().create_timer(0.15, false).timeout
+
+			for t in aoe_targets:
+				var is_heal = false
+				if ability != null:
+					is_heal = ability.is_heal
+
+				if is_heal:
+					var real_heal = current_roll_dmg
+					if not hit and ability != null and ability.aoe_type != "none":
+						real_heal = maxi(1, floori(current_roll_dmg / 2.0))
+						
+					var applied = _apply_heal_to_target(t, real_heal, attacker)
+					print("[COMBAT] %s heal sebesar %d HP!" % [t.name, applied])
+				else:
+					var real_dmg = current_roll_dmg
+					if not hit and ability != null and ability.aoe_type != "none":
+						real_dmg = maxi(1, floori(current_roll_dmg / 2.0))
+					
+					var cond = StatSystem.get_condition_component(t) if StatSystem != null else t.get_node_or_null("ConditionComponent")
+					if is_instance_valid(cond) and cond.has_method("has_condition") and cond.has_condition("vulnerable") and not is_magical:
+						real_dmg = maxi(1, floori(real_dmg * 1.5))
+						print("[COMBAT] %s is VULNERABLE! Damage increased to %d" % [t.name, real_dmg])
+					
+					var applied = _apply_damage_to_target(t, real_dmg, attacker, "magical" if is_magical else "physical")
+					
+					if is_burst:
+						print("[COMBAT] Burst %d: %s menerima %d damage!" % [burst_idx + 1, t.name, applied])
+					else:
+						print("[COMBAT] %s menerima %d damage! (Total DMG)" % [t.name, applied])
+					
+					if is_instance_valid(t) and t.has_method("play_hurt"):
+						t.play_hurt()
+					
+					var element_tag = "physical"
+					if ability != null:
+						element_tag = ability.element_tag
+					if is_magical and ability == null:
+						element_tag = "arcane"
+						
+					if ElementSystem != null:
+						ElementSystem.resolve_elemental_hit(t, element_tag, applied)
+					
+				if hit and burst_idx == loop_count - 1:
+					var kb_tiles = 0
+					if ability != null:
+						kb_tiles = ability.knockback_tiles
+						if ability.status_effect != "":
+							EventBus.on_status_applied.emit(t, ability.status_effect, ability.status_duration, ability.status_stacks)
+					
+					if kb_tiles != 0 and not _knockback_done:
+						var _t_pos = t.get("grid_pos")
+						var diff = _t_pos - a_pos
+						var dir = Vector2i.RIGHT
+						if abs(diff.x) > abs(diff.y): dir = Vector2i(sign(diff.x), 0)
+						else: dir = Vector2i(0, sign(diff.y))
+						
+						if kb_tiles < 0:
+							dir = -dir
+							
+						ForcedMovementResolver.knockback_entity(t, abs(kb_tiles), dir, attacker)
 	else:
 		print("[COMBAT] Serangan meleset!")
 
