@@ -122,14 +122,26 @@ func _populate_shop() -> void:
 		
 		NeobrutalStyle.apply_to_button(item_card, color)
 		
+		var vbox = VBoxContainer.new()
+		vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
+		vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+		item_card.add_child(vbox)
+		
+		var rect = TextureRect.new()
+		var placeholder_tex = load("res://assets/ui_assets/placeholder.jpeg")
+		rect.texture = placeholder_tex
+		rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		rect.custom_minimum_size = Vector2(80, 80)
+		rect.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		vbox.add_child(rect)
+		
 		var label = Label.new()
-		label.text = "%s\n\nCost: 💰 %d" % [stock.data.name, stock.cost]
+		label.text = "%s\nCost: 💰 %d" % [stock.data.name, stock.cost]
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		label.set_anchors_preset(Control.PRESET_FULL_RECT)
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD
 		label.add_theme_color_override("font_color", Color.BLACK)
-		item_card.add_child(label)
+		vbox.add_child(label)
 		
 		item_card.pressed.connect(_on_buy_clicked.bind(i))
 		grid.add_child(item_card)

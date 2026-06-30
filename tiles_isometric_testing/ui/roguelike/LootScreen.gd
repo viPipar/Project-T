@@ -101,11 +101,25 @@ func _on_card_clicked(idx: int) -> void:
 		NeobrutalStyle.apply_to_button(card, color)
 		
 		var label = card.get_child(0) as Label
-		label.text = "%s\n\n%s" % [data.name, ItemRegistry.Rarity.keys()[rarity]]
+		label.text = "%s\n%s" % [data.name, ItemRegistry.Rarity.keys()[rarity]]
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD
 		
+		# Add a visual icon to the card upon reveal
+		var rect = TextureRect.new()
+		var placeholder_tex = load("res://assets/ui_assets/placeholder.jpeg")
+		rect.texture = placeholder_tex
+		rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		rect.custom_minimum_size = Vector2(80, 80)
+		rect.position = Vector2(85, 80)
+		card.add_child(rect)
+		
+		# Position text below the icon
+		label.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+		label.position.y = 180
+		
 		if i == idx:
-			label.text += "\n\n(ACQUIRED!)"
+			label.text += "\n(ACQUIRED!)"
 			if InventoryManager != null:
 				InventoryManager.add_item(1, data.id)
 			card.scale = Vector2(1.1, 1.1)
