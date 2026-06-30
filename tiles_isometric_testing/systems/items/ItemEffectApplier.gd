@@ -14,11 +14,19 @@ func _ready() -> void:
 		if not InventoryManager.item_removed.is_connected(_on_inventory_changed):
 			InventoryManager.item_removed.connect(_on_inventory_changed)
 
+func _get_player_by_id(pid: int) -> Node:
+	if not is_inside_tree():
+		return null
+	for p in get_tree().get_nodes_in_group("players"):
+		var p_id = p.get("player_id")
+		if p_id != null and typeof(p_id) == TYPE_INT and p_id == pid:
+			return p
+	return null
+
 func _on_inventory_changed(player_id: int, _item_id: String) -> void:
-	if is_instance_valid(TurnManager) and TurnManager.has_method("_get_player_by_id"):
-		var player = TurnManager._get_player_by_id(player_id)
-		if player != null:
-			recalculate_player_stats(player, player_id)
+	var player = _get_player_by_id(player_id)
+	if player != null:
+		recalculate_player_stats(player, player_id)
 
 func apply_immediate_effect(player_id: int, item_id: String, player_node: Node = null) -> void:
 	var item = StatDataDB.get_item_data(item_id)
