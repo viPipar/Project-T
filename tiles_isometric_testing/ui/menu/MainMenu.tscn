@@ -1,0 +1,474 @@
+[gd_scene load_steps=18 format=3 uid="uid://dpskv8l6v7e8y"]
+
+[ext_resource type="Script" path="res://ui/menu/MainMenu.gd" id="1_menu"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bg"]
+bg_color = Color(0.0588235, 0.0627451, 0.0784314, 1)
+
+[sub_resource type="SystemFont" id="SystemFont_title"]
+font_names = PackedStringArray("Sans-Serif", "Arial", "Helvetica")
+font_weight = 800
+
+[sub_resource type="LabelSettings" id="LabelSettings_title"]
+font = SubResource("SystemFont_title")
+font_size = 48
+font_color = Color(0.901961, 0.901961, 0.901961, 1)
+shadow_size = 8
+shadow_color = Color(0, 0, 0, 0.5)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_normal"]
+content_margin_left = 20.0
+content_margin_top = 10.0
+content_margin_right = 20.0
+content_margin_bottom = 10.0
+bg_color = Color(0.129412, 0.145098, 0.176471, 0.8)
+border_width_left = 3
+border_color = Color(0.231373, 0.258824, 0.313726, 1)
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+anti_aliasing = true
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
+content_margin_left = 28.0
+content_margin_top = 10.0
+content_margin_right = 20.0
+content_margin_bottom = 10.0
+bg_color = Color(0.176471, 0.203922, 0.25098, 0.95)
+border_width_left = 6
+border_color = Color(0.85098, 0.65098, 0.12549, 1)
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+anti_aliasing = true
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_pressed"]
+content_margin_left = 20.0
+content_margin_top = 10.0
+content_margin_right = 20.0
+content_margin_bottom = 10.0
+bg_color = Color(0.0980392, 0.109804, 0.133333, 0.9)
+border_width_left = 3
+border_color = Color(0.129412, 0.145098, 0.176471, 1)
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+anti_aliasing = true
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.0980392, 0.109804, 0.133333, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.231373, 0.258824, 0.313726, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+shadow_color = Color(0, 0, 0, 0.6)
+shadow_size = 15
+shadow_offset = Vector2(0, 8)
+
+[sub_resource type="LabelSettings" id="LabelSettings_panel_title"]
+font = SubResource("SystemFont_title")
+font_size = 28
+font_color = Color(0.85098, 0.65098, 0.12549, 1)
+
+[sub_resource type="LabelSettings" id="LabelSettings_panel_body"]
+font_size = 16
+font_color = Color(0.8, 0.82, 0.85, 1)
+line_spacing = 6.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_close_normal"]
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
+bg_color = Color(0.180392, 0.203922, 0.25098, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_close_hover"]
+content_margin_left = 16.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
+bg_color = Color(0.35, 0.15, 0.15, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="SystemFont" id="SystemFont_label"]
+font_names = PackedStringArray("Sans-Serif", "Arial", "Helvetica")
+font_weight = 700
+
+[sub_resource type="LabelSettings" id="LabelSettings_setting_item"]
+font = SubResource("SystemFont_label")
+font_size = 16
+font_color = Color(0.9, 0.9, 0.9, 1)
+
+[sub_resource type="StyleBoxLine" id="StyleBoxLine_separator"]
+color = Color(0.231373, 0.258824, 0.313726, 1)
+thickness = 2
+
+[sub_resource type="SystemFont" id="SystemFont_menu_btn"]
+font_names = PackedStringArray("Sans-Serif", "Arial", "Helvetica")
+font_weight = 700
+
+[sub_resource type="LabelSettings" id="LabelSettings_splash_art"]
+font_size = 20
+font_color = Color(0.231373, 0.258824, 0.313726, 0.5)
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_menu")
+
+[node name="Background" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_bg")
+
+[node name="SplashArtPlaceholder" type="Label" parent="Background"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -380.0
+offset_top = -80.0
+offset_right = -40.0
+offset_bottom = -40.0
+grow_horizontal = 0
+grow_vertical = 0
+text = "(SPLASH ART IN BACKGROUND)"
+label_settings = SubResource("LabelSettings_splash_art")
+horizontal_alignment = 2
+vertical_alignment = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 60
+theme_override_constants/margin_top = 80
+theme_override_constants/margin_right = 60
+theme_override_constants/margin_bottom = 80
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="MenuButtons" type="VBoxContainer" parent="MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(320, 0)
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="Title" type="Label" parent="MarginContainer/HBoxContainer/MenuButtons"]
+layout_mode = 2
+text = "PROJECT T"
+label_settings = SubResource("LabelSettings_title")
+
+[node name="Spacer" type="Control" parent="MarginContainer/HBoxContainer/MenuButtons"]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+
+[node name="StartGameButton" type="Button" parent="MarginContainer/HBoxContainer/MenuButtons"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_menu_btn")
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_pressed")
+text = "Start Game"
+alignment = 0
+
+[node name="HowToPlayButton" type="Button" parent="MarginContainer/HBoxContainer/MenuButtons"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_menu_btn")
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_pressed")
+text = "How to Play"
+alignment = 0
+
+[node name="SettingsButton" type="Button" parent="MarginContainer/HBoxContainer/MenuButtons"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_menu_btn")
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_pressed")
+text = "Settings"
+alignment = 0
+
+[node name="CreditsButton" type="Button" parent="MarginContainer/HBoxContainer/MenuButtons"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_menu_btn")
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_pressed")
+text = "Credits"
+alignment = 0
+
+[node name="ExitButton" type="Button" parent="MarginContainer/HBoxContainer/MenuButtons"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_menu_btn")
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_pressed")
+text = "Exit"
+alignment = 0
+
+[node name="Overlays" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="HowToPlayPanel" type="PanelContainer" parent="Overlays"]
+visible = false
+custom_minimum_size = Vector2(500, 360)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -250.0
+offset_top = -180.0
+offset_right = 250.0
+offset_bottom = 180.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="MarginContainer" type="MarginContainer" parent="Overlays/HowToPlayPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 30
+theme_override_constants/margin_top = 25
+theme_override_constants/margin_right = 30
+theme_override_constants/margin_bottom = 25
+
+[node name="VBox" type="VBoxContainer" parent="Overlays/HowToPlayPanel/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="Title" type="Label" parent="Overlays/HowToPlayPanel/MarginContainer/VBox"]
+layout_mode = 2
+text = "How to Play"
+label_settings = SubResource("LabelSettings_panel_title")
+
+[node name="HSeparator" type="HSeparator" parent="Overlays/HowToPlayPanel/MarginContainer/VBox"]
+layout_mode = 2
+theme_override_styles/separator = SubResource("StyleBoxLine_separator")
+
+[node name="Instructions" type="Label" parent="Overlays/HowToPlayPanel/MarginContainer/VBox"]
+custom_minimum_size = Vector2(440, 0)
+layout_mode = 2
+size_flags_vertical = 3
+text = "• Control players on an isometric tactical grid.
+• Take turns movement and actions.
+• Roll dice to resolve combat and ability outcomes.
+• Work together in 2-Player mode to defeat enemies!
+• P1 Controls: WASD to move, F to confirm.
+• P2 Controls: IJKL to move, Semilcolon (;) to confirm."
+label_settings = SubResource("LabelSettings_panel_body")
+autowrap_mode = 2
+
+[node name="CloseButton" type="Button" parent="Overlays/HowToPlayPanel/MarginContainer/VBox"]
+layout_mode = 2
+size_flags_horizontal = 8
+theme_override_fonts/font = SubResource("SystemFont_menu_btn")
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("StyleBoxFlat_close_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_close_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_close_normal")
+text = "Close"
+
+[node name="SettingsPanel" type="PanelContainer" parent="Overlays"]
+visible = false
+custom_minimum_size = Vector2(500, 360)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -250.0
+offset_top = -180.0
+offset_right = 250.0
+offset_bottom = 180.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="MarginContainer" type="MarginContainer" parent="Overlays/SettingsPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 30
+theme_override_constants/margin_top = 25
+theme_override_constants/margin_right = 30
+theme_override_constants/margin_bottom = 25
+
+[node name="VBox" type="VBoxContainer" parent="Overlays/SettingsPanel/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="Title" type="Label" parent="Overlays/SettingsPanel/MarginContainer/VBox"]
+layout_mode = 2
+text = "Settings"
+label_settings = SubResource("LabelSettings_panel_title")
+
+[node name="HSeparator" type="HSeparator" parent="Overlays/SettingsPanel/MarginContainer/VBox"]
+layout_mode = 2
+theme_override_styles/separator = SubResource("StyleBoxLine_separator")
+
+[node name="VolumeSettings" type="VBoxContainer" parent="Overlays/SettingsPanel/MarginContainer/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="MasterContainer" type="HBoxContainer" parent="Overlays/SettingsPanel/MarginContainer/VBox/VolumeSettings"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Overlays/SettingsPanel/MarginContainer/VBox/VolumeSettings/MasterContainer"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+text = "Master Volume"
+label_settings = SubResource("LabelSettings_setting_item")
+
+[node name="MasterSlider" type="HSlider" parent="Overlays/SettingsPanel/MarginContainer/VBox/VolumeSettings/MasterContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+max_value = 1.0
+step = 0.05
+value = 0.8
+
+[node name="DisplaySettings" type="HBoxContainer" parent="Overlays/SettingsPanel/MarginContainer/VBox"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Overlays/SettingsPanel/MarginContainer/VBox/DisplaySettings"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+text = "Fullscreen"
+label_settings = SubResource("LabelSettings_setting_item")
+
+[node name="FullscreenCheckbox" type="CheckButton" parent="Overlays/SettingsPanel/MarginContainer/VBox/DisplaySettings"]
+layout_mode = 2
+size_flags_horizontal = 8
+
+[node name="Spacer" type="Control" parent="Overlays/SettingsPanel/MarginContainer/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="CloseButton" type="Button" parent="Overlays/SettingsPanel/MarginContainer/VBox"]
+layout_mode = 2
+size_flags_horizontal = 8
+theme_override_fonts/font = SubResource("SystemFont_menu_btn")
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("StyleBoxFlat_close_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_close_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_close_normal")
+text = "Save & Close"
+
+[node name="CreditsPanel" type="PanelContainer" parent="Overlays"]
+visible = false
+custom_minimum_size = Vector2(500, 360)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -250.0
+offset_top = -180.0
+offset_right = 250.0
+offset_bottom = 180.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="MarginContainer" type="MarginContainer" parent="Overlays/CreditsPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 30
+theme_override_constants/margin_top = 25
+theme_override_constants/margin_right = 30
+theme_override_constants/margin_bottom = 25
+
+[node name="VBox" type="VBoxContainer" parent="Overlays/CreditsPanel/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="Title" type="Label" parent="Overlays/CreditsPanel/MarginContainer/VBox"]
+layout_mode = 2
+text = "Credits"
+label_settings = SubResource("LabelSettings_panel_title")
+
+[node name="HSeparator" type="HSeparator" parent="Overlays/CreditsPanel/MarginContainer/VBox"]
+layout_mode = 2
+theme_override_styles/separator = SubResource("StyleBoxLine_separator")
+
+[node name="CreditsText" type="Label" parent="Overlays/CreditsPanel/MarginContainer/VBox"]
+custom_minimum_size = Vector2(440, 0)
+layout_mode = 2
+size_flags_vertical = 3
+text = "PROJECT T - Game Jam Version
+
+Developer: NOBRAINDEV
+
+Special Thanks:
+• Godot Engine Community
+• Ultimate UI SFX Pack by JDSherbert
+• Fantasy SFX Pack by TomMusic
+• Super Dialogue Audio Pack v1"
+label_settings = SubResource("LabelSettings_panel_body")
+autowrap_mode = 2
+
+[node name="CloseButton" type="Button" parent="Overlays/CreditsPanel/MarginContainer/VBox"]
+layout_mode = 2
+size_flags_horizontal = 8
+theme_override_fonts/font = SubResource("SystemFont_menu_btn")
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("StyleBoxFlat_close_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_close_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_close_normal")
+text = "Close"
+
+[node name="FadeOverlay" type="ColorRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 1)
+
+[connection signal="pressed" from="MarginContainer/HBoxContainer/MenuButtons/StartGameButton" to="." method="_on_start_game_pressed"]
+[connection signal="pressed" from="MarginContainer/HBoxContainer/MenuButtons/HowToPlayButton" to="." method="_on_how_to_play_pressed"]
+[connection signal="pressed" from="MarginContainer/HBoxContainer/MenuButtons/SettingsButton" to="." method="_on_settings_pressed"]
+[connection signal="pressed" from="MarginContainer/HBoxContainer/MenuButtons/CreditsButton" to="." method="_on_credits_pressed"]
+[connection signal="pressed" from="MarginContainer/HBoxContainer/MenuButtons/ExitButton" to="." method="_on_exit_pressed"]
+[connection signal="pressed" from="Overlays/HowToPlayPanel/MarginContainer/VBox/CloseButton" to="." method="_on_how_to_play_close_pressed"]
+[connection signal="pressed" from="Overlays/SettingsPanel/MarginContainer/VBox/CloseButton" to="." method="_on_settings_close_pressed"]
+[connection signal="pressed" from="Overlays/CreditsPanel/MarginContainer/VBox/CloseButton" to="." method="_on_credits_close_pressed"]

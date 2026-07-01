@@ -1,0 +1,195 @@
+[gd_scene load_steps=12 format=3 uid="uid://dgkq12j6w7e2x"]
+
+[ext_resource type="Script" path="res://ui/menu/DisclaimerScreen.gd" id="1_disclaimer"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bg"]
+bg_color = Color(0.85098, 0.85098, 0.85098, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+shadow_color = Color(0, 0, 0, 0.25)
+shadow_size = 10
+shadow_offset = Vector2(0, 5)
+
+[sub_resource type="SystemFont" id="SystemFont_title"]
+font_names = PackedStringArray("Sans-Serif", "Arial", "Helvetica")
+font_weight = 700
+
+[sub_resource type="LabelSettings" id="LabelSettings_title"]
+font = SubResource("SystemFont_title")
+font_size = 32
+font_color = Color(0.0784314, 0.0784314, 0.0784314, 1)
+
+[sub_resource type="LabelSettings" id="LabelSettings_body"]
+font_size = 18
+font_color = Color(0.196078, 0.196078, 0.196078, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_head_p1"]
+bg_color = Color(0.0784314, 0.0784314, 0.0784314, 1)
+corner_radius_top_left = 15
+corner_radius_top_right = 15
+corner_radius_bottom_right = 15
+corner_radius_bottom_left = 15
+anti_aliasing = true
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_torso_p1"]
+bg_color = Color(0.501961, 0, 0, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+anti_aliasing = true
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_head_p2"]
+bg_color = Color(0.95, 0.95, 0.95, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.901961, 0.901961, 0, 1)
+corner_radius_top_left = 15
+corner_radius_top_right = 15
+corner_radius_bottom_right = 15
+corner_radius_bottom_left = 15
+anti_aliasing = true
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_torso_p2"]
+bg_color = Color(1, 1, 0.8, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.901961, 0.901961, 0, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+anti_aliasing = true
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_normal"]
+bg_color = Color(0.156863, 0.156863, 0.156863, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+anti_aliasing = true
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
+bg_color = Color(0.27451, 0.27451, 0.27451, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+anti_aliasing = true
+
+[node name="DisclaimerScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_disclaimer")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0980392, 0.0980392, 0.0980392, 1)
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ContentPanel" type="PanelContainer" parent="CenterContainer"]
+custom_minimum_size = Vector2(580, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_bg")
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/ContentPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 30
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 30
+
+[node name="MainLayout" type="VBoxContainer" parent="CenterContainer/ContentPanel/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Title" type="Label" parent="CenterContainer/ContentPanel/MarginContainer/MainLayout"]
+layout_mode = 2
+text = "DISCLAIMER"
+label_settings = SubResource("LabelSettings_title")
+horizontal_alignment = 1
+
+[node name="Text" type="Label" parent="CenterContainer/ContentPanel/MarginContainer/MainLayout"]
+custom_minimum_size = Vector2(500, 0)
+layout_mode = 2
+text = "This is an early game jam version.
+
+For the best experience, it is highly recommended to play with two players. However, it is still fully playable solo if you wish to explore it on your own!"
+label_settings = SubResource("LabelSettings_body")
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="PlayerIconsContainer" type="HBoxContainer" parent="CenterContainer/ContentPanel/MarginContainer/MainLayout"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Player1" type="VBoxContainer" parent="CenterContainer/ContentPanel/MarginContainer/MainLayout/PlayerIconsContainer"]
+layout_mode = 2
+theme_override_constants/separation = 4
+alignment = 1
+
+[node name="Head" type="Panel" parent="CenterContainer/ContentPanel/MarginContainer/MainLayout/PlayerIconsContainer/Player1"]
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_head_p1")
+
+[node name="Torso" type="Panel" parent="CenterContainer/ContentPanel/MarginContainer/MainLayout/PlayerIconsContainer/Player1"]
+custom_minimum_size = Vector2(44, 28)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_torso_p1")
+
+[node name="Player2" type="VBoxContainer" parent="CenterContainer/ContentPanel/MarginContainer/MainLayout/PlayerIconsContainer"]
+layout_mode = 2
+theme_override_constants/separation = 4
+alignment = 1
+
+[node name="Head" type="Panel" parent="CenterContainer/ContentPanel/MarginContainer/MainLayout/PlayerIconsContainer/Player2"]
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_head_p2")
+
+[node name="Torso" type="Panel" parent="CenterContainer/ContentPanel/MarginContainer/MainLayout/PlayerIconsContainer/Player2"]
+custom_minimum_size = Vector2(44, 28)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_torso_p2")
+
+[node name="ContinueButton" type="Button" parent="CenterContainer/ContentPanel/MarginContainer/MainLayout"]
+custom_minimum_size = Vector2(160, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_fonts/font = SubResource("SystemFont_title")
+theme_override_font_sizes/font_size = 16
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_normal")
+text = "Continue"
+
+[connection signal="pressed" from="CenterContainer/ContentPanel/MarginContainer/MainLayout/ContinueButton" to="." method="_on_continue_button_pressed"]

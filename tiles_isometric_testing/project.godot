@@ -11,8 +11,10 @@ config_version=5
 [application]
 
 config/name="Tiles_Isometric_Testing"
-run/main_scene="uid://bv8gg8sp656ia"
+run/main_scene="res://ui/menu/SplashScreen.tscn"
 config/features=PackedStringArray("4.4", "GL Compatibility")
+boot_splash/bg_color=Color(0.1, 0.1, 0.1, 1)
+boot_splash/show_image=false
 
 [autoload]
 
