@@ -7,11 +7,44 @@
       "scene": "res://entities/enemies/EnemyPlaceholder.tscn",
       "sprite_folder": "res://assets/characters/small_mosquito",
       "is_2x2": false,
+      "sprite_scale": 0.40,
+      "sprite_offset": [
+        0,
+        -75
+      ],
       "sprite_animations": {
-        "idle": { "file": "enemy small idle.png", "frame_w": 512, "frame_h": 512, "cols": 6, "rows": 1, "frames": 6 },
-        "attack": { "file": "enemy small attack.png", "frame_w": 512, "frame_h": 512, "cols": 13, "rows": 1, "frames": 13 },
-        "damage": { "file": "small enemy damage.png", "frame_w": 1024, "frame_h": 1054, "cols": 10, "rows": 1, "frames": 10 },
-        "mati": { "file": "small enemy mati.png", "frame_w": 1024, "frame_h": 1024, "cols": 10, "rows": 1, "frames": 10 }
+        "idle": {
+          "file": "enemy small idle.png",
+          "frame_w": 512,
+          "frame_h": 512,
+          "cols": 6,
+          "rows": 1,
+          "frames": 6
+        },
+        "attack": {
+          "file": "enemy small attack.png",
+          "frame_w": 512,
+          "frame_h": 512,
+          "cols": 13,
+          "rows": 1,
+          "frames": 13
+        },
+        "damage": {
+          "file": "small enemy damage.png",
+          "frame_w": 1024,
+          "frame_h": 1054,
+          "cols": 10,
+          "rows": 1,
+          "frames": 10
+        },
+        "mati": {
+          "file": "small enemy mati.png",
+          "frame_w": 1024,
+          "frame_h": 1024,
+          "cols": 10,
+          "rows": 1,
+          "frames": 10
+        }
       },
       "base_stats": {
         "vit": 6,
@@ -35,7 +68,10 @@
       },
       "spawn": {
         "map_id": 1,
-        "grid_pos": [5, 5]
+        "grid_pos": [
+          5,
+          5
+        ]
       }
     },
     "orc": {
@@ -43,11 +79,44 @@
       "scene": "res://entities/enemies/EnemyPlaceholder.tscn",
       "sprite_folder": "res://assets/characters/medium_grasshopper",
       "is_2x2": false,
+      "sprite_scale": 0.5,
+      "sprite_offset": [
+        0,
+        -110
+      ],
       "sprite_animations": {
-        "idle": { "file": "medium enemy idle.png", "frame_w": 1024, "frame_h": 1024, "cols": 9, "rows": 1, "frames": 9 },
-        "attack": { "file": "medium enemy attack.png", "frame_w": 1024, "frame_h": 1024, "cols": 13, "rows": 1, "frames": 13 },
-        "damage": { "file": "medium enemy damage.png", "frame_w": 1024, "frame_h": 1024, "cols": 13, "rows": 1, "frames": 13 },
-        "mati": { "file": "medium enemy mati.png", "frame_w": 1024, "frame_h": 1024, "cols": 11, "rows": 1, "frames": 11 }
+        "idle": {
+          "file": "medium enemy idle.png",
+          "frame_w": 1024,
+          "frame_h": 1024,
+          "cols": 9,
+          "rows": 1,
+          "frames": 9
+        },
+        "attack": {
+          "file": "medium enemy attack.png",
+          "frame_w": 1024,
+          "frame_h": 1024,
+          "cols": 13,
+          "rows": 1,
+          "frames": 13
+        },
+        "damage": {
+          "file": "medium enemy damage.png",
+          "frame_w": 1024,
+          "frame_h": 1024,
+          "cols": 13,
+          "rows": 1,
+          "frames": 13
+        },
+        "mati": {
+          "file": "medium enemy mati.png",
+          "frame_w": 1024,
+          "frame_h": 1024,
+          "cols": 11,
+          "rows": 1,
+          "frames": 11
+        }
       },
       "base_stats": {
         "vit": 14,
@@ -71,7 +140,10 @@
       },
       "spawn": {
         "map_id": 1,
-        "grid_pos": [8, 4]
+        "grid_pos": [
+          8,
+          4
+        ]
       }
     },
     "beetle": {
@@ -79,11 +151,44 @@
       "scene": "res://entities/enemies/EnemyPlaceholder.tscn",
       "sprite_folder": "res://assets/characters/big_beetle",
       "is_2x2": true,
+      "sprite_scale": 0.5,
+      "sprite_offset": [
+        0,
+        -115
+      ],
       "sprite_animations": {
-        "idle": { "file": "idle big enemy.png", "frame_w": 2390, "frame_h": 1494, "cols": 3, "rows": 2, "frames": 6 },
-        "attack": { "file": "slash big enemy.png", "frame_w": 2390, "frame_h": 1494, "cols": 4, "rows": 4, "frames": 13 },
-        "damage": { "file": "damage big enemy.png", "frame_w": 2390, "frame_h": 1494, "cols": 4, "rows": 2, "frames": 7 },
-        "mati": { "file": "big enemy mati.png", "frame_w": 2048, "frame_h": 1280, "cols": 4, "rows": 4, "frames": 16 }
+        "idle": {
+          "file": "idle big enemy.png",
+          "frame_w": 2390,
+          "frame_h": 1494,
+          "cols": 3,
+          "rows": 2,
+          "frames": 6
+        },
+        "attack": {
+          "file": "slash big enemy.png",
+          "frame_w": 2390,
+          "frame_h": 1494,
+          "cols": 4,
+          "rows": 4,
+          "frames": 13
+        },
+        "damage": {
+          "file": "damage big enemy.png",
+          "frame_w": 2390,
+          "frame_h": 1494,
+          "cols": 4,
+          "rows": 2,
+          "frames": 7
+        },
+        "mati": {
+          "file": "big enemy mati.png",
+          "frame_w": 2048,
+          "frame_h": 1280,
+          "cols": 4,
+          "rows": 4,
+          "frames": 16
+        }
       },
       "base_stats": {
         "vit": 20,
@@ -107,7 +212,10 @@
       },
       "spawn": {
         "map_id": 1,
-        "grid_pos": [9, 7]
+        "grid_pos": [
+          9,
+          7
+        ]
       }
     }
   }

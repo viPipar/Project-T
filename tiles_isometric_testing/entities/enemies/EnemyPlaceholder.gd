@@ -36,6 +36,10 @@ var _hovering_players: Dictionary = {} # int -> bool
 var _is_my_turn: bool = false
 var raw_data: Dictionary = {}
 
+var base_sprite_scale: Vector2 = Vector2(0.75, 0.75)
+var base_sprite_offset: Vector2 = Vector2(14, -113)
+var anim_frame_widths: Dictionary = {}
+
 const INSECT_DIR := "res://assets/characters/insect1_placeholder"
 
 
@@ -59,7 +63,7 @@ func _ready() -> void:
 		add_child(tooltip)
 		
 	if sprite != null:
-		sprite.play("idle_down")
+		_play_anim("idle_down")
 	if start_grid_pos.x >= 0 and start_grid_pos.y >= 0:
 		call_deferred("_deferred_place")
 
@@ -198,11 +202,11 @@ func _on_hp_changed(new_hp: int, new_max_hp: int) -> void:
 func _on_health_damaged(amount: int) -> void:
 	print("[%s] Menerima %d damage. HP: %d/%d" % [enemy_name, amount, current_hp, max_hp])
 	if sprite != null and sprite.sprite_frames.has_animation("damage") and is_alive:
-		sprite.play("damage")
+		_play_anim("damage")
 		# Return to idle after a short delay
 		get_tree().create_timer(0.4).timeout.connect(func():
 			if is_alive and sprite.animation == "damage":
-				sprite.play("idle_down")
+				_play_anim("idle_down")
 		)
 
 
@@ -239,7 +243,7 @@ func _die(killer: Node = null, emit_bus: bool = true) -> void:
 
 	if sprite != null:
 		if sprite.sprite_frames.has_animation("mati"):
-			sprite.play("mati")
+			_play_anim("mati")
 			await sprite.animation_finished
 			_play_dissolve_death()
 			await get_tree().create_timer(1.2).timeout
@@ -319,9 +323,9 @@ func apply_wind_sway(strength: float = 60.0) -> void:
 
 func play_attack(ability_id: String) -> void:
 	if sprite != null and sprite.sprite_frames.has_animation("attack"):
-		sprite.play("attack")
+		_play_anim("attack")
 		await sprite.animation_finished
-		sprite.play("idle_down")
+		_play_anim("idle_down")
 	elif sprite != null:
 		var tw = create_tween()
 		tw.tween_property(sprite, "position:y", sprite.position.y + 15, 0.1).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
@@ -395,6 +399,23 @@ func apply_custom_data(data: Dictionary) -> void:
 	is_2x2 = data.get("is_2x2", false)
 	sprite_folder = data.get("sprite_folder", "")
 	
+	if data.has("sprite_scale"):
+		var s = float(data["sprite_scale"])
+		base_sprite_scale = Vector2(s, s)
+	else:
+		base_sprite_scale = Vector2(0.75, 0.75)
+		
+	if data.has("sprite_offset"):
+		var raw_offset = data["sprite_offset"]
+		if typeof(raw_offset) == TYPE_ARRAY and raw_offset.size() >= 2:
+			base_sprite_offset = Vector2(float(raw_offset[0]), float(raw_offset[1]))
+	else:
+		base_sprite_offset = Vector2(14, -113)
+
+	if sprite != null:
+		sprite.scale = base_sprite_scale
+		sprite.position = base_sprite_offset
+		
 	_setup_sprite()
 	
 	var anim_config: Dictionary = data.get("sprite_animations", {})
@@ -403,7 +424,6 @@ func apply_custom_data(data: Dictionary) -> void:
 	else:
 		_apply_idle_frames()
 		
-	# Re-apply grid placement coordinate adjustments if needed
 	if start_grid_pos.x >= 0 and start_grid_pos.y >= 0:
 		place_at(start_grid_pos)
 
@@ -411,6 +431,7 @@ func apply_custom_data(data: Dictionary) -> void:
 func _apply_spritesheet_animations(anim_config: Dictionary) -> void:
 	if sprite == null: return
 	
+	anim_frame_widths.clear()
 	var sprite_frames := SpriteFrames.new()
 	if sprite_frames.has_animation("default"):
 		sprite_frames.remove_animation("default")
@@ -433,6 +454,8 @@ func _apply_spritesheet_animations(anim_config: Dictionary) -> void:
 		var rows: int = int(cfg.get("rows", 1))
 		var total_frames: int = int(cfg.get("frames", 1))
 		
+		anim_frame_widths[anim_key] = fw
+		
 		var frames := _load_frames_from_spritesheet(full_path, fw, fh, cols, rows, total_frames)
 		if frames.is_empty():
 			continue
@@ -452,7 +475,24 @@ func _apply_spritesheet_animations(anim_config: Dictionary) -> void:
 				sprite_frames.add_frame(target_name, frame)
 				
 	sprite.sprite_frames = sprite_frames
-	sprite.play("idle_down")
+	_play_anim("idle_down")
+
+
+func _play_anim(anim_name: String) -> void:
+	if sprite == null: return
+	
+	sprite.play(anim_name)
+	
+	var anim_key = anim_name
+	if anim_name.begins_with("idle"):
+		anim_key = "idle"
+		
+	if anim_frame_widths.has(anim_key) and anim_frame_widths.has("idle"):
+		var idle_w = float(anim_frame_widths["idle"])
+		var current_w = float(anim_frame_widths[anim_key])
+		if current_w > 0:
+			var multiplier = idle_w / current_w
+			sprite.scale = base_sprite_scale * multiplier
 
 
 func _load_frames_from_spritesheet(path: String, fw: int, fh: int, cols: int, rows: int, total_frames: int) -> Array[Texture2D]:
