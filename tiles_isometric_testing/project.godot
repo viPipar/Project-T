@@ -42,7 +42,6 @@ CoinEconomy="*res://systems/shop/CoinEconomy.gd"
 AudioManager="*res://autoloads/AudioManager.gd"
 ScreenEffects="*res://autoloads/ScreenEffects.gd"
 
-
 [display]
 
 window/size/viewport_width=1280

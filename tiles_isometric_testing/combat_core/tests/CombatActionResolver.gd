@@ -311,10 +311,14 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 		# PLAYER: Dice overlay first
 		var overlay = bridge._overlay_p1 if pid == 1 else bridge._overlay_p2
 		if overlay != null:
+			var visual_rolls = dmg_rolls.duplicate()
+			if crit and crit_rolls.size() > 0:
+				visual_rolls.append_array(crit_rolls)
+			
 			if target != null:
-				await overlay.play_attack_sequence(attacker, target, hit_result, dmg_rolls, dmg_total, _dmg_formula, dmg_mod)
+				await overlay.play_attack_sequence(attacker, target, hit_result, visual_rolls, dmg_total, _dmg_formula, dmg_mod)
 			else:
-				await overlay.play_attack_sequence(attacker, attacker, hit_result, dmg_rolls, dmg_total, _dmg_formula, dmg_mod)
+				await overlay.play_attack_sequence(attacker, attacker, hit_result, visual_rolls, dmg_total, _dmg_formula, dmg_mod)
 		
 		# Then Attack & Dash
 		if not _played_attack and is_instance_valid(attacker) and attacker.has_method("play_attack"):
@@ -518,6 +522,11 @@ func _apply_damage_to_target(target: Node, amount: int, attacker: Node, damage_t
 		var lbl = bridge.vfx_controller._make_world_label(str(applied), 40, Color.RED)
 		lbl.global_position = target.global_position + Vector2(0, -60)
 		bridge.vfx_controller.add_child(lbl)
+		
+		var tw = create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		tw.tween_property(lbl, "global_position:y", lbl.global_position.y - 60, 0.8)
+		tw.parallel().tween_property(lbl, "modulate:a", 0.0, 0.5).set_delay(0.3)
+		tw.tween_callback(func(): if is_instance_valid(lbl): lbl.queue_free())
 	
 	EventBus.damage_dealt.emit(target, applied, damage_type, false, null)
 	return applied
@@ -535,6 +544,11 @@ func _apply_heal_to_target(target: Node, amount: int, source: Node) -> int:
 		var lbl = bridge.vfx_controller._make_world_label("+" + str(applied), 40, Color.GREEN)
 		lbl.global_position = target.global_position + Vector2(0, -60)
 		bridge.vfx_controller.add_child(lbl)
+		
+		var tw = create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		tw.tween_property(lbl, "global_position:y", lbl.global_position.y - 60, 0.8)
+		tw.parallel().tween_property(lbl, "modulate:a", 0.0, 0.5).set_delay(0.3)
+		tw.tween_callback(func(): if is_instance_valid(lbl): lbl.queue_free())
 	
 	return applied
 

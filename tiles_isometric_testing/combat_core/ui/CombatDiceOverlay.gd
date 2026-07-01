@@ -454,8 +454,8 @@ func play_attack_sequence(
 					await get_tree().create_timer(current_duration + 0.1).timeout
 
 			# ── ANIMASI MODIFIER MENYATU (Absorb) KE DADU DAMAGE ─────────────
-			# Mirip seperti D20: Label "+3" muncul lalu menabrak dadu
-			if dmg_mod != 0:
+			# Mirip seperti D20: Label "+3" muncul lalu menabrak dadu (hanya di dadu pertama)
+			if dmg_mod != 0 and i == 0:
 				_mod_label.text = "+%d" % dmg_mod if dmg_mod >= 0 else str(dmg_mod)
 				_mod_label.position = Vector2(180, -20)
 				_mod_label.modulate.a = 0.0
@@ -482,7 +482,8 @@ func play_attack_sequence(
 			# Emit per-die damage agar Bridge bisa menge-track (walau apply damage nya di akhir)
 			var am_dmg_hit = get_node_or_null("/root/AudioManager")
 			if am_dmg_hit != null: am_dmg_hit.play_sfx("sword_hit")
-			dice_hit_landed.emit(i, dmg_rolls[i] + dmg_mod)
+			var final_val = dmg_rolls[i] + dmg_mod if (i == 0) else dmg_rolls[i]
+			dice_hit_landed.emit(i, final_val)
 			
 			# Jeda sangat kecil antar lemparan dadu berikutnya
 			var pause: float = maxf(0.05, 0.15 * pow(0.65, i))
