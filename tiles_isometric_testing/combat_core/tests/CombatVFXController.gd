@@ -216,10 +216,10 @@ func _spawn_magic_projectile(attacker: Node, target: Node, element: String, trac
 	
 	if is_instance_valid(target):
 		var init_dir = (target.global_position + Vector2(0, -32) - start_pos).normalized()
-		# Massive random spread (up to 120 degrees sideways)
-		var spread_angle = randf_range(-PI/1.5, PI/1.5) 
+		# Wide anime-style spread (up to 100 degrees sideways)
+		var spread_angle = randf_range(-PI/1.8, PI/1.8) 
 		init_dir = init_dir.rotated(spread_angle)
-		orb.set("current_velocity", init_dir * randf_range(1200.0, 1800.0))
+		orb.set("current_velocity", init_dir * randf_range(1600.0, 2000.0))
 		
 	add_child(orb)
 	await orb.tree_exited

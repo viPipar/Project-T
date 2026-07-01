@@ -208,14 +208,18 @@ func _on_action_wheel_selected(pid: int, action_name: String) -> void:
 		if _loaded_ability.aoe_type == "self_radius":
 			var tiles = _loaded_ability.get_target_tiles(grid_pos)
 			var has_target := false
-			for t in tiles:
-				var ent = GridManager.get_entity_at(t)
-				if ent != null and ent != self and ent.has_method("get_armor"):
-					var pid_ent = ent.get("player_id")
-					var pid_att = self.get("player_id")
-					if (self.is_in_group("enemies") != ent.is_in_group("enemies")) or (pid_ent != null and pid_att != null and pid_ent != pid_att):
-						has_target = true
-						break
+			
+			if _loaded_ability.is_heal or _loaded_ability.target_alignment != 1: # 1 = ENEMY
+				has_target = true
+			else:
+				for t in tiles:
+					var ent = GridManager.get_entity_at(t)
+					if ent != null and ent != self and ent.has_method("get_armor"):
+						var pid_ent = ent.get("player_id")
+						var pid_att = self.get("player_id")
+						if (self.is_in_group("enemies") != ent.is_in_group("enemies")) or (pid_ent != null and pid_att != null and pid_ent != pid_att):
+							has_target = true
+							break
 			
 			if not has_target:
 				print("[Player P%d] Tidak ada target di area AOE, membatalkan skill." % player_id)

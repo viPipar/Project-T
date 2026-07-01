@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="BaseAbility" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://combat_core/abilities/BaseAbility.gd" id="1_fireball"]
+
+[resource]
+script = ExtResource("1_fireball")
+ability_name = "Fireball"
+ability_description = "Single target, high variance 1D20 Fire damage."
+ability_tag = "fireball"
+ability_type = 1
+element_tag = "fire"
+target_alignment = 0
+ally_targeting_dc = 10
+range_type = "diamond"
+range_size = 4
+is_projectile = true
+aoe_type = "none"
+aoe_size = 0
+is_burst_attack = false
+burst_retarget = false
+damage_dice = "1D20"
+is_heal = false
+is_position_switch = false
+knockback_tiles = 0
+status_effect = ""
+status_duration = 0
+status_stacks = 1
+cost_action = 1
+cost_bonus_action = 0
+cost_mana = 1

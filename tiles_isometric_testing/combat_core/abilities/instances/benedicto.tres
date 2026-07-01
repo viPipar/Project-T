@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="BaseAbility" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://combat_core/abilities/BaseAbility.gd" id="1_benedicto"]
+
+[resource]
+script = ExtResource("1_benedicto")
+ability_name = "Benedicto"
+ability_description = "Heals everyone in a 3-tile radius for 2D10. Enemies receive half healing."
+ability_tag = "benedicto"
+ability_type = 2
+element_tag = "holy"
+target_alignment = 3
+ally_targeting_dc = 10
+range_type = "diamond"
+range_size = 0
+is_projectile = false
+aoe_type = "self_radius"
+aoe_size = 3
+is_burst_attack = false
+burst_retarget = false
+damage_dice = "2D10"
+is_heal = true
+is_position_switch = false
+knockback_tiles = 0
+status_effect = ""
+status_duration = 0
+status_stacks = 1
+cost_action = 1
+cost_bonus_action = 0
+cost_mana = 2

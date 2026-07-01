@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="BaseAbility" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://combat_core/abilities/BaseAbility.gd" id="1_windstorm"]
+
+[resource]
+script = ExtResource("1_windstorm")
+ability_name = "Wind Storm"
+ability_description = "Deals 4D12 Wind damage to a target, and knocks back all enemies in a 3x3 area behind them by 1 tile (without damaging them)."
+ability_tag = "wind_storm"
+ability_type = 1
+element_tag = "wind"
+target_alignment = 3
+ally_targeting_dc = 10
+range_type = "diamond"
+range_size = 4
+is_projectile = false
+aoe_type = "behind_target_square"
+aoe_size = 1
+damage_primary_only = true
+is_burst_attack = false
+burst_retarget = false
+damage_dice = "4D12"
+is_heal = false
+is_position_switch = false
+knockback_tiles = 1
+status_effect = ""
+status_duration = 0
+status_stacks = 1
+cost_action = 1
+cost_bonus_action = 0
+cost_mana = 4
