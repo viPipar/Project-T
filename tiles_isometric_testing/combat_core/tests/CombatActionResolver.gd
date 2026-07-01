@@ -273,7 +273,7 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 	bridge._set_player_busy(pid, true)
 	
 	var _played_attack := false
-	var _knockback_done := false
+	var _knockback_done := [false]
 	is_player = attacker.is_in_group("players")
 	
 	# Function to handle dash movement
@@ -285,9 +285,9 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 				if old_pos != dash_dest:
 					var t_pos: Vector2i = target.get("grid_pos") if target != null else Vector2i(-1, -1)
 					# Knockback FIRST to clear the tile if we are dashing into them
-					if dash_dest == t_pos and ability.knockback_tiles > 0 and not _knockback_done:
+					if dash_dest == t_pos and ability.knockback_tiles > 0 and not _knockback_done[0]:
 						ForcedMovementResolver.knockback_from_attack(attacker, target, ability.knockback_tiles)
-						_knockback_done = true
+						_knockback_done[0] = true
 					# Single fast blitz dash to destination
 					if is_instance_valid(GridManager) and GridManager.move_entity(old_pos, dash_dest, attacker):
 						attacker.set("grid_pos", dash_dest)
@@ -309,12 +309,12 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 		var safe_pid = pid if pid != null else -1
 		await bridge.vfx_controller._play_enemy_dice_sequence(attacker, raw, total, thresh, hit_modifier, hit, crit, safe_pid)
 
-	var has_overlay = false
+	var _has_overlay = false
 	if is_player:
 		# PLAYER: Dice overlay first
 		var overlay = bridge._overlay_p1 if pid == 1 else bridge._overlay_p2
 		if overlay != null:
-			has_overlay = true
+			_has_overlay = true
 			var visual_rolls = dmg_rolls.duplicate()
 			if crit and crit_rolls.size() > 0:
 				visual_rolls.append_array(crit_rolls)
@@ -346,7 +346,7 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 			else:
 				await bridge.vfx_controller._spawn_magic_projectile(attacker, target, ability.element_tag)
 
-	var had_kill := false
+	var _had_kill := false
 
 	if hit or (ability != null and ability.aoe_type != "none" and not aoe_targets.is_empty()):
 		await _impact_freeze(0.1 if not crit else 0.18)
@@ -381,9 +381,9 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 				is_heal = ability.is_heal
 
 			if is_heal:
-				var real_heal = dmg_total
+				var _real_heal = dmg_total
 				if not hit and ability != null and ability.aoe_type != "none":
-					real_heal = maxi(1, floori(dmg_total / 2.0))
+					_real_heal = maxi(1, floori(dmg_total / 2.0))
 		var is_burst = ability != null and ("is_burst_attack" in ability) and ability.is_burst_attack
 		var loop_count = 1
 		if is_burst:
@@ -517,7 +517,7 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 								effect_to_apply = random_effects.pick_random()
 							EventBus.on_status_applied.emit(t, effect_to_apply, ability.status_duration, ability.status_stacks)
 					
-					if kb_tiles != 0 and not _knockback_done:
+					if kb_tiles != 0 and not _knockback_done[0]:
 						var _t_pos = t.get("grid_pos")
 						var diff = _t_pos - a_pos
 						dir = Vector2i.RIGHT
