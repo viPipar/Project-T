@@ -1,0 +1,21 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://entities/props/Blockade.gd" id="1_script"]
+
+[node name="Blockade" type="Node2D"]
+script = ExtResource("1_script")
+
+[node name="Polygon2D" type="Polygon2D" parent="."]
+position = Vector2(0, -10)
+color = Color(0.3, 0.2, 0.15, 1)
+polygon = PackedVector2Array(-25, 0, -15, -30, 0, -45, 15, -25, 25, 0, 10, 15, -10, 15)
+
+[node name="Polygon2D2" type="Polygon2D" parent="."]
+position = Vector2(0, -10)
+color = Color(0.4, 0.3, 0.2, 1)
+polygon = PackedVector2Array(-15, -5, -5, -25, 5, -35, 15, -10, 10, 5, -5, 5)
+
+[node name="Shadow" type="Polygon2D" parent="."]
+z_index = -1
+color = Color(0, 0, 0, 0.3)
+polygon = PackedVector2Array(-25, 5, 0, 20, 25, 5, 0, -10)

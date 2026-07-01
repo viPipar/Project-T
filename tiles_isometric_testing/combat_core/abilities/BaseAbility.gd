@@ -21,8 +21,9 @@ enum TargetAlignment { ENEMY_ONLY, ALLY_ONLY, SELF_ONLY, ANY }
 @export_enum("none", "self_radius", "target_radius", "directional_line", "self_square", "target_square", "behind_target_square") var aoe_type: String = "none"
 @export var aoe_size        : int    = 0
 @export var damage_primary_only: bool = false
+@export var summon_blockade_front: bool = false
 
-@export_group("Burst Mechanics")
+@export_group("Burst / Projectile Options")
 @export var is_burst_attack : bool   = false
 @export var burst_retarget  : bool   = false
 

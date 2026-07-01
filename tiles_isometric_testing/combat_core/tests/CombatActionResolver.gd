@@ -531,6 +531,29 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 	else:
 		print("[COMBAT] Serangan meleset!")
 
+	if hit and ability != null and ("summon_blockade_front" in ability) and ability.summon_blockade_front and primary_target != null:
+		var t_pos: Vector2i = primary_target.get("grid_pos")
+		var diff = t_pos - a_pos
+		var dir = Vector2i.ZERO
+		if abs(diff.x) > abs(diff.y): dir = Vector2i(sign(diff.x), 0)
+		elif diff.y != 0: dir = Vector2i(0, sign(diff.y))
+		if dir == Vector2i.ZERO: dir = Vector2i(1, 0)
+		
+		var spawn_pos = t_pos - dir
+		if spawn_pos != a_pos and is_instance_valid(GridManager) and GridManager.is_walkable(spawn_pos):
+			print("[COMBAT] Summoning Blockade at %s" % spawn_pos)
+			var blockade_scene = load("res://entities/props/Blockade.tscn")
+			if blockade_scene:
+				var world = attacker.get_parent()
+				if world and world.has_method("spawn_entity"):
+					world.spawn_entity(blockade_scene, spawn_pos)
+				else:
+					var blockade = blockade_scene.instantiate()
+					blockade.set("grid_pos", spawn_pos)
+					blockade.position = IsoUtils.world_to_iso(spawn_pos)
+					blockade.z_index = IsoUtils.get_depth(spawn_pos)
+					if world: world.add_child(blockade)
+
 	if is_player:
 		EventBus.attackcam_finished.emit(attacker)
 	else:
