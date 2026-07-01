@@ -935,7 +935,7 @@ Luck also determines Contested Item Pick winner and Luck Event outcomes.
 
 | # | Question | Status |
 |---|---------|--------|
-| 1 | Wizard (P2) full skill set / ability list — needs detailing (equivalent to Fighter list) | 🔴 TODO |
+| 1 | Wizard (P2) full skill set / ability list — Fireball, Water Blast, Gust of Wind, Earth Spike, Staff Bonk, Benedicto, Wind Storm, Ring o' Fire, Holy Curse | 🟢 DONE |
 | 2 | Loot minigame mechanic — what is the minigame exactly? | 🔴 TODO |
 | 3 | How many rows / nodes does a full run have? (Estimated 8–10 rows) | 🟡 TBD |
 | 4 | Enemy roster — how many enemy types for Battle vs Elite vs Boss? | 🔴 TODO |

@@ -128,6 +128,10 @@ Game
 │   │   │   ├── Earth Spike (.tres)
 │   │   │   ├── Gust of Wind (.tres)
 │   │   │   ├── Staff Bonk (.tres)
+│   │   │   ├── Benedicto (.tres) — 3-tile radius, 2D10 Heal (Enemies half)
+│   │   │   ├── Wind Storm (.tres) — 4D12 + 3x3 behind-target Knockback AOE
+│   │   │   ├── Ring o' Fire (.tres) — 1D12 Earth + Summon Blockade
+│   │   │   ├── Holy Curse (.tres) — 1D10 + Status Debuff
 │   │   │   └── Generic Ranged Placeholder (.tres)
 │   │   └── Friendly Fire Handler  [built into BaseAbility]  ← #11 (merged, not separate)
 │   │       ├── TargetAlignment enum: ENEMY_ONLY / ALLY_ONLY / SELF_ONLY / ANY
@@ -786,4 +790,4 @@ After selecting a skill:
 
 ---
 
-*Last updated: June 2026 — Architecture revisions 1–15 applied. Combat controller refactor, new abilities (Divine Departure, Great Bash, Thrust, Chain Dagger, Kitin Bomb), pull mechanic, vulnerable damage multiplier, and AOE heal/target alignment system added.*
+*Last updated: July 2026 — Architecture revisions 1–15 applied. Combat controller refactor, new abilities (Divine Departure, Great Bash, Thrust, Chain Dagger, Kitin Bomb, Benedicto, Wind Storm, Ring o' Fire, Holy Curse), behind-target AOEs, summon blockade mechanic, vulnerable damage multiplier, and AOE heal/target alignment system added.*

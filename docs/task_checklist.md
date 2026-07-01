@@ -29,6 +29,7 @@
 | Gilang | Ability System | Tambahin deskripsi ability field. Sama divine departure ketinggalan. | Critical | Done | Ability Base Class | #9 |
 | Gilang | Ability System | Calculate Damage Multipliers (Vulnerable/Vapor) in BaseAbility before sending to Candra | High | Done | Status Effects | #9 |
 | Gilang | Ability System | Implement new abilities: Divine Departure, Great Bash, Thrust, Chain Dagger, Kitin Bomb | High | Done | Ability Base Class, AOE System | #9 |
+| Gilang | Ability System | Implement advanced abilities: Benedicto, Wind Storm, Ring o' Fire (w/ custom AOEs & Blockades) | High | Done | Ability Base Class | - |
 | Gilang | Ability System | Implement Pull mechanic (negative knockback_tiles) in CombatActionResolver | High | Done | ForcedMovementResolver | #13 |
 | Gilang | Ability System | Implement AOE Heal resolution in CombatActionResolver | High | Done | HealthComponent | #9 |
 | Gilang | Ability System | Implement TargetAlignment-aware AOE collection (ENEMY_ONLY/ALLY_ONLY/SELF_ONLY/ANY) | High | Done | Ability Base Class | #11 |
