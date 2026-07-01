@@ -516,6 +516,9 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 								var random_effects = ["weakened", "vulnerable", "bleeding", "stunned", "frozen", "lacerate"]
 								effect_to_apply = random_effects.pick_random()
 							EventBus.on_status_applied.emit(t, effect_to_apply, ability.status_duration, ability.status_stacks)
+							
+						if crit and ability.ability_name == "Main Attack":
+							EventBus.on_status_applied.emit(t, "stunned", 1, 1)
 					
 					if kb_tiles != 0 and not _knockback_done[0]:
 						var _t_pos = t.get("grid_pos")
