@@ -43,7 +43,19 @@ func _ready() -> void:
 		EventBus.on_status_applied.connect(_on_status_applied)
 	if EventBus != null and not EventBus.on_status_removed.is_connected(_on_status_removed):
 		EventBus.on_status_removed.connect(_on_status_removed)
+		
+	call_deferred("_inject_visualizer")
 
+func _inject_visualizer() -> void:
+	var parent = get_parent()
+	if not parent: return
+	
+	if not parent.has_node("StatusVisualizerComponent"):
+		var scene = load("res://components/StatusVisualizerComponent.tscn")
+		if scene:
+			var viz = scene.instantiate()
+			parent.add_child(viz)
+			viz.owner = parent
 
 # -----------------------------------------------------------------------------
 # Public API
@@ -108,6 +120,12 @@ func remove_condition(condition_id: String) -> void:
 
 func has_condition(condition_id: String) -> bool:
 	return _conditions.has(_normalize_id(condition_id))
+
+func get_condition_turns(condition_id: String) -> int:
+	var id = _normalize_id(condition_id)
+	if _conditions.has(id):
+		return int(_conditions[id].get("turns", 0))
+	return 0
 
 
 func is_stunned() -> bool:

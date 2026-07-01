@@ -29,22 +29,19 @@ scale_amount_min = 2.0
 scale_amount_max = 4.0
 color = Color(0.8, 0.1, 0.1, 1)
 
-[node name="StarParticles" type="CPUParticles2D" parent="."]
+[node name="StarPivot" type="Node2D" parent="."]
 position = Vector2(0, -220)
-scale = Vector2(2.5, 0.8)
+
+[node name="StarParticles" type="CPUParticles2D" parent="StarPivot"]
 emitting = false
-amount = 15
-lifetime = 1.0
-emission_shape = 5
-emission_ring_radius = 20.0
-emission_ring_inner_radius = 18.0
-emission_ring_height = 0.0
-emission_ring_axis = Vector3(0, 0, 1)
+amount = 20
+lifetime = 0.6
+local_coords = false
+emission_shape = 1
+emission_sphere_radius = 2.0
 gravity = Vector2(0, 0)
-orbit_velocity_min = 1.0
-orbit_velocity_max = 1.5
 scale_amount_min = 3.0
-scale_amount_max = 5.0
+scale_amount_max = 6.0
 scale_amount_curve = SubResource("Curve_stars")
 color_ramp = SubResource("Gradient_stars")
 

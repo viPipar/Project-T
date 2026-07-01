@@ -41,8 +41,8 @@
 | Gilang | Status Effects | Physical Status Effects (Bleeding/Stun/Lacerate/Weakened/Vulnerable) | High | Done | SignalBus | - |
 | Gilang | Status Effects | DoT / Persistent Effect Ticker | Medium | Done | Status Effects | - |
 | Gilang | Status Effects | Vulnerable damage multiplier (×1.5 phys) in CombatActionResolver | High | Done | ConditionComponent | #9 |
-| Gilang | Status Particle FX | Per-entity particle emitter (attach to entity node) | Medium | To Do | Status Effects | #15 |
-| Gilang | Status Particle FX | Particle sets: Bleeding/Stun/Fire/Water/Earth/Air/Magma/Mud/Mist/Conflagration | Low | To Do | Particle Emitter | #15 |
+| Gilang | Status Particle FX | Per-entity particle emitter (attach to entity node) | Medium | Done | Status Effects | #15 |
+| Gilang | Status Particle FX | Particle sets: Bleeding/Stun/Fire/Water/Earth/Air/Magma/Mud/Mist/Conflagration | Low | Done | Particle Emitter | #15 |
 | Gilang | Status Effects | Implement `autotomy_armor_buff` (+4 Armor for 1 turn) from Autotomy | Medium | Done | Status Effects | #9 |
 | Gilang | Audio System | SFX & BGM Manager (Combat sounds, UI clicks, bgm tracks) | High | To Do | EventBus | - |
 | Gilang | AI System | Enemy AI Brain (Target Selection, Ability Choice, Movement Logic) | Critical | Done | Phase Mgr, A* Grid | - |
