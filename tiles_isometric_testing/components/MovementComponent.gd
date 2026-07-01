@@ -215,6 +215,10 @@ func _start_step(index: int) -> void:
 	_step_origin = IsoUtils.world_to_iso(from_tile)
 	_step_target = IsoUtils.world_to_iso(to_tile)
 
+	if owner.get("is_2x2") == true:
+		_step_origin.y += IsoUtils.TILE_H / 2.0
+		_step_target.y += IsoUtils.TILE_H / 2.0
+
 	# Control point: lift slightly above the midpoint for a gentle arc
 	var mid := (_step_origin + _step_target) * 0.5
 	_ctrl_offset = mid + Vector2(0, -IsoUtils.TILE_H * 0.35)

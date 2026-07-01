@@ -95,8 +95,9 @@ func _ready() -> void:
 		kb_cursor_p2.set("camera_ref", _split_screen.cam_p2)
 
 	# ── Spawn enemy placeholder untuk testing combat_core ─────────────────────
-	_spawn_enemy_from_json("goblin", "Goblin", Vector2i(5, 5), Color(0.3, 0.9, 0.3, 1.0))
-	# _spawn_enemy_from_json("orc", "Orc", Vector2i(8, 5), Color(0.9, 0.4, 0.1, 1.0))
+	_spawn_enemy_from_json("goblin", "Goblin Mosquito", Vector2i(5, 5), Color(0.3, 0.9, 0.3, 1.0))
+	_spawn_enemy_from_json("orc", "Orc Grasshopper", Vector2i(8, 4), Color(0.9, 0.4, 0.1, 1.0))
+	_spawn_enemy_from_json("beetle", "Elite Beetle", Vector2i(9, 7), Color(0.1, 0.6, 0.9, 1.0))
 
 	# ── CombatTestBridge ──────────────────────────────────────────────────────
 	var bridge := Node.new()
