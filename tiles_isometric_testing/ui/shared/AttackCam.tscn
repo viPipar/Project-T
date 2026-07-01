@@ -1,9 +1,11 @@
-[gd_scene load_steps=7 format=3 uid="uid://ttackcam001"]
+[gd_scene load_steps=9 format=3 uid="uid://ttackcam001"]
 
-[ext_resource type="Script" uid="uid://biv0g6np8ag24" path="res://autoloads/AttackCam.gd" id="1_atkcam"]
-[ext_resource type="Texture2D" uid="uid://uwjdd71rvwep" path="res://assets/ui_assets/New_Project_80.png" id="2_1nlki"]
-[ext_resource type="Texture2D" uid="uid://crq2r4f82syxb" path="res://assets/ui_assets/New_Project_81.png" id="3_utrgt"]
-[ext_resource type="AudioStream" uid="uid://dmeqb26sraqlw" path="res://assets/SFX_assets/bazz.mp3" id="4_utrgt"]
+[ext_resource type="Script" path="res://autoloads/AttackCam.gd" id="1_atkcam"]
+[ext_resource type="Texture2D" path="res://assets/ui_assets/New_Project_80.png" id="2_1nlki"]
+[ext_resource type="Texture2D" path="res://assets/ui_assets/New_Project_81.png" id="3_utrgt"]
+[ext_resource type="AudioStream" path="res://assets/SFX_assets/bazz.mp3" id="4_utrgt"]
+[ext_resource type="PackedScene" path="res://ui/shared/FighterBanner.tscn" id="5_fighter"]
+[ext_resource type="PackedScene" path="res://ui/shared/WizardBanner.tscn" id="6_wizard"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_mfvw1"]
 animations = [{
@@ -63,6 +65,7 @@ visible = false
 position = Vector2(640, 360)
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="AttackCamP1"]
+visible = false
 texture_filter = 1
 scale = Vector2(1.6, 1.6)
 sprite_frames = SubResource("SpriteFrames_mfvw1")
@@ -72,6 +75,7 @@ visible = false
 position = Vector2(640, 360)
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="AttackCamP2"]
+visible = false
 texture_filter = 1
 scale = Vector2(1.6, 1.6)
 sprite_frames = SubResource("SpriteFrames_blt6u")
@@ -82,3 +86,9 @@ stream = ExtResource("4_utrgt")
 [node name="SFX_P2" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("4_utrgt")
 volume_db = 1.87
+
+[node name="FighterBanner" parent="." instance=ExtResource("5_fighter")]
+visible = false
+
+[node name="WizardBanner" parent="." instance=ExtResource("6_wizard")]
+visible = false

@@ -27,6 +27,12 @@ signal cam_finished
 @onready var p2:      Node2D           = $AttackCamP2
 @onready var anim_p1: AnimatedSprite2D = $AttackCamP1/AnimatedSprite2D
 @onready var anim_p2: AnimatedSprite2D = $AttackCamP2/AnimatedSprite2D
+@onready var fighter_banner: TextureRect = $FighterBanner
+@onready var wizard_banner: TextureRect = $WizardBanner
+
+var _tween_p1: Tween = null
+var _tween_p2: Tween = null
+var _tween_finish: Tween = null
 
 const DEFAULT_ANIM  := "default"
 const DEFAULT_SFX_P1 := "SFX_P1"
@@ -64,14 +70,43 @@ func play(
 	_active_sfx = []
 	visible     = true
 
+	# Kill any running tweens to prevent overlapping animations
+	if _tween_p1 and _tween_p1.is_valid(): _tween_p1.kill()
+	if _tween_p2 and _tween_p2.is_valid(): _tween_p2.kill()
+	if _tween_finish and _tween_finish.is_valid(): _tween_finish.kill()
+
 	if show_p1:
 		p1.show()
+		# Position off-screen left, scale down to 0.3 (594x324 layout size)
+		fighter_banner.position = Vector2(-650, 20)
+		fighter_banner.scale = Vector2(0.3, 0.3)
+		fighter_banner.pivot_offset = Vector2.ZERO
+		fighter_banner.show()
+		
+		# Tween slide in from left to right (active position is -120 to anchor as tab)
+		_tween_p1 = create_tween()
+		_tween_p1.tween_property(fighter_banner, "position", Vector2(-120, 20), 0.45)\
+			.set_trans(Tween.TRANS_BACK)\
+			.set_ease(Tween.EASE_OUT)
+			
 		anim_p1.play(_resolve_anim(anim_p1, anim_p1_name))
 		_pending += 1
 		_try_play_sfx(sfx_p1_name)
 
 	if show_p2:
 		p2.show()
+		# Position off-screen right, scale down to 0.3 (594x324 layout size)
+		wizard_banner.position = Vector2(1350, 20)
+		wizard_banner.scale = Vector2(0.3, 0.3)
+		wizard_banner.pivot_offset = Vector2.ZERO
+		wizard_banner.show()
+		
+		# Tween slide in from right to left (active position is 800 to anchor as tab)
+		_tween_p2 = create_tween()
+		_tween_p2.tween_property(wizard_banner, "position", Vector2(800, 20), 0.45)\
+			.set_trans(Tween.TRANS_BACK)\
+			.set_ease(Tween.EASE_OUT)
+			
 		anim_p2.play(_resolve_anim(anim_p2, anim_p2_name))
 		_pending += 1
 		_try_play_sfx(sfx_p2_name)
@@ -81,10 +116,17 @@ func play(
 		_finish()
 
 func hide_cam() -> void:
+	# Instantly cancel active tweens
+	if _tween_p1 and _tween_p1.is_valid(): _tween_p1.kill()
+	if _tween_p2 and _tween_p2.is_valid(): _tween_p2.kill()
+	if _tween_finish and _tween_finish.is_valid(): _tween_finish.kill()
+
 	anim_p1.stop()
 	anim_p2.stop()
 	for sfx in _active_sfx:
 		sfx.stop()
+	fighter_banner.hide()
+	wizard_banner.hide()
 	p1.hide()
 	p2.hide()
 	_pending = 0
@@ -122,11 +164,41 @@ func _try_play_sfx(sfx_node_name: String) -> void:
 func _on_done() -> void:
 	_pending -= 1
 	if _pending <= 0:
+		# Add a hold delay of 1.8s so the face animation stays on screen before tweening out
+		get_tree().create_timer(1.8).timeout.connect(func():
+			if visible:
+				_slide_out_and_finish()
+		)
+
+func _slide_out_and_finish() -> void:
+	if _tween_p1 and _tween_p1.is_valid(): _tween_p1.kill()
+	if _tween_p2 and _tween_p2.is_valid(): _tween_p2.kill()
+	
+	_tween_finish = create_tween().set_parallel(true)
+	var has_anim := false
+	
+	if fighter_banner.visible:
+		_tween_finish.tween_property(fighter_banner, "position", Vector2(-650, 20), 0.35)\
+			.set_trans(Tween.TRANS_QUAD)\
+			.set_ease(Tween.EASE_IN)
+		has_anim = true
+		
+	if wizard_banner.visible:
+		_tween_finish.tween_property(wizard_banner, "position", Vector2(1350, 20), 0.35)\
+			.set_trans(Tween.TRANS_QUAD)\
+			.set_ease(Tween.EASE_IN)
+		has_anim = true
+		
+	if has_anim:
+		_tween_finish.chain().tween_callback(_finish)
+	else:
 		_finish()
 
 func _finish() -> void:
 	p1.hide()
 	p2.hide()
+	fighter_banner.hide()
+	wizard_banner.hide()
 	visible  = false
 	_pending = 0
 	cam_finished.emit()
