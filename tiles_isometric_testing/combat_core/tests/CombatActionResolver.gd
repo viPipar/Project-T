@@ -307,10 +307,12 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 		await execute_dash.call()
 		await bridge.vfx_controller._play_enemy_dice_sequence(attacker, raw, total, thresh, hit_modifier, hit, crit, pid)
 
+	var has_overlay = false
 	if is_player:
 		# PLAYER: Dice overlay first
 		var overlay = bridge._overlay_p1 if pid == 1 else bridge._overlay_p2
 		if overlay != null:
+			has_overlay = true
 			var visual_rolls = dmg_rolls.duplicate()
 			if crit and crit_rolls.size() > 0:
 				visual_rolls.append_array(crit_rolls)
@@ -392,6 +394,8 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 					print("[COMBAT] %s is VULNERABLE! Damage increased to %d" % [t.name, real_dmg])
 				
 				var applied = _apply_damage_to_target(t, real_dmg, attacker, "magical" if is_magical else "physical")
+				if not is_player:
+					EventBus.damage_dealt.emit(t, real_dmg, "magical" if is_magical else "physical", bool(crit), attacker)
 				print("[COMBAT] %s menerima %d damage! (Total DMG)" % [t.name, applied])
 				if is_instance_valid(t) and t.has_method("is_dead") and t.is_dead():
 					had_kill = true
@@ -464,6 +468,17 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 					
 					var applied = _apply_damage_to_target(t, real_dmg, attacker, "magical" if is_magical else "physical")
 					
+					var element_str = "magical" if is_magical else "physical"
+					if is_burst:
+						EventBus.damage_dealt.emit(t, real_dmg, element_str, bool(crit), attacker)
+					else:
+						for i in range(dmg_rolls.size()):
+							var final_val = dmg_rolls[i] + dmg_mod if (i == 0) else dmg_rolls[i]
+							EventBus.damage_dealt.emit(t, final_val, element_str, false, attacker)
+						if crit and crit_rolls.size() > 0:
+							for i in range(crit_rolls.size()):
+								EventBus.damage_dealt.emit(t, crit_rolls[i], element_str, true, attacker)
+					
 					if is_burst:
 						print("[COMBAT] Burst %d: %s menerima %d damage!" % [burst_idx + 1, t.name, applied])
 					else:
@@ -518,17 +533,6 @@ func _apply_damage_to_target(target: Node, amount: int, attacker: Node, damage_t
 		if target.has_method("take_damage"):
 			applied = target.take_damage(amount, attacker, damage_type)
 	
-	if applied > 0:
-		var lbl = bridge.vfx_controller._make_world_label(str(applied), 40, Color.RED)
-		lbl.global_position = target.global_position + Vector2(0, -60)
-		bridge.vfx_controller.add_child(lbl)
-		
-		var tw = create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-		tw.tween_property(lbl, "global_position:y", lbl.global_position.y - 60, 0.8)
-		tw.parallel().tween_property(lbl, "modulate:a", 0.0, 0.5).set_delay(0.3)
-		tw.tween_callback(func(): if is_instance_valid(lbl): lbl.queue_free())
-	
-	EventBus.damage_dealt.emit(target, applied, damage_type, false, null)
 	return applied
 
 
@@ -541,14 +545,7 @@ func _apply_heal_to_target(target: Node, amount: int, source: Node) -> int:
 			applied = target.add_hp(amount, source)
 	
 	if applied > 0:
-		var lbl = bridge.vfx_controller._make_world_label("+" + str(applied), 40, Color.GREEN)
-		lbl.global_position = target.global_position + Vector2(0, -60)
-		bridge.vfx_controller.add_child(lbl)
-		
-		var tw = create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-		tw.tween_property(lbl, "global_position:y", lbl.global_position.y - 60, 0.8)
-		tw.parallel().tween_property(lbl, "modulate:a", 0.0, 0.5).set_delay(0.3)
-		tw.tween_callback(func(): if is_instance_valid(lbl): lbl.queue_free())
+		EventBus.floating_text_requested.emit(target, str(applied), Color.GREEN, "heal")
 	
 	return applied
 
