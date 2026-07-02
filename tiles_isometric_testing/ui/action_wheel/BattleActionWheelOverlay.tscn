@@ -34,7 +34,7 @@ grow_vertical = 2
 
 [node name="ActionWheelLeft" parent="LeftSide" instance=ExtResource("1_faht1")]
 layout_mode = 1
-title_text = "Player 1"
+title_text = "Fighter"
 subtitle_text = "WASD pilih arah, Q/E ganti wheel, F confirm"
 
 [node name="RightSide" type="Control" parent="."]
@@ -49,7 +49,7 @@ grow_vertical = 2
 
 [node name="ActionWheelRight" parent="RightSide" instance=ExtResource("1_faht1")]
 layout_mode = 1
-title_text = "Player 2"
+title_text = "Wizard"
 subtitle_text = "IJKL pilih arah, U/O ganti wheel, ; confirm"
 player_id = 2
 hover_up_key = 73
