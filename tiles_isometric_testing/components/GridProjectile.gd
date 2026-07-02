@@ -40,7 +40,7 @@ func setup(p_shooter: Node, p_target_tile: Vector2i, p_options: Dictionary = {})
 	if raw_color is Color:
 		color = raw_color
 
-	result = ProjectileSystem.resolve_projectile(shooter, target_tile, options)
+	result = _resolve_projectile(shooter, target_tile, options)
 	_tiles = result.get("tiles", [])
 	if _tiles.is_empty():
 		_finish()
@@ -113,3 +113,33 @@ func _apply_damage(target: Node) -> void:
 		applied = int(target.call("take_damage", damage, source, damage_type))
 	result["damage"] = damage
 	result["applied_damage"] = applied
+
+
+func _resolve_projectile(p_shooter: Node, p_target_tile: Vector2i, p_options: Dictionary) -> Dictionary:
+	var origin := _get_entity_grid_pos(p_shooter)
+	var max_range := int(p_options.get("max_range", -1))
+	var resolved: Dictionary
+	if max_range >= 0:
+		resolved = ProjectileLine.cast_ranged(origin, p_target_tile, max_range)
+	else:
+		resolved = ProjectileLine.cast(origin, p_target_tile)
+
+	resolved["origin"] = origin
+	resolved["target"] = p_target_tile
+	resolved["max_range"] = max_range
+	resolved["hit_entity"] = GridManager.get_entity_at(resolved.get("tile", p_target_tile)) if resolved.get("result", "") == "hit_entity" else null
+	return resolved
+
+
+func _get_entity_grid_pos(entity: Node) -> Vector2i:
+	if is_instance_valid(entity) and entity.has_method("get_grid_pos"):
+		var method_value: Variant = entity.call("get_grid_pos")
+		if method_value is Vector2i:
+			return method_value
+
+	if is_instance_valid(entity):
+		var prop_value: Variant = entity.get("grid_pos")
+		if prop_value is Vector2i:
+			return prop_value
+
+	return Vector2i.ZERO

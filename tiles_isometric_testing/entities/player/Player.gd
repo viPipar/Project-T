@@ -135,12 +135,14 @@ func _on_confirm() -> void:
 		return
 	_update_facing_from_to(grid_pos, target)
 
-	var interaction := EnvironmentInteractionHandler.interact_at(self, target, {
-		"reason": "confirm",
-		"player_id": player_id,
-	})
-	if bool(interaction.get("handled", false)):
-		return
+	var environment_handler := get_node_or_null("/root/EnvironmentInteractionHandler")
+	if environment_handler != null:
+		var interaction := environment_handler.interact_at(self, target, {
+			"reason": "confirm",
+			"player_id": player_id,
+		})
+		if bool(interaction.get("handled", false)):
+			return
 
 	var occupant := GridManager.get_entity_at(target)
 	var entity_type := GridManager.get_entity_type(target)

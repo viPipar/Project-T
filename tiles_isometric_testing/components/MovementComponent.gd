@@ -292,9 +292,10 @@ func _owner_is_downed() -> bool:
 
 
 func _trigger_environment_at(tile: Vector2i, reason: String, from_tile: Vector2i) -> void:
-	if EnvironmentInteractionHandler == null:
+	var environment_handler := get_node_or_null("/root/EnvironmentInteractionHandler")
+	if environment_handler == null:
 		return
-	EnvironmentInteractionHandler.trigger_tile(owner, tile, {
+	environment_handler.trigger_tile(owner, tile, {
 		"reason": reason,
 		"from": from_tile,
 	})
