@@ -301,6 +301,18 @@ func _is_valid_type(type: String) -> bool:
 	return true
 
 
+func _get_material(node: Node) -> ShaderMaterial:
+	if node == null:
+		return null
+	if "material" in node and node.material is ShaderMaterial:
+		return node.material as ShaderMaterial
+	for child in node.get_children():
+		var mat = _get_material(child)
+		if mat != null:
+			return mat
+	return null
+
+
 func _update_borders(type: String) -> void:
 	if not _active.has(type): return
 	# Buat lookup set posisi aktif untuk tipe highlight ini
@@ -313,10 +325,7 @@ func _update_borders(type: String) -> void:
 	# Update uniform shader tiap rect berdasarkan keberadaan tetangga
 	for pos in active_positions:
 		var rect_node = active_positions[pos] as Node2D
-		var color_rect = rect_node.get_child(0) as ColorRect
-		if color_rect == null or color_rect.material == null:
-			continue
-		var mat = color_rect.material as ShaderMaterial
+		var mat = _get_material(rect_node)
 		if mat == null:
 			continue
 			
