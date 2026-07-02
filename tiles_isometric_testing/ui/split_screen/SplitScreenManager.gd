@@ -58,6 +58,11 @@ var _p2_end_label   : Label    = null
 var _p1_end_tween   : Tween    = null
 var _p2_end_tween   : Tween    = null
 
+# Inspect focus mode overlays and highlights
+var _p1_dark_overlay : ColorRect = null
+var _p2_dark_overlay : ColorRect = null
+var _entity_highlights : Dictionary = { 1: [], 2: [] }
+
 # ── Public API ────────────────────────────────────────────────────────────────
 var cam_p1: PlayerCamera2D:
 	get:
@@ -437,6 +442,27 @@ func _attach_cameras(world_node: Node2D) -> void:
 
 	print("[SplitScreenManager] Cameras aktif — shared World2D: ", shared_world)
 
+	# Initialize dark overlays for inspect mode
+	_p1_dark_overlay = ColorRect.new()
+	_p1_dark_overlay.name = "P1DarkOverlay"
+	_p1_dark_overlay.color = Color(0.0, 0.0, 0.0, 0.6)
+	_p1_dark_overlay.size = Vector2(8000, 8000)
+	_p1_dark_overlay.position = Vector2(-4000, -4000)
+	_p1_dark_overlay.z_index = 1000
+	_p1_dark_overlay.visible = false
+	_p1_dark_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_cam_p1.add_child(_p1_dark_overlay)
+
+	_p2_dark_overlay = ColorRect.new()
+	_p2_dark_overlay.name = "P2DarkOverlay"
+	_p2_dark_overlay.color = Color(0.0, 0.0, 0.0, 0.6)
+	_p2_dark_overlay.size = Vector2(8000, 8000)
+	_p2_dark_overlay.position = Vector2(-4000, -4000)
+	_p2_dark_overlay.z_index = 1000
+	_p2_dark_overlay.visible = false
+	_p2_dark_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_cam_p2.add_child(_p2_dark_overlay)
+
 
 ## Fokuskan kamera ke posisi world tertentu (dipanggil setelah spawn player)
 func focus_camera(player_id: int, world_position: Vector2) -> void:
@@ -561,7 +587,27 @@ func _toggle_relic_focus(player_id: int) -> void:
 		if InputManager != null:
 			InputManager.relic_focus_p2 = active
 			
-	if not active:
+	if active:
+		if player_id == 1 and _p1_dark_overlay != null:
+			_p1_dark_overlay.visible = true
+		elif player_id == 2 and _p2_dark_overlay != null:
+			_p2_dark_overlay.visible = true
+			
+		_clear_entity_highlights(player_id)
+		var targets = get_tree().get_nodes_in_group("players") + get_tree().get_nodes_in_group("enemies")
+		for ent in targets:
+			if is_instance_valid(ent):
+				var hl = _create_highlight_sprite(ent, player_id)
+				if hl != null:
+					_entity_highlights[player_id].append({ "entity": ent, "highlight": hl })
+	else:
+		if player_id == 1 and _p1_dark_overlay != null:
+			_p1_dark_overlay.visible = false
+		elif player_id == 2 and _p2_dark_overlay != null:
+			_p2_dark_overlay.visible = false
+			
+		_clear_entity_highlights(player_id)
+		
 		_hide_inspect_window(player_id)
 		if InputManager != null:
 			InputManager.set_meta("relic_focus_just_deactivated_p%d" % player_id, true)
@@ -569,6 +615,9 @@ func _toggle_relic_focus(player_id: int) -> void:
 		for enemy in get_tree().get_nodes_in_group("enemies"):
 			if is_instance_valid(enemy) and enemy.has_method("_update_tooltip_visibility"):
 				enemy.call("_update_tooltip_visibility")
+
+	if MovementRangeManager != null:
+		MovementRangeManager.call("_refresh_all")
 
 func _hide_inspect_window(player_id: int) -> void:
 	var inspect_overlay = get_parent().get_node_or_null("InspectCanvas/InspectOverlay")
@@ -747,3 +796,106 @@ func _snap_cursor_to_button(player_id: int, btn: Control) -> void:
 	if is_instance_valid(cursor) and is_instance_valid(btn):
 		var center_offset = btn.size / 2.0
 		cursor.global_position = btn.global_position + center_offset
+
+
+func _process(_delta: float) -> void:
+	_sync_entity_highlights(1)
+	_sync_entity_highlights(2)
+
+
+func _clear_entity_highlights(player_id: int) -> void:
+	for item in _entity_highlights[player_id]:
+		var hl = item["highlight"]
+		if is_instance_valid(hl):
+			hl.queue_free()
+	_entity_highlights[player_id].clear()
+
+
+func _create_highlight_sprite(entity: Node, player_id: int) -> AnimatedSprite2D:
+	if not is_instance_valid(entity):
+		return null
+		
+	# Cari sprite original dari entitas
+	var orig_sprite: AnimatedSprite2D = null
+	if entity.has_node("AnimatedSprite2D"):
+		orig_sprite = entity.get_node("AnimatedSprite2D") as AnimatedSprite2D
+	elif entity.has_node("Player1Sprite") and player_id == 1:
+		orig_sprite = entity.get_node("Player1Sprite") as AnimatedSprite2D
+	elif entity.has_node("Player2Sprite") and player_id == 2:
+		orig_sprite = entity.get_node("Player2Sprite") as AnimatedSprite2D
+	else:
+		# Fallback mencari AnimatedSprite2D di child
+		for child in entity.get_children():
+			if child is AnimatedSprite2D:
+				orig_sprite = child
+				break
+				
+	if orig_sprite == null:
+		return null
+		
+	# Buat duplicate AnimatedSprite2D
+	var hl = AnimatedSprite2D.new()
+	hl.name = "HL_" + entity.name
+	hl.sprite_frames = orig_sprite.sprite_frames
+	hl.animation = orig_sprite.animation
+	hl.frame = orig_sprite.frame
+	hl.flip_h = orig_sprite.flip_h
+	hl.flip_v = orig_sprite.flip_v
+	hl.scale = orig_sprite.scale
+	hl.offset = orig_sprite.offset
+	
+	# Pasang outline shader material
+	var mat = ShaderMaterial.new()
+	var shader = load("res://assets/shaders/2d_outline_inline.gdshader")
+	if shader != null:
+		mat.shader = shader
+		mat.set_shader_parameter("color", Color(1.0, 0.85, 0.3, 1.0)) # Gold glow
+		mat.set_shader_parameter("width", 2.0)
+		mat.set_shader_parameter("inside", false)
+		mat.set_shader_parameter("add_margins", true)
+		hl.material = mat
+	
+	hl.z_index = 1100 # Di atas dark overlay
+	
+	# Layer visibilitas multiplayer
+	hl.visibility_layer = 2 if player_id == 1 else 4
+	
+	# Tambahkan sebagai child dari entity agar posisinya terikat otomatis
+	entity.add_child(hl)
+	return hl
+
+
+func _sync_entity_highlights(player_id: int) -> void:
+	var list: Array = _entity_highlights[player_id]
+	for i in range(list.size() - 1, -1, -1):
+		var item = list[i]
+		var entity = item["entity"]
+		var hl = item["highlight"]
+		
+		if not is_instance_valid(entity) or not is_instance_valid(hl):
+			if is_instance_valid(hl):
+				hl.queue_free()
+			list.remove_at(i)
+			continue
+			
+		var orig_sprite: AnimatedSprite2D = null
+		if entity.has_node("AnimatedSprite2D"):
+			orig_sprite = entity.get_node("AnimatedSprite2D") as AnimatedSprite2D
+		elif entity.has_node("Player1Sprite") and player_id == 1:
+			orig_sprite = entity.get_node("Player1Sprite") as AnimatedSprite2D
+		elif entity.has_node("Player2Sprite") and player_id == 2:
+			orig_sprite = entity.get_node("Player2Sprite") as AnimatedSprite2D
+		else:
+			for child in entity.get_children():
+				if child is AnimatedSprite2D:
+					orig_sprite = child
+					break
+					
+		if orig_sprite != null:
+			hl.animation = orig_sprite.animation
+			hl.frame = orig_sprite.frame
+			hl.flip_h = orig_sprite.flip_h
+			hl.flip_v = orig_sprite.flip_v
+			hl.scale = orig_sprite.scale
+			hl.offset = orig_sprite.offset
+			hl.visible = orig_sprite.visible

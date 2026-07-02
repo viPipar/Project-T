@@ -507,8 +507,12 @@ func is_resolving_action() -> bool:
 func should_hide_movement_range() -> bool:
 	if _state == PlayerState.TARGETING or _state == PlayerState.ACTING:
 		return true
-	if InputManager != null and InputManager.is_player_blocked(player_id):
-		return true
+	if InputManager != null:
+		var has_focus = InputManager.relic_focus_p1 if player_id == 1 else InputManager.relic_focus_p2
+		if has_focus:
+			return true
+		if InputManager.is_player_blocked(player_id):
+			return true
 	return false
 
 
