@@ -170,6 +170,8 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 		if target != null and is_instance_valid(GridManager):
 			bridge._set_player_busy(pid, true)
 			if is_instance_valid(attacker) and attacker.has_method("play_attack"):
+				if attacker.has_method("face_target") and target != null:
+					attacker.face_target(target.get("grid_pos"))
 				attacker.play_attack(_base_ability_id)
 				await get_tree().create_timer(0.2).timeout
 				
@@ -305,6 +307,8 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 		
 		if hit:
 			if is_instance_valid(attacker) and attacker.has_method("play_attack"):
+				if attacker.has_method("face_target") and target != null:
+					attacker.face_target(target.get("grid_pos"))
 				attacker.play_attack(_base_ability_id)
 				_played_attack = true
 				await get_tree().create_timer(0.6, false).timeout
@@ -329,6 +333,8 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 		# Then Attack & Dash
 		if hit:
 			if not _played_attack and is_instance_valid(attacker) and attacker.has_method("play_attack"):
+				if attacker.has_method("face_target") and target != null:
+					attacker.face_target(target.get("grid_pos"))
 				attacker.play_attack(_base_ability_id)
 				_played_attack = true
 				await get_tree().create_timer(0.6, false).timeout
@@ -338,6 +344,8 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 	# Projectile VFX
 	if hit and ability != null and ability.is_projectile:
 		if not _played_attack and is_instance_valid(attacker) and attacker.has_method("play_attack"):
+			if attacker.has_method("face_target") and target != null:
+				attacker.face_target(target.get("grid_pos"))
 			attacker.play_attack(_base_ability_id)
 			await get_tree().create_timer(0.2).timeout
 		if target != null:
