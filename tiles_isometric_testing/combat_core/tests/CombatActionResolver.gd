@@ -558,7 +558,7 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 	else:
 		print("[COMBAT] Serangan meleset!")
 
-	if hit and ability != null and ("summon_blockade_front" in ability) and ability.summon_blockade_front and primary_target != null:
+	if ability != null and ("summon_blockade_front" in ability) and ability.summon_blockade_front and primary_target != null:
 		var t_pos: Vector2i = primary_target.get("grid_pos")
 		var diff = t_pos - a_pos
 		var dir = Vector2i.ZERO

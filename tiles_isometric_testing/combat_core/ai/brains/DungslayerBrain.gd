@@ -49,7 +49,29 @@ func decide_and_act(entity: Node, ai_component: AIComponent) -> void:
 	if move_comp != null and move_comp.has_movement():
 		var target_pos: Vector2i = target.get("grid_pos")
 		if not move_comp.interact_move_to(target_pos):
-			print("[AI:%s] Unable to find a path or move. Will try to cast blockade from here." % entity.name)
+			print("[AI:%s] Unable to fully reach target. Will move as far as possible..." % entity.name)
+			
+			if GridManager._astar != null:
+				var path = GridManager._astar.get_id_path(my_pos, target_pos)
+				if path.size() > 1:
+					var max_steps = move_comp.movement_left
+					var best_move = my_pos
+					var steps = 0
+					
+					for i in range(1, path.size()):
+						if steps >= max_steps:
+							break
+						var step_pos = path[i]
+						if GridManager.can_enter_tile(step_pos, entity):
+							best_move = step_pos
+							steps += 1
+						else:
+							break
+					
+					if best_move != my_pos:
+						move_comp.move_to(best_move)
+						await move_comp.move_finished
+						print("[AI:%s] Partial movement finished." % entity.name)
 		else:
 			print("[AI:%s] Moving towards target..." % entity.name)
 			await move_comp.move_finished
