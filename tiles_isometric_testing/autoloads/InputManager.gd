@@ -1,5 +1,27 @@
 extends Node
 
+func _ready() -> void:
+	if not InputMap.has_action("p1_inspect"):
+		InputMap.add_action("p1_inspect")
+		var key_tab := InputEventKey.new()
+		key_tab.physical_keycode = KEY_TAB
+		InputMap.action_add_event("p1_inspect", key_tab)
+	
+	if not InputMap.has_action("p2_inspect"):
+		InputMap.add_action("p2_inspect")
+		var key_y := InputEventKey.new()
+		key_y.physical_keycode = KEY_Y
+		InputMap.action_add_event("p2_inspect", key_y)
+
+func is_inspect_pressed(player_id: int) -> bool:
+	if killcam_active or is_in_menu:
+		return false
+	if player_id == 1:
+		return Input.is_action_just_pressed("p1_inspect")
+	elif player_id == 2:
+		return Input.is_action_just_pressed("p2_inspect")
+	return false
+
 var killcam_active: bool = false
 var is_in_menu: bool = false
 
