@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://6eoavnmaa4vg"
-path="res://.godot/imported/scene 4.png-a66a565263be289daec0d3ae2dac8399.ctex"
+uid="uid://b57tqrwkb77nt"
+path="res://.godot/imported/skill 2 boss.png-dfc6b4e7b621ce429c506efcf9c482fa.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/backgrounds/scene_4/scene 4.png"
-dest_files=["res://.godot/imported/scene 4.png-a66a565263be289daec0d3ae2dac8399.ctex"]
+source_file="res://assets/characters/boss_butterfly/skill 2 boss.png"
+dest_files=["res://.godot/imported/skill 2 boss.png-dfc6b4e7b621ce429c506efcf9c482fa.ctex"]
 
 [params]
 

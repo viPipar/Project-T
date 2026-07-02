@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dop12svmi77kj"
-path="res://.godot/imported/tebing belakang.png-c02ff26a5fc09a08f05ae2ff0e321d0f.ctex"
+uid="uid://b4h1b6axy7obl"
+path="res://.godot/imported/skill 1 boss.png-49e68bccc4f63cce2b40ce713182771b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/backgrounds/scene_1/tebing belakang.png"
-dest_files=["res://.godot/imported/tebing belakang.png-c02ff26a5fc09a08f05ae2ff0e321d0f.ctex"]
+source_file="res://assets/characters/boss_butterfly/skill 1 boss.png"
+dest_files=["res://.godot/imported/skill 1 boss.png-49e68bccc4f63cce2b40ce713182771b.ctex"]
 
 [params]
 

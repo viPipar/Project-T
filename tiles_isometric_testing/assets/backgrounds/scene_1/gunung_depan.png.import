@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://go4pc0bbyhmu"
-path="res://.godot/imported/scene 2.png-cba7e06223aa6a4839b088c618147754.ctex"
+uid="uid://lmary03d044j"
+path="res://.godot/imported/gunung_depan.png-752704ca8b41b83d2b9b5a5395af14ca.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/backgrounds/scene_2/scene 2.png"
-dest_files=["res://.godot/imported/scene 2.png-cba7e06223aa6a4839b088c618147754.ctex"]
+source_file="res://assets/backgrounds/scene_1/gunung_depan.png"
+dest_files=["res://.godot/imported/gunung_depan.png-752704ca8b41b83d2b9b5a5395af14ca.ctex"]
 
 [params]
 
