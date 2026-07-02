@@ -77,7 +77,7 @@ func _move_cursor(delta: float) -> void:
 
 	# ── EDGE SCROLLING (CAMERA PANNING) ──
 	if camera_ref != null and is_instance_valid(camera_ref):
-		var screen_pos = get_global_transform_with_canvas().origin
+		var screen_pos = camera_ref.unproject_position(global_position)
 		var viewport_size = get_viewport().get_visible_rect().size
 		
 		var edge_margin := 40.0
@@ -114,7 +114,7 @@ func _check_relic_hover() -> void:
 	var container = ssm.get("_p1_relics_container") if player_id == 1 else ssm.get("_p2_relics_container")
 	if container == null: return
 	
-	var screen_pos = get_global_transform_with_canvas().origin
+	var screen_pos = camera_ref.unproject_position(global_position) if is_instance_valid(camera_ref) else get_global_transform_with_canvas().origin
 	
 	var hovered_btn: Control = null
 	for btn in container.get_children():
