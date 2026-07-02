@@ -4,9 +4,9 @@
 
 [resource]
 script = ExtResource("1")
-ability_name = "Generic Ranged Placeholder"
-ability_description = "A standard long-range attack. [WARNING: PLACEHOLDER ONLY. DO NOT USE IN FINAL BUILD]"
-ability_tag = "ability_base"
+ability_name = "Stingky Spit"
+ability_description = "A nasty, acidic projectile spit from afar."
+ability_tag = "stingky_spit"
 ability_type = 0
 element_tag = "physical"
 target_alignment = 0
