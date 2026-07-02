@@ -48,6 +48,12 @@ func _process(delta: float) -> void:
 				_last_hovered_relic.call("_on_hover_exited")
 			_last_hovered_relic = null
 			
+		if is_instance_valid(_last_hovered_entity):
+			if _last_hovered_entity.has_method("remove_hover_player"):
+				_last_hovered_entity.remove_hover_player(player_id)
+			_last_hovered_entity = null
+			_notify_inspect_overlay(null)
+			
 	queue_redraw()
 
 
