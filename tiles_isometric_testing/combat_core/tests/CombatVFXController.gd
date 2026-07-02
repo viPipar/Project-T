@@ -192,8 +192,7 @@ func _play_enemy_dice_sequence(
 
 func _spawn_magic_projectile(attacker: Node, target: Node, element: String, tracking_array: Array = []) -> void:
 	print("[COMBAT] 🌠 Merender efek sihir elemen: %s" % element)
-	
-	var orb = Sprite2D.new()
+	var orb = AnimatedSprite2D.new()
 	
 	var start_pos = attacker.global_position + Vector2(0, -32)
 	orb.global_position = start_pos
@@ -207,15 +206,31 @@ func _spawn_magic_projectile(attacker: Node, target: Node, element: String, trac
 	orb.set("tracking_array", tracking_array)
 	orb.set("fallback_target", target)
 	
-	if is_instance_valid(target):
-		var init_dir = (target.global_position + Vector2(0, -32) - start_pos).normalized()
-		# Wide anime-style spread (up to 100 degrees sideways)
-		var spread_angle = randf_range(-PI/1.8, PI/1.8) 
-		init_dir = init_dir.rotated(spread_angle)
-		orb.set("current_velocity", init_dir * randf_range(1600.0, 2000.0))
-		
 	add_child(orb)
-	await orb.tree_exited
+	
+	# For backwards compatibility with single projectiles:
+	# Instantly launch at target without spread
+	orb.launch_at(target)
+	await orb.impacted
+
+func _spawn_hover_burst(attacker: Node, targets: Array, element: String) -> Array:
+	var spawned: Array = []
+	var start_pos = attacker.global_position + Vector2(0, -32)
+	
+	var projectile_element := element
+	if attacker != null and attacker.is_in_group("enemies"):
+		projectile_element = "enemy"
+		
+	for i in range(targets.size()):
+		var orb = AnimatedSprite2D.new()
+		orb.global_position = start_pos
+		orb.set_script(preload("res://combat_core/tests/HomingProjectile.gd"))
+		orb.set("element", projectile_element)
+		add_child(orb)
+		orb.spread_out(start_pos, targets[i])
+		spawned.append(orb)
+		
+	return spawned
 
 func _spawn_hit_vfx(target: Node, element: String) -> void:
 	if not is_instance_valid(target):

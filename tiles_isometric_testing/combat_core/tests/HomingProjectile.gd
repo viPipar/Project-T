@@ -1,92 +1,92 @@
-extends Sprite2D
+extends AnimatedSprite2D
+
+signal impacted
 
 var element: String = ""
 var tracking_array: Array = []
 var fallback_target: Node = null
-var current_velocity: Vector2 = Vector2.ZERO
-var speed: float = 2200.0
-var max_time: float = 1.2
+var max_time: float = 3.0 # Fallback safety max time
 var timer: float = 0.0
-var steer_force_base: float = 15000.0
 
-var _total_frames: int = 1
-var _fps: float = 24.0
+var _is_impacting: bool = false
+var _phase: int = 0 # 0=spawned, 1=spread, 2=homing
+var active_target_node: Node = null
 
 func _ready() -> void:
-	speed = randf_range(1800.0, 2800.0)
-	steer_force_base = randf_range(8000.0, 24000.0)
-	
 	var tex_path := ""
-	var h := 6
-	var v := 3
-	
 	match element.to_lower():
-		"fire":
-			tex_path = "res://assets/ui_assets/projectiles/Fire Wizard.png"
-			h = 5
-		"water":
-			tex_path = "res://assets/ui_assets/projectiles/Water Wizard.png"
-			h = 6
-		"earth":
-			tex_path = "res://assets/ui_assets/projectiles/Earth Wizard.png"
-			h = 5
-		"air", "wind":
-			tex_path = "res://assets/ui_assets/projectiles/Wind Wizard.png"
-			h = 7
-		"enemy":
-			tex_path = "res://assets/ui_assets/projectiles/Medium Enemy.png"
-			h = 6
-		_:
-			tex_path = "res://assets/ui_assets/projectiles/Fighter.png"
-			h = 6
+		"fire": tex_path = "res://assets/ui_assets/projectiles/Fire Wizard_frames.tres"
+		"water": tex_path = "res://assets/ui_assets/projectiles/Water Wizard_frames.tres"
+		"earth": tex_path = "res://assets/ui_assets/projectiles/Earth Wizard_frames.tres"
+		"air", "wind": tex_path = "res://assets/ui_assets/projectiles/Wind Wizard_frames.tres"
+		"enemy": tex_path = "res://assets/ui_assets/projectiles/Medium Enemy_frames.tres"
+		_: tex_path = "res://assets/ui_assets/projectiles/Fighter_frames.tres"
 
 	if ResourceLoader.exists(tex_path):
-		texture = load(tex_path)
-		hframes = h
-		vframes = v
-		_total_frames = h * v
+		sprite_frames = load(tex_path)
 		scale = Vector2(0.12, 0.12)
+		play("entry")
+		animation_finished.connect(_on_animation_finished)
 	else:
-		push_warning("[HomingProjectile] Texture not found: %s" % tex_path)
+		push_warning("[HomingProjectile] Frames not found: %s" % tex_path)
+
+func _on_animation_finished() -> void:
+	if animation == "entry":
+		play("loop")
+	elif animation == "impact":
+		queue_free()
+
+func spread_out(center_pos: Vector2, target: Node = null) -> void:
+	_phase = 1
+	active_target_node = target
+	# Spread upwards in a 90 degree cone (-135 to -45 degrees)
+	var angle = randf_range(-PI * 0.75, -PI * 0.25)
+	var distance = randf_range(240.0, 400.0)
+	var spread_pos = center_pos + Vector2(cos(angle), sin(angle)) * distance
+	
+	var tw = create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tw.tween_property(self, "global_position", spread_pos, 0.4)
+
+func launch_at(target: Node) -> void:
+	_phase = 2
+	fallback_target = target
+	active_target_node = target
+	
+	var active_target = target
+	if tracking_array.size() > 0 and is_instance_valid(tracking_array[0]) and not tracking_array[0].is_queued_for_deletion():
+		if tracking_array[0].has_method("is_dead") and not tracking_array[0].is_dead():
+			active_target = tracking_array[0]
+		elif not tracking_array[0].has_method("is_dead"):
+			active_target = tracking_array[0]
+			
+	var target_pos = global_position
+	if is_instance_valid(active_target):
+		target_pos = active_target.global_position + Vector2(0, -32)
+		active_target_node = active_target
+		
+	var dist = global_position.distance_to(target_pos)
+	var travel_speed = randf_range(900.0, 1400.0) # Slower than before!
+	var travel_time = dist / travel_speed
+	
+	var tw = create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	tw.tween_property(self, "global_position", target_pos, travel_time)
+	tw.finished.connect(_start_impact)
+
+func _start_impact() -> void:
+	if _is_impacting: return
+	_is_impacting = true
+	impacted.emit()
+	if sprite_frames and sprite_frames.has_animation("impact"):
+		play("impact")
+	else:
+		queue_free()
 
 func _process(delta: float) -> void:
 	timer += delta
-	if timer >= max_time:
-		queue_free()
-		return
+	if timer > max_time and not _is_impacting:
+		_start_impact()
 		
-	var active_target = fallback_target
-	if tracking_array.size() > 0 and is_instance_valid(tracking_array[0]) and not tracking_array[0].is_queued_for_deletion():
-		if tracking_array[0].has_method("is_dead"):
-			if not tracking_array[0].is_dead():
-				active_target = tracking_array[0]
-		else:
-			active_target = tracking_array[0]
-			
-	if is_instance_valid(active_target):
-		var target_pos = active_target.global_position + Vector2(0, -32)
-		var desired_velocity = (target_pos - global_position).normalized() * speed
-		var steering = (desired_velocity - current_velocity)
-		
-		var steer_force = steer_force_base * delta
-		if steering.length() > steer_force:
-			steering = steering.normalized() * steer_force
-			
-		current_velocity += steering
-		
-		if current_velocity.length() > speed:
-			current_velocity = current_velocity.normalized() * speed
-		global_position += current_velocity * delta
-		
-		if global_position.distance_to(target_pos) < 25.0:
-			queue_free()
-	else:
-		global_position += current_velocity * delta
-
-	# Animate frame
-	if texture != null and _total_frames > 1:
-		frame = int(timer * _fps) % _total_frames
-
-	# Rotate towards velocity direction
-	if current_velocity != Vector2.ZERO:
-		rotation = current_velocity.angle()
+	if not _is_impacting and is_instance_valid(active_target_node):
+		var t_pos = active_target_node.global_position + Vector2(0, -32)
+		# Add PI/4 (45 degrees) offset because the original sprite is drawn pointing top-right
+		rotation = (t_pos - global_position).angle() + PI / 4.0
