@@ -10,6 +10,13 @@
 [ext_resource type="Script" uid="uid://dfgx2uqpj1g3d" path="res://components/AIComponent.gd" id="8_ai"]
 [ext_resource type="Script" uid="uid://dleotlv76kabm" path="res://components/MovementComponent.gd" id="9_move"]
 [ext_resource type="Resource" uid="uid://bivjnnvw0rb8h" path="res://combat_core/ai/brains/SimpleMeleeBrain.tres" id="10_brain"]
+[ext_resource type="Shader" path="res://assets/shaders/hover_shadow.gdshader" id="11_shadow_shader"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_static_shadow"]
+shader = ExtResource("11_shadow_shader")
+shader_parameter/blur_amount = 0.4
+shader_parameter/opacity = 0.43
+shader_parameter/shadow_color = Color(0, 0, 0, 1)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_enemy"]
 atlas = ExtResource("4_tex")
@@ -28,6 +35,15 @@ animations = [{
 
 [node name="BaseEnemy" type="CharacterBody2D"]
 script = ExtResource("1_h7x2k")
+
+[node name="Shadow" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_static_shadow")
+custom_minimum_size = Vector2(160, 80)
+offset_left = -80.0
+offset_top = -30.0
+offset_right = 80.0
+offset_bottom = 50.0
+mouse_filter = 2
 
 [node name="StatsComponent" type="Node" parent="."]
 script = ExtResource("2_stats")
