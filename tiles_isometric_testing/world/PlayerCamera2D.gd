@@ -69,10 +69,14 @@ func shake(intensity: float = 0.5, duration: float = 0.3) -> void:
 
 
 func _handle_pan_input(delta: float) -> void:
-	if is_instance_valid(InputManager) and InputManager.is_in_menu:
-		return
-	if is_instance_valid(InputManager) and InputManager.is_player_menu_blocked(player_id):
-		return
+	if is_instance_valid(InputManager):
+		if InputManager.is_in_menu:
+			return
+		if InputManager.is_player_menu_blocked(player_id):
+			return
+		var in_focus = InputManager.relic_focus_p1 if player_id == 1 else InputManager.relic_focus_p2
+		if in_focus:
+			return
 
 	var dir := Vector2.ZERO
 

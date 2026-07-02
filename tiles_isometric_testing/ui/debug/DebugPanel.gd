@@ -227,46 +227,94 @@ func _build_ui() -> void:
 	tab_items.name = "Item Sandbox"
 	tab_items.add_theme_constant_override("margin_left", 10)
 	tab_items.add_theme_constant_override("margin_top", 10)
+	tab_items.add_theme_constant_override("margin_right", 10)
+	tab_items.add_theme_constant_override("margin_bottom", 10)
 	tabs.add_child(tab_items)
 	
 	var items_vbox = VBoxContainer.new()
-	items_vbox.add_theme_constant_override("separation", 15)
+	items_vbox.add_theme_constant_override("separation", 10)
 	tab_items.add_child(items_vbox)
 	
-	var item_lbl = Label.new()
-	item_lbl.text = "Select an item to inject into player inventories:"
-	items_vbox.add_child(item_lbl)
+	var player_hbox = HBoxContainer.new()
+	player_hbox.add_theme_constant_override("separation", 10)
+	items_vbox.add_child(player_hbox)
 	
-	var item_picker = OptionButton.new()
-	item_picker.custom_minimum_size = Vector2(200, 30)
-	items_vbox.add_child(item_picker)
+	var select_lbl = Label.new()
+	select_lbl.text = "Target Player:"
+	player_hbox.add_child(select_lbl)
 	
-	var item_list = StatDataDB.get_item_ids()
-	for key in item_list:
-		item_picker.add_item(key)
-
-	var hbox_btns = HBoxContainer.new()
-	hbox_btns.add_theme_constant_override("separation", 10)
-	items_vbox.add_child(hbox_btns)
+	var target_picker = OptionButton.new()
+	target_picker.add_item("Player 1 (Fighter)")
+	target_picker.add_item("Player 2 (Wizard)")
+	target_picker.selected = 0
+	player_hbox.add_child(target_picker)
 	
-	var btn_style = StyleBoxFlat.new()
-	btn_style.bg_color = Color(0.2, 0.4, 0.8, 0.8)
-	btn_style.corner_radius_top_left = 6
-	btn_style.corner_radius_top_right = 6
-	btn_style.corner_radius_bottom_left = 6
-	btn_style.corner_radius_bottom_right = 6
+	var click_lbl = Label.new()
+	click_lbl.text = "(Hover over icons for details, click to grant item)"
+	click_lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+	items_vbox.add_child(click_lbl)
 	
-	var p1_add = Button.new()
-	p1_add.text = " Give P1 "
-	p1_add.add_theme_stylebox_override("normal", btn_style)
-	p1_add.pressed.connect(func(): if InventoryManager != null: InventoryManager.add_item(1, item_list[item_picker.selected]))
-	hbox_btns.add_child(p1_add)
+	var items_scroll = ScrollContainer.new()
+	items_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	items_vbox.add_child(items_scroll)
 	
-	var p2_add = Button.new()
-	p2_add.text = " Give P2 "
-	p2_add.add_theme_stylebox_override("normal", btn_style)
-	p2_add.pressed.connect(func(): if InventoryManager != null: InventoryManager.add_item(2, item_list[item_picker.selected]))
-	hbox_btns.add_child(p2_add)
+	var items_grid = GridContainer.new()
+	items_grid.columns = 10
+	items_grid.add_theme_constant_override("h_separation", 8)
+	items_grid.add_theme_constant_override("v_separation", 8)
+	items_scroll.add_child(items_grid)
+	
+	var all_item_ids = StatDataDB.get_item_ids()
+	for item_id in all_item_ids:
+		var item_data = ItemRegistry.get_item(item_id)
+		if item_data.is_empty():
+			continue
+			
+		var item_btn = Button.new()
+		item_btn.custom_minimum_size = Vector2(50, 50)
+		item_btn.expand_icon = true
+		
+		var icon_path = item_data.get("icon_path", "res://assets/ui_assets/placeholder.jpeg")
+		item_btn.icon = load(icon_path)
+		
+		var rarity_name = "Common"
+		match int(item_data.get("rarity", 0)):
+			1: rarity_name = "Rare"
+			2: rarity_name = "Epic"
+			3: rarity_name = "Legendary"
+			4: rarity_name = "Cursed"
+				
+		item_btn.tooltip_text = "%s\n(%s)\n\n%s" % [item_data.name, rarity_name, item_data.get("description", "")]
+		
+		var btn_style = StyleBoxFlat.new()
+		btn_style.bg_color = Color(0.1, 0.1, 0.12, 0.9)
+		btn_style.border_width_left = 2
+		btn_style.border_width_right = 2
+		btn_style.border_width_top = 2
+		btn_style.border_width_bottom = 2
+		
+		var b_color = Color(1, 1, 1, 0.7)
+		match int(item_data.get("rarity", 0)):
+			1: b_color = Color(0.2, 0.5, 0.9, 0.8)
+			2: b_color = Color(0.7, 0.2, 0.9, 0.8)
+			3: b_color = Color(0.9, 0.7, 0.1, 0.8)
+			4: b_color = Color(0.5, 0.1, 0.7, 0.8)
+		btn_style.border_color = b_color
+		btn_style.corner_radius_top_left = 4
+		btn_style.corner_radius_top_right = 4
+		btn_style.corner_radius_bottom_left = 4
+		btn_style.corner_radius_bottom_right = 4
+		
+		item_btn.add_theme_stylebox_override("normal", btn_style)
+		item_btn.add_theme_stylebox_override("hover", btn_style)
+		
+		item_btn.pressed.connect(func():
+			var target_player = target_picker.selected + 1
+			if InventoryManager != null:
+				InventoryManager.add_item(target_player, item_id)
+		)
+		
+		items_grid.add_child(item_btn)
 
 	# --- TAB 4: Roguelite Events ---
 	var tab_events = MarginContainer.new()

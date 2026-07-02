@@ -2,90 +2,540 @@
   "version": 1,
   "kind": "item_stat_mods",
   "items": {
-    "ring_str": {
-      "display_name": "Ring of Strength",
+    "blade_wrath": {
+      "display_name": "Blade o' Wrath",
+      "item_type": "weapon",
+      "equip_slot": "hand_right",
+      "rarity": "legendary",
+      "icon_path": "res://assets/ui_assets/item_icons/legendary/Blade o’ Wrath.png",
+      "stat_mods": {
+        "str": 5
+      },
+      "description": "Kill Enemy → Gain a stack of +1 Flat Damage (max 7 stacks); stacks reset on Rest."
+    },
+    "crown_pride": {
+      "display_name": "Crown o' Pride",
       "item_type": "accessory",
-      "equip_slot": "ring",
-      "source_id": "item:ring_str",
+      "equip_slot": "head",
+      "rarity": "legendary",
+      "icon_path": "res://assets/ui_assets/item_icons/legendary/Crown o’ Pride.png",
       "stat_mods": {
-        "str": 2
-      }
+        "con": 4
+      },
+      "description": "Not hit this turn → Heal 10% HP."
     },
-    "iron_armor": {
-      "display_name": "Iron Armor",
-      "item_type": "armor",
-      "equip_slot": "body",
-      "source_id": "item:iron_armor",
-      "stat_mods": {
-        "armor": 3,
-        "dex": -1
-      }
-    },
-    "sage_charm": {
-      "display_name": "Sage Charm",
-      "item_type": "accessory",
-      "equip_slot": "charm",
-      "source_id": "item:sage_charm",
-      "stat_mods": {
-        "int": 2,
-        "att": 5
-      }
-    },
-    "swift_boots": {
-      "display_name": "Swift Boots",
+    "boots_lust": {
+      "display_name": "Boots o' Lust",
       "item_type": "boots",
       "equip_slot": "feet",
-      "source_id": "item:swift_boots",
+      "rarity": "legendary",
+      "icon_path": "res://assets/ui_assets/item_icons/legendary/Boots o’ Lust.png",
       "stat_mods": {
-        "mov": 5,
-        "movement_tiles": 1
-      }
+        "mov": 2
+      },
+      "description": "Trigger a Status effect → Status triggers twice."
     },
-    "potion_small": {
-      "display_name": "Small Potion",
-      "item_type": "consumable",
-      "on_use": {
-        "heal": 10
-      }
+    "ring_greed": {
+      "display_name": "Ring o' Greed",
+      "item_type": "accessory",
+      "equip_slot": "ring",
+      "rarity": "legendary",
+      "icon_path": "res://assets/ui_assets/item_icons/legendary/Ring o’ Greed.png",
+      "stat_mods": {
+        "lck": 4
+      },
+      "description": "Gain Coins → Coins gained +20%."
+    },
+    "gauntlet_sloth": {
+      "display_name": "Gauntlet o' Sloth",
+      "item_type": "accessory",
+      "equip_slot": "body",
+      "rarity": "legendary",
+      "icon_path": "res://assets/ui_assets/item_icons/legendary/Gauntlet o’ Sloth.png",
+      "stat_mods": {
+        "con": 3
+      },
+      "description": "Per turn without moving → +1 Lazy Stack (max 5). Next attack: consume all stacks for +[stack]d4."
+    },
+    "clock_chronos": {
+      "display_name": "Clock o' Chronos",
+      "item_type": "accessory",
+      "equip_slot": "neck",
+      "rarity": "legendary",
+      "icon_path": "res://assets/ui_assets/item_icons/legendary/Clock o’ Chronos.png",
+      "stat_mods": {
+        "vit": 5
+      },
+      "description": "Die → Revive with 1% HP (1x per Combat)."
+    },
+    "mask_gluttony": {
+      "display_name": "Mask o' Gluttony",
+      "item_type": "accessory",
+      "equip_slot": "head",
+      "rarity": "legendary",
+      "icon_path": "res://assets/ui_assets/item_icons/legendary/Mask o’ Gluttony.png",
+      "stat_mods": {
+        "vit": 4
+      },
+      "description": "Kill Enemy → Heals +10 HP."
+    },
+    "robe_envy": {
+      "display_name": "Robe o' Envy",
+      "item_type": "armor",
+      "equip_slot": "body",
+      "rarity": "legendary",
+      "icon_path": "res://assets/ui_assets/item_icons/legendary/Robe o’ Envy .png",
+      "stat_mods": {
+        "int": 4
+      },
+      "description": "Hit Enemy → +5 to a Random Stat (lasts 1 turn)."
+    },
+    "grid_topos": {
+      "display_name": "Grid o' Topos",
+      "item_type": "accessory",
+      "equip_slot": "ring",
+      "rarity": "legendary",
+      "icon_path": "res://assets/ui_assets/item_icons/legendary/Grid o’ Topos.png",
+      "stat_mods": {
+        "dex": 3
+      },
+      "description": "Hit Enemy → Swap positions with the enemy."
+    },
+    "switchblade": {
+      "display_name": "Switchblade",
+      "item_type": "weapon",
+      "equip_slot": "hand_right",
+      "rarity": "epic",
+      "icon_path": "res://assets/ui_assets/item_icons/epic/SWITCHBLADE.png",
+      "stat_mods": {
+        "str": 2
+      },
+      "description": "Attack Enemy → +1d8 Physical Damage."
+    },
+    "skywalker": {
+      "display_name": "Skywalker",
+      "item_type": "boots",
+      "equip_slot": "feet",
+      "rarity": "epic",
+      "icon_path": "res://assets/ui_assets/item_icons/epic/SKYWALKER.png",
+      "stat_mods": {
+        "mov": 2
+      },
+      "description": "Kill Enemy → +2 Tiles Movement."
+    },
+    "sandal": {
+      "display_name": "Sandal",
+      "item_type": "boots",
+      "equip_slot": "feet",
+      "rarity": "epic",
+      "icon_path": "res://assets/ui_assets/item_icons/epic/SANDAL.png",
+      "stat_mods": {
+        "mov": 1
+      },
+      "description": "Every 1 tile moved/passed → Heal 1 HP."
+    },
+    "greathorn_staff": {
+      "display_name": "Greathorn Staff",
+      "item_type": "weapon",
+      "equip_slot": "hand_right",
+      "rarity": "epic",
+      "icon_path": "res://assets/ui_assets/item_icons/epic/GREATHORN STAFF.png",
+      "stat_mods": {
+        "int": 2
+      },
+      "description": "HP < 50% → Self +2 AC."
+    },
+    "holymoly_necklace": {
+      "display_name": "Holymoly Necklace",
+      "item_type": "accessory",
+      "equip_slot": "neck",
+      "rarity": "epic",
+      "icon_path": "res://assets/ui_assets/item_icons/epic/HOLYMOLY NECKLACE.png",
+      "stat_mods": {
+        "att": 2
+      },
+      "description": "Kill Enemy → +1 Spell Lv.1 / +1 Charge."
+    },
+    "rainbow_hand": {
+      "display_name": "Rainbow Hand",
+      "item_type": "accessory",
+      "equip_slot": "hand_left",
+      "rarity": "epic",
+      "icon_path": "res://assets/ui_assets/item_icons/epic/RAINBOW HAND.png",
+      "stat_mods": {
+        "att": 2
+      },
+      "description": "Hit Enemy with Physical damage → Give enemy 1 random elemental status."
+    },
+    "greatskull_sword": {
+      "display_name": "Greatskull Sword",
+      "item_type": "weapon",
+      "equip_slot": "hand_right",
+      "rarity": "epic",
+      "icon_path": "res://assets/ui_assets/item_icons/epic/GREATSKULL SWORD.png",
+      "stat_mods": {
+        "str": 3
+      },
+      "description": "Use an Action Point → Get a Bonus Action Point."
+    },
+    "red_cloud_cape": {
+      "display_name": "Red Cloud Cape",
+      "item_type": "armor",
+      "equip_slot": "body",
+      "rarity": "epic",
+      "icon_path": "res://assets/ui_assets/item_icons/epic/RED CLOUD CAPE.png",
+      "stat_mods": {
+        "con": 2
+      },
+      "description": "Get hit by Enemy → Deal 2 flat damage back to enemy."
+    },
+    "big_hand": {
+      "display_name": "Big Hand",
+      "item_type": "accessory",
+      "equip_slot": "hand_left",
+      "rarity": "epic",
+      "icon_path": "res://assets/ui_assets/item_icons/epic/BIG HAND.png",
+      "stat_mods": {
+        "str": 2
+      },
+      "description": "Knockback Enemy 1 tile → Give 1 additional knockback tile."
+    },
+    "book_chronos_topos": {
+      "display_name": "Book of Chronos and Topos",
+      "item_type": "accessory",
+      "rarity": "epic",
+      "icon_path": "res://assets/ui_assets/item_icons/epic/BOOK OF CRONOS AND TOPOS.png",
+      "stat_mods": {
+        "ap": 1
+      },
+      "description": "+1 Action Point."
+    },
+    "book_seven_deadly_sins": {
+      "display_name": "Book of Seven Deadly Sins",
+      "item_type": "accessory",
+      "rarity": "epic",
+      "icon_path": "res://assets/ui_assets/item_icons/epic/BOOK OF SEVEN DEADLY SINS.png",
+      "stat_mods": {
+        "bap": 1
+      },
+      "description": "+1 Bonus Action Point."
+    },
+    "book_united_swarm_alliance": {
+      "display_name": "Book of United Swarm Alliance",
+      "item_type": "accessory",
+      "rarity": "epic",
+      "icon_path": "res://assets/ui_assets/item_icons/epic/BOOK OF UNITED SWARM ALLIANCE.png",
+      "stat_mods": {
+        "movement_tiles": 1
+      },
+      "description": "+1 Tile of Movement."
+    },
+    "red_cape": {
+      "display_name": "Red Cape",
+      "item_type": "armor",
+      "equip_slot": "body",
+      "rarity": "rare",
+      "icon_path": "res://assets/ui_assets/item_icons/rare/RED CAPE.png",
+      "stat_mods": {
+        "con": 1
+      },
+      "description": "First kill in this Combat → +2 All Stats until combat ends."
+    },
+    "egg_pouch": {
+      "display_name": "Egg Pouch",
+      "item_type": "accessory",
+      "equip_slot": "body",
+      "rarity": "rare",
+      "icon_path": "res://assets/ui_assets/item_icons/rare/EGG POUCH.png",
+      "stat_mods": {
+        "lck": 2
+      },
+      "description": "Kill Enemy → +10 Coins."
+    },
+    "holy_ring": {
+      "display_name": "Holy Ring",
+      "item_type": "accessory",
+      "equip_slot": "ring",
+      "rarity": "rare",
+      "icon_path": "res://assets/ui_assets/item_icons/rare/HOLY RING.png",
+      "stat_mods": {
+        "att": 2
+      },
+      "description": "Heal anything → +1d6 to the Heal."
+    },
+    "ant_fang": {
+      "display_name": "Ant Fang",
+      "item_type": "accessory",
+      "equip_slot": "ring",
+      "rarity": "rare",
+      "icon_path": "res://assets/ui_assets/placeholder.jpeg",
+      "stat_mods": {
+        "acc": 2
+      },
+      "description": "HP > 80% → All Hit Rolls +2."
+    },
+    "sleeping_bag": {
+      "display_name": "Sleeping Bag",
+      "item_type": "accessory",
+      "rarity": "rare",
+      "icon_path": "res://assets/ui_assets/placeholder.jpeg",
+      "stat_mods": {
+        "vit": 2
+      },
+      "description": "Skip entire turn → Next turn: +1 Action Point, +1 Charge/Spell Slot."
+    },
+    "honey_wax": {
+      "display_name": "Honey Wax",
+      "item_type": "accessory",
+      "rarity": "rare",
+      "icon_path": "res://assets/ui_assets/placeholder.jpeg",
+      "stat_mods": {
+        "int": 2
+      },
+      "description": "Consume any Charge/Spell Slot → +1d6 Heal."
+    },
+    "glasswing": {
+      "display_name": "Glasswing",
+      "item_type": "accessory",
+      "rarity": "rare",
+      "icon_path": "res://assets/ui_assets/item_icons/rare/GLASSWING.png",
+      "stat_mods": {
+        "att": 3
+      },
+      "description": "HP >= 50% → +2 All Attack, but HP < 50% → -2 AC."
+    },
+    "sleeping_pouch": {
+      "display_name": "Sleeping Pouch",
+      "item_type": "accessory",
+      "rarity": "rare",
+      "icon_path": "res://assets/ui_assets/placeholder.jpeg",
+      "stat_mods": {
+        "con": 2
+      },
+      "description": "Skip entire turn → Next turn: +1 Bonus Action Point, Heal 10% HP."
+    },
+    "white_robe": {
+      "display_name": "White Robe",
+      "item_type": "armor",
+      "equip_slot": "body",
+      "rarity": "rare",
+      "icon_path": "res://assets/ui_assets/placeholder.jpeg",
+      "stat_mods": {
+        "int": 2
+      },
+      "description": "Ally kills an enemy → +1 Bonus Action Point."
+    },
+    "page_ant_extraplanar": {
+      "display_name": "Page of Ant Extraplanar",
+      "item_type": "accessory",
+      "rarity": "rare",
+      "icon_path": "res://assets/ui_assets/item_icons/page_of/Page of Ant Extraplanar.png",
+      "stat_mods": {
+        "str": 3,
+        "int": 2
+      },
+      "description": "+3 STR, +2 INT."
+    },
+    "page_butterfly_kaleidoscope": {
+      "display_name": "Page of Butterfly Kaleidoscope",
+      "item_type": "accessory",
+      "rarity": "rare",
+      "icon_path": "res://assets/ui_assets/item_icons/page_of/Page of Butterfly Kaleidoscope.png",
+      "stat_mods": {
+        "lck": 3,
+        "mov": 2
+      },
+      "description": "+3 LCK, +2 MOV."
+    },
+    "page_mantis_jade": {
+      "display_name": "Page of Mantis Jade",
+      "item_type": "accessory",
+      "rarity": "rare",
+      "icon_path": "res://assets/ui_assets/item_icons/page_of/Page of Mantis Jade.png",
+      "stat_mods": {
+        "acc": 3,
+        "vit": 2
+      },
+      "description": "+3 ACC, +2 VIT."
+    },
+    "page_scorpion_nightshade": {
+      "display_name": "Page of Scorpion Nightshade",
+      "item_type": "accessory",
+      "rarity": "rare",
+      "icon_path": "res://assets/ui_assets/item_icons/page_of/Page of Scorpion Nightshade.png",
+      "stat_mods": {
+        "int": 3,
+        "att": 2
+      },
+      "description": "+3 INT, +2 ATT."
+    },
+    "page_hopper_ultrawalker": {
+      "display_name": "Page of Hopper Ultrawalker",
+      "item_type": "accessory",
+      "rarity": "rare",
+      "icon_path": "res://assets/ui_assets/item_icons/page_of/Page of Hopper Ultrawalker.png",
+      "stat_mods": {
+        "mov": 3,
+        "dex": 2
+      },
+      "description": "+3 MOV, +2 DEX."
+    },
+    "page_roach_ash": {
+      "display_name": "Page of Roach Ash",
+      "item_type": "accessory",
+      "rarity": "rare",
+      "icon_path": "res://assets/ui_assets/item_icons/page_of/Page of Roach Ash.png",
+      "stat_mods": {
+        "vit": 3,
+        "con": 2
+      },
+      "description": "+3 VIT, +2 CON."
+    },
+    "page_spider_astral_silk": {
+      "display_name": "Page of Spider Astral Silk",
+      "item_type": "accessory",
+      "rarity": "rare",
+      "icon_path": "res://assets/ui_assets/item_icons/page_of/Page of Spider Astral Silk.png",
+      "stat_mods": {
+        "att": 3,
+        "lck": 2
+      },
+      "description": "+3 ATT, +2 LCK."
+    },
+    "page_wasp_midnight_sun": {
+      "display_name": "Page of Wasp Midnight Sun",
+      "item_type": "accessory",
+      "rarity": "rare",
+      "icon_path": "res://assets/ui_assets/item_icons/page_of/Page of Wasp Midnight Sun.png",
+      "stat_mods": {
+        "dex": 3,
+        "acc": 2
+      },
+      "description": "+3 DEX, +2 ACC."
+    },
+    "page_beetle_titanus": {
+      "display_name": "Page of Beetle Titanus",
+      "item_type": "accessory",
+      "rarity": "rare",
+      "icon_path": "res://assets/ui_assets/item_icons/page_of/Page of Beetle Titanus.png",
+      "stat_mods": {
+        "con": 3,
+        "str": 2
+      },
+      "description": "+3 CON, +2 STR."
     },
     "iron_sword": {
       "display_name": "Iron Sword",
       "item_type": "weapon",
       "equip_slot": "hand_right",
-      "source_id": "item:iron_sword",
+      "rarity": "common",
+      "icon_path": "res://assets/ui_assets/item_icons/common/iron sword.png",
       "stat_mods": {
-        "str": 4
-      }
+        "str": 2
+      },
+      "description": "+2 STR."
     },
-    "magic_ring": {
-      "display_name": "Magic Ring",
+    "clover_leaf": {
+      "display_name": "Clover Leaf",
       "item_type": "accessory",
-      "equip_slot": "ring",
-      "source_id": "item:magic_ring",
+      "equip_slot": "charm",
+      "rarity": "common",
+      "icon_path": "res://assets/ui_assets/item_icons/common/clover leaf.png",
       "stat_mods": {
-        "att": 5
-      }
+        "lck": 2
+      },
+      "description": "+2 LCK."
     },
-    "berserker_axe": {
-      "display_name": "Berserker Axe",
+    "hunter_bow": {
+      "display_name": "Hunter Bow",
       "item_type": "weapon",
       "equip_slot": "hand_right",
-      "source_id": "item:berserker_axe",
+      "rarity": "common",
+      "icon_path": "res://assets/ui_assets/item_icons/common/Hunter Bow.png",
       "stat_mods": {
-        "str": 10
+        "acc": 2
       },
-      "on_turn": {
-        "damage_per_turn": 1
-      }
+      "description": "+2 ACC."
+    },
+    "magic_staff": {
+      "display_name": "Magic Staff",
+      "item_type": "weapon",
+      "equip_slot": "hand_right",
+      "rarity": "common",
+      "icon_path": "res://assets/ui_assets/item_icons/common/magic staff.png",
+      "stat_mods": {
+        "int": 2
+      },
+      "description": "+2 INT."
+    },
+    "leather_boots": {
+      "display_name": "Leather Boots",
+      "item_type": "boots",
+      "equip_slot": "feet",
+      "rarity": "common",
+      "icon_path": "res://assets/ui_assets/item_icons/common/Leather Boots.png",
+      "stat_mods": {
+        "mov": 2
+      },
+      "description": "+2 MOV."
+    },
+    "chainmail": {
+      "display_name": "Chainmail",
+      "item_type": "armor",
+      "equip_slot": "body",
+      "rarity": "common",
+      "icon_path": "res://assets/ui_assets/item_icons/common/chainmail.png",
+      "stat_mods": {
+        "armor": 2
+      },
+      "description": "+2 Armor."
+    },
+    "book_magic": {
+      "display_name": "Book of Magic",
+      "item_type": "accessory",
+      "equip_slot": "charm",
+      "rarity": "common",
+      "icon_path": "res://assets/ui_assets/item_icons/common/Book of Magic.png",
+      "stat_mods": {
+        "att": 2
+      },
+      "description": "+2 ATT."
+    },
+    "cloth_cape": {
+      "display_name": "Cloth Cape",
+      "item_type": "armor",
+      "equip_slot": "body",
+      "rarity": "common",
+      "icon_path": "res://assets/ui_assets/item_icons/common/Cloth Cape.png",
+      "stat_mods": {
+        "dex": 2
+      },
+      "description": "+2 DEX."
+    },
+    "iron_pants": {
+      "display_name": "Iron Pants",
+      "item_type": "armor",
+      "equip_slot": "body",
+      "rarity": "common",
+      "icon_path": "res://assets/ui_assets/item_icons/common/Iron Pants.png",
+      "stat_mods": {
+        "con": 2
+      },
+      "description": "+2 CON."
     },
     "cursed_amulet": {
       "display_name": "Cursed Amulet",
       "item_type": "accessory",
       "equip_slot": "neck",
-      "source_id": "item:cursed_amulet",
+      "rarity": "cursed",
+      "icon_path": "res://assets/ui_assets/placeholder.jpeg",
       "stat_mods": {
         "dex": -10
-      }
+      },
+      "on_turn": {
+        "damage_per_turn": 1
+      },
+      "description": "Locked until Rest node. Ticks 1 true damage per turn."
     }
   }
 }

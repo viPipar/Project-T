@@ -25,6 +25,9 @@ func is_inspect_pressed(player_id: int) -> bool:
 var killcam_active: bool = false
 var is_in_menu: bool = false
 
+var relic_focus_p1: bool = false
+var relic_focus_p2: bool = false
+
 # Blok input per-player saat animasi dice combat berjalan
 var _player_blocked: Dictionary = {1: false, 2: false}
 var _player_menu_blocked: Dictionary = {1: false, 2: false}
@@ -35,15 +38,18 @@ func set_player_blocked(player_id: int, blocked: bool) -> void:
 
 ## Cek apakah player sedang di-blok (misal: saat roll dadu)
 func is_player_blocked(player_id: int) -> bool:
-	return _player_blocked.get(player_id, false)
+	if player_id == 1:
+		return _player_blocked.get(1, false) or relic_focus_p1
+	else:
+		return _player_blocked.get(2, false) or relic_focus_p2
+
+## Cek menu blocked
+func is_player_menu_blocked(player_id: int) -> bool:
+	return _player_menu_blocked.get(player_id, false)
 
 ## Blok input gameplay untuk satu player saat UI modal miliknya terbuka.
 func set_player_menu_blocked(player_id: int, blocked: bool) -> void:
 	_player_menu_blocked[player_id] = blocked
-
-
-func is_player_menu_blocked(player_id: int) -> bool:
-	return _player_menu_blocked.get(player_id, false)
 
 # action = "move_up" | "move_down" | "move_left" | "move_right" | "end_turn"
 func _can_accept_input(player_id: int) -> bool:
@@ -52,6 +58,10 @@ func _can_accept_input(player_id: int) -> bool:
 	if _player_menu_blocked.get(player_id, false):
 		return false
 	if _player_blocked.get(player_id, false):
+		return false
+	if player_id == 1 and relic_focus_p1:
+		return false
+	if player_id == 2 and relic_focus_p2:
 		return false
 	if TurnManager != null and not TurnManager.can_player_act(player_id):
 		return false
@@ -74,6 +84,10 @@ func _can_accept_end_turn_input(player_id: int) -> bool:
 	if _player_menu_blocked.get(player_id, false):
 		return false
 	if _player_blocked.get(player_id, false):
+		return false
+	if player_id == 1 and relic_focus_p1:
+		return false
+	if player_id == 2 and relic_focus_p2:
 		return false
 	if TurnManager == null:
 		return true
