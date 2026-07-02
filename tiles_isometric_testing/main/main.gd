@@ -318,6 +318,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_F5:
 				_show_squiggles = not _show_squiggles
 				_toggle_squigglevision(_show_squiggles)
+			KEY_F6:
+				CombatActionResolver.always_success = not CombatActionResolver.always_success
+				print("[DEBUG] always_success toggled: ", CombatActionResolver.always_success)
 			KEY_T:
 				print("--- 'T' KEY DETECTED ---")
 				_run_all_tests()

@@ -1,6 +1,8 @@
 class_name CombatActionResolver
 extends Node
 
+static var always_success: bool = false
+
 var bridge: Node
 
 func _init(b: Node) -> void:
@@ -160,6 +162,10 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 		hit    = hit_result["hit"]
 		crit   = hit_result["crit"]
 		hit_modifier = total - raw
+		
+		if always_success:
+			hit = true
+			hit_result["hit"] = true
 
 	var defense_label := "Resist" if is_magical else "Armor"
 	print("[COMBAT] D20: %d (raw) + %d → %d  vs  %s: %d" % [raw, hit_modifier, total, defense_label, thresh])
