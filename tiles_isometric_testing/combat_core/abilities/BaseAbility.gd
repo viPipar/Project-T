@@ -52,6 +52,47 @@ func is_self_target() -> bool:
 	return target_alignment == TargetAlignment.SELF_ONLY
 
 
+func get_ability_sfx() -> String:
+	match ability_tag:
+		"wind_storm": return "spell_wave"
+		"wind_blade": return "sword_attack_2"
+		"thrust": return "sword_attack_3"
+		"stingky_spit": return "spell_water"
+		"staff_bonk": return "impact_heavy_1"
+		"slash_flash": return "sword_attack_2"
+		"rupture": return "impact_heavy_2"
+		"ring_o_fire", "ring_o'_fire": return "spell_fire_spray"
+		"main_attack": return "sword_slice"
+		"mage_main_attack": return "spell_fire"
+		"kitin_bomb": return "explosion_impact"
+		"icicle": return "spell_ice_throw"
+		"holy_curse": return "spell_impact_3"
+		"great_bash": return "impact_heavy_3"
+		"grand_escape": return "ui_cancel"
+		"glacias": return "spell_ice_freeze"
+		"fireball": return "spell_fire"
+		"epimorphic": return "spell_fire_buff"
+		"elbow_smash": return "impact_heavy_1"
+		"divine_departure": return "reveal_legendary"
+		"dagger_throw": return "sword_parry_1"
+		"cleave": return "sword_attack_2"
+		"chain_dagger": return "sword_attack_3"
+		"boss_great_bash": return "impact_heavy_3"
+		"boss_cleave": return "sword_attack_2"
+		"boss_blockade": return "spell_earth"
+		"blast": return "explosion_impact"
+		"benedicto": return "reveal_rare"
+		"autotomy": return "spell_fire_buff"
+		_:
+			if ability_type == 1: # AbilityType.MAGICAL
+				match element_tag:
+					"fire": return "spell_fire"
+					"water": return "spell_water"
+					"earth": return "spell_earth"
+					_: return "spell_impact"
+			return "sword_slice"
+
+
 func requires_target_selection() -> bool:
 	if is_position_switch:
 		return false

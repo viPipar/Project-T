@@ -325,7 +325,10 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 				attacker.play_attack(_base_ability_id)
 				var am_e = get_node_or_null("/root/AudioManager")
 				if am_e != null:
-					am_e.play_sfx("sword_slice" if ability == null or ability.ability_type == 0 else "spell_impact")
+					if ability != null and ability.has_method("get_ability_sfx"):
+						am_e.play_sfx(ability.get_ability_sfx())
+					else:
+						am_e.play_sfx("sword_slice" if ability == null or ability.ability_type == 0 else "spell_impact")
 				bridge.vfx_controller._play_skill_cast_vfx(attacker, _base_ability_id, ability.ability_type if ability != null else 0, ability.element_tag if ability != null else "physical")
 				_played_attack = true
 				await get_tree().create_timer(0.6, false).timeout
@@ -355,7 +358,10 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 				attacker.play_attack(_base_ability_id)
 				var am_p = get_node_or_null("/root/AudioManager")
 				if am_p != null:
-					am_p.play_sfx("sword_slice" if ability == null or ability.ability_type == 0 else "spell_impact")
+					if ability != null and ability.has_method("get_ability_sfx"):
+						am_p.play_sfx(ability.get_ability_sfx())
+					else:
+						am_p.play_sfx("sword_slice" if ability == null or ability.ability_type == 0 else "spell_impact")
 				bridge.vfx_controller._play_skill_cast_vfx(attacker, _base_ability_id, ability.ability_type if ability != null else 0, ability.element_tag if ability != null else "physical")
 				_played_attack = true
 				await get_tree().create_timer(0.6, false).timeout
@@ -370,7 +376,10 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 			attacker.play_attack(_base_ability_id)
 			var am_pr = get_node_or_null("/root/AudioManager")
 			if am_pr != null:
-				am_pr.play_sfx("sword_slice" if ability.ability_type == 0 else "spell_impact")
+				if ability != null and ability.has_method("get_ability_sfx"):
+					am_pr.play_sfx(ability.get_ability_sfx())
+				else:
+					am_pr.play_sfx("sword_slice" if ability.ability_type == 0 else "spell_impact")
 			bridge.vfx_controller._play_skill_cast_vfx(attacker, _base_ability_id, ability.ability_type, ability.element_tag)
 			await get_tree().create_timer(0.2).timeout
 		if target != null:
