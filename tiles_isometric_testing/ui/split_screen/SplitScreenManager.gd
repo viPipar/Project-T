@@ -23,6 +23,26 @@ var _world_node            : Node2D
 var _f3_hud_p1: Control
 var _f3_hud_p2: Control
 
+var _p1_relics_container: HFlowContainer
+var _p2_relics_container: HFlowContainer
+
+var _p1_tooltip_label: RichTextLabel
+var _p2_tooltip_label: RichTextLabel
+
+var _p1_highlight_index: int = -1
+var _p2_highlight_index: int = -1
+
+var _p1_relic_focus_active: bool = false
+var _p2_relic_focus_active: bool = false
+
+var _keyboard_huds_visible: bool = true
+
+var _p1_keyboard_hud: KeyboardHelperHUD
+var _p2_keyboard_hud: KeyboardHelperHUD
+
+var _p1_toggle_reminder_lbl: Label
+var _p2_toggle_reminder_lbl: Label
+
 # ── End-turn overlay per player ───────────────────────────────────────────────
 var _p1_end_overlay : ColorRect = null
 var _p2_end_overlay : ColorRect = null
@@ -154,6 +174,143 @@ func _build_layout() -> void:
 	
 	# ── F3 Debug HUDs ────────────────────────────────────────────────────────
 	_spawn_f3_huds()
+
+	# ── Player Relic HUD Flow Containers ──────────────────────────────────────
+	_p1_relics_container = HFlowContainer.new()
+	_p1_relics_container.name = "P1RelicsContainer"
+	_p1_relics_container.anchor_left = 0.0
+	_p1_relics_container.anchor_top = 0.04
+	_p1_relics_container.anchor_right = 0.5
+	_p1_relics_container.anchor_bottom = 0.4
+	_p1_relics_container.offset_left = 10
+	_p1_relics_container.offset_right = -10
+	_p1_relics_container.offset_top = 30
+	_p1_relics_container.offset_bottom = 0
+	_p1_relics_container.mouse_filter = Control.MOUSE_FILTER_PASS
+	_p1_relics_container.add_theme_constant_override("h_separation", 14)
+	_p1_relics_container.add_theme_constant_override("v_separation", 8)
+	add_child(_p1_relics_container)
+
+	_p2_relics_container = HFlowContainer.new()
+	_p2_relics_container.name = "P2RelicsContainer"
+	_p2_relics_container.anchor_left = 0.5
+	_p2_relics_container.anchor_top = 0.04
+	_p2_relics_container.anchor_right = 1.0
+	_p2_relics_container.anchor_bottom = 0.4
+	_p2_relics_container.offset_left = 10
+	_p2_relics_container.offset_right = -10
+	_p2_relics_container.offset_top = 30
+	_p2_relics_container.offset_bottom = 0
+	_p2_relics_container.mouse_filter = Control.MOUSE_FILTER_PASS
+	_p2_relics_container.add_theme_constant_override("h_separation", 14)
+	_p2_relics_container.add_theme_constant_override("v_separation", 8)
+	add_child(_p2_relics_container)
+
+	# ── Player Tooltip Labels ─────────────────────────────────────────────────
+	_p1_tooltip_label = RichTextLabel.new()
+	_p1_tooltip_label.name = "P1TooltipLabel"
+	_p1_tooltip_label.bbcode_enabled = true
+	_p1_tooltip_label.fit_content = true
+	_p1_tooltip_label.custom_minimum_size = Vector2(250, 0)
+	_p1_tooltip_label.anchor_left = 0.0
+	_p1_tooltip_label.anchor_top = 0.28
+	_p1_tooltip_label.anchor_right = 0.5
+	_p1_tooltip_label.anchor_bottom = 0.5
+	_p1_tooltip_label.offset_left = 15
+	_p1_tooltip_label.offset_right = -15
+	_p1_tooltip_label.offset_top = 0
+	_p1_tooltip_label.offset_bottom = 0
+	_p1_tooltip_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_p1_tooltip_label.modulate.a = 0.0
+	add_child(_p1_tooltip_label)
+
+	_p2_tooltip_label = RichTextLabel.new()
+	_p2_tooltip_label.name = "P2TooltipLabel"
+	_p2_tooltip_label.bbcode_enabled = true
+	_p2_tooltip_label.fit_content = true
+	_p2_tooltip_label.custom_minimum_size = Vector2(250, 0)
+	_p2_tooltip_label.anchor_left = 0.5
+	_p2_tooltip_label.anchor_top = 0.28
+	_p2_tooltip_label.anchor_right = 1.0
+	_p2_tooltip_label.anchor_bottom = 0.5
+	_p2_tooltip_label.offset_left = 15
+	_p2_tooltip_label.offset_right = -15
+	_p2_tooltip_label.offset_top = 0
+	_p2_tooltip_label.offset_bottom = 0
+	_p2_tooltip_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_p2_tooltip_label.modulate.a = 0.0
+	add_child(_p2_tooltip_label)
+
+	# ── Player Keyboard Helper HUDs ───────────────────────────────────────────
+	_p1_keyboard_hud = KeyboardHelperHUD.new()
+	_p1_keyboard_hud.player_id = 1
+	_p1_keyboard_hud.name = "P1KeyboardHelper"
+	_p1_keyboard_hud.anchor_left = 0.25
+	_p1_keyboard_hud.anchor_right = 0.25
+	_p1_keyboard_hud.anchor_top = 1.0
+	_p1_keyboard_hud.anchor_bottom = 1.0
+	_p1_keyboard_hud.offset_left = -215
+	_p1_keyboard_hud.offset_right = 215
+	_p1_keyboard_hud.offset_top = -292
+	_p1_keyboard_hud.offset_bottom = -107
+	add_child(_p1_keyboard_hud)
+
+	_p2_keyboard_hud = KeyboardHelperHUD.new()
+	_p2_keyboard_hud.player_id = 2
+	_p2_keyboard_hud.name = "P2KeyboardHelper"
+	_p2_keyboard_hud.anchor_left = 0.75
+	_p2_keyboard_hud.anchor_right = 0.75
+	_p2_keyboard_hud.anchor_top = 1.0
+	_p2_keyboard_hud.anchor_bottom = 1.0
+	_p2_keyboard_hud.offset_left = -215
+	_p2_keyboard_hud.offset_right = 215
+	_p2_keyboard_hud.offset_top = -292
+	_p2_keyboard_hud.offset_bottom = -107
+	add_child(_p2_keyboard_hud)
+
+	# ── Player Toggle Reminder Labels ──────────────────────────────────────────
+	_p1_toggle_reminder_lbl = Label.new()
+	_p1_toggle_reminder_lbl.name = "P1ToggleReminderLabel"
+	_p1_toggle_reminder_lbl.text = "Press [H] to Toggle Controls HUD"
+	_p1_toggle_reminder_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_p1_toggle_reminder_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_p1_toggle_reminder_lbl.add_theme_font_size_override("font_size", 11)
+	_p1_toggle_reminder_lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 0.6))
+	_p1_toggle_reminder_lbl.anchor_left = 0.25
+	_p1_toggle_reminder_lbl.anchor_right = 0.25
+	_p1_toggle_reminder_lbl.anchor_top = 1.0
+	_p1_toggle_reminder_lbl.anchor_bottom = 1.0
+	_p1_toggle_reminder_lbl.offset_left = -200
+	_p1_toggle_reminder_lbl.offset_right = 200
+	_p1_toggle_reminder_lbl.offset_top = -102
+	_p1_toggle_reminder_lbl.offset_bottom = -72
+	add_child(_p1_toggle_reminder_lbl)
+
+	_p2_toggle_reminder_lbl = Label.new()
+	_p2_toggle_reminder_lbl.name = "P2ToggleReminderLabel"
+	_p2_toggle_reminder_lbl.text = "Press [H] to Toggle Controls HUD"
+	_p2_toggle_reminder_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_p2_toggle_reminder_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_p2_toggle_reminder_lbl.add_theme_font_size_override("font_size", 11)
+	_p2_toggle_reminder_lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 0.6))
+	_p2_toggle_reminder_lbl.anchor_left = 0.75
+	_p2_toggle_reminder_lbl.anchor_right = 0.75
+	_p2_toggle_reminder_lbl.anchor_top = 1.0
+	_p2_toggle_reminder_lbl.anchor_bottom = 1.0
+	_p2_toggle_reminder_lbl.offset_left = -200
+	_p2_toggle_reminder_lbl.offset_right = 200
+	_p2_toggle_reminder_lbl.offset_top = -102
+	_p2_toggle_reminder_lbl.offset_bottom = -72
+	add_child(_p2_toggle_reminder_lbl)
+
+	if InventoryManager != null:
+		if not InventoryManager.item_added.is_connected(_on_inventory_changed):
+			InventoryManager.item_added.connect(_on_inventory_changed)
+		if not InventoryManager.item_removed.is_connected(_on_inventory_changed):
+			InventoryManager.item_removed.connect(_on_inventory_changed)
+
+	_update_relics_display(1)
+	_update_relics_display(2)
 
 
 func _spawn_f3_huds() -> void:
@@ -365,9 +522,110 @@ func _spawn_combat_hud_bars() -> void:
 # ── INVENTORY TOGGLE (TAB KEY) ───────────────────────────────────────────────
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.is_pressed() and not event.is_echo():
+		if event.keycode == KEY_H:
+			_keyboard_huds_visible = not _keyboard_huds_visible
+			if _p1_keyboard_hud: _p1_keyboard_hud.visible = _keyboard_huds_visible
+			if _p2_keyboard_hud: _p2_keyboard_hud.visible = _keyboard_huds_visible
+			get_viewport().set_input_as_handled()
+			return
+		elif event.keycode == KEY_TAB:
+			_toggle_relic_focus(1)
+			get_viewport().set_input_as_handled()
+			return
+		elif event.keycode == KEY_Y:
+			_toggle_relic_focus(2)
+			get_viewport().set_input_as_handled()
+			return
+			
+		if _p1_relic_focus_active:
+			if event.keycode == KEY_A:
+				_navigate_relics(1, -1)
+				get_viewport().set_input_as_handled()
+				return
+			elif event.keycode == KEY_D:
+				_navigate_relics(1, 1)
+				get_viewport().set_input_as_handled()
+				return
+				
+		if _p2_relic_focus_active:
+			if event.keycode == KEY_J:
+				_navigate_relics(2, -1)
+				get_viewport().set_input_as_handled()
+				return
+			elif event.keycode == KEY_L:
+				_navigate_relics(2, 1)
+				get_viewport().set_input_as_handled()
+				return
+
 	if event.is_action_pressed("p1_inventory") or event.is_action_pressed("p2_inventory"):
 		EventBus.inventory_toggled.emit()
 		get_viewport().set_input_as_handled()
+
+func _toggle_relic_focus(player_id: int) -> void:
+	var container = _p1_relics_container if player_id == 1 else _p2_relics_container
+	if container == null or container.get_child_count() == 0:
+		return
+		
+	var active = not (_p1_relic_focus_active if player_id == 1 else _p2_relic_focus_active)
+	
+	if player_id == 1:
+		_p1_relic_focus_active = active
+		if InputManager != null:
+			InputManager.relic_focus_p1 = active
+	else:
+		_p2_relic_focus_active = active
+		if InputManager != null:
+			InputManager.relic_focus_p2 = active
+			
+	if active:
+		if player_id == 1:
+			_p1_highlight_index = 0
+		else:
+			_p2_highlight_index = 0
+	else:
+		if player_id == 1:
+			_p1_highlight_index = -1
+		else:
+			_p2_highlight_index = -1
+			
+	_update_highlight_visual(player_id)
+
+func _navigate_relics(player_id: int, direction: int) -> void:
+	var container = _p1_relics_container if player_id == 1 else _p2_relics_container
+	if container == null or container.get_child_count() == 0:
+		return
+		
+	var total = container.get_child_count()
+	var current_idx = _p1_highlight_index if player_id == 1 else _p2_highlight_index
+	
+	current_idx = (current_idx + direction + total) % total
+	
+	if player_id == 1:
+		_p1_highlight_index = current_idx
+	else:
+		_p2_highlight_index = current_idx
+		
+	_update_highlight_visual(player_id)
+
+func _update_highlight_visual(player_id: int) -> void:
+	var container = _p1_relics_container if player_id == 1 else _p2_relics_container
+	if container == null:
+		return
+		
+	var current_idx = _p1_highlight_index if player_id == 1 else _p2_highlight_index
+	var total = container.get_child_count()
+	
+	for i in range(total):
+		var btn = container.get_child(i)
+		if is_instance_valid(btn):
+			if i == current_idx:
+				if btn.has_method("_on_hover_entered"):
+					btn.call("_on_hover_entered")
+				_snap_cursor_to_button(player_id, btn)
+			else:
+				if btn.has_method("_on_hover_exited"):
+					btn.call("_on_hover_exited")
 
 
 func _kill_end_tween(player_id: int) -> void:
@@ -395,3 +653,147 @@ func _get_input_key_label(action_name: String, fallback: String) -> String:
 			if code != 0:
 				return OS.get_keycode_string(code)
 	return fallback
+
+func _on_inventory_changed(player_id: int, _item_id: String) -> void:
+	_update_relics_display(player_id)
+
+func _update_relics_display(player_id: int) -> void:
+	if player_id == 1:
+		_p1_highlight_index = -1
+	else:
+		_p2_highlight_index = -1
+		
+	var container: HFlowContainer = _p1_relics_container if player_id == 1 else _p2_relics_container
+	if container == null:
+		return
+		
+	for child in container.get_children():
+		child.queue_free()
+		
+	if InventoryManager == null or ItemRegistry == null:
+		return
+		
+	var items = InventoryManager.get_player_items(player_id)
+	for item_id in items:
+		var item_data = ItemRegistry.get_item(item_id)
+		if item_data.is_empty():
+			continue
+			
+		var icon_path = item_data.get("icon_path", "res://assets/ui_assets/placeholder.jpeg")
+		
+		var relic_btn = RelicHUDButton.new()
+		relic_btn.custom_minimum_size = Vector2(40, 40)
+		relic_btn.expand_icon = true
+		relic_btn.icon = load(icon_path)
+		
+		var rarity_name = "Common"
+		match int(item_data.get("rarity", 0)):
+			1: rarity_name = "Rare"
+			2: rarity_name = "Epic"
+			3: rarity_name = "Legendary"
+			4: rarity_name = "Cursed"
+			
+		relic_btn.player_id = player_id
+		relic_btn.item_name = item_data.name
+		relic_btn.rarity_name = rarity_name
+		relic_btn.description = item_data.get("description", "")
+		relic_btn.manager_node = self
+		
+		var style = StyleBoxFlat.new()
+		style.bg_color = Color(0, 0, 0, 0.4)
+		style.border_width_left = 2
+		style.border_width_right = 2
+		style.border_width_top = 2
+		style.border_width_bottom = 2
+		
+		var rarity = item_data.get("rarity", 0)
+		var border_color = Color(1, 1, 1, 0.8)
+		match int(rarity):
+			1: border_color = Color(0.2, 0.5, 0.9, 0.9)
+			2: border_color = Color(0.7, 0.2, 0.9, 0.9)
+			3: border_color = Color(0.9, 0.7, 0.1, 0.9)
+			4: border_color = Color(0.5, 0.1, 0.7, 0.9)
+			
+		style.border_color = border_color
+		style.corner_radius_top_left = 4
+		style.corner_radius_top_right = 4
+		style.corner_radius_bottom_left = 4
+		style.corner_radius_bottom_right = 4
+		
+		var glow_style = style.duplicate() as StyleBoxFlat
+		glow_style.border_width_left = 3
+		glow_style.border_width_right = 3
+		glow_style.border_width_top = 3
+		glow_style.border_width_bottom = 3
+		glow_style.shadow_color = border_color
+		glow_style.shadow_size = 6
+		
+		relic_btn.normal_style = style
+		relic_btn.glow_style = glow_style
+		
+		relic_btn.add_theme_stylebox_override("normal", style)
+		relic_btn.add_theme_stylebox_override("hover", style)
+		relic_btn.add_theme_stylebox_override("pressed", style)
+		relic_btn.add_theme_stylebox_override("focus", style)
+		
+		container.add_child(relic_btn)
+
+func show_relic_tooltip(player_id: int, item_name: String, rarity_name: String, description: String, btn: Control = null) -> void:
+	var label: RichTextLabel = _p1_tooltip_label if player_id == 1 else _p2_tooltip_label
+	if label == null:
+		return
+		
+	var rarity_color := "white"
+	match rarity_name:
+		"Rare": rarity_color = "#3399ff"
+		"Epic": rarity_color = "#cc33ff"
+		"Legendary": rarity_color = "#ffcc00"
+		"Cursed": rarity_color = "#aa00ff"
+		
+	label.text = "[color=yellow][b]%s[/b][/color] [color=%s](%s)[/color]\n[color=#dddddd]%s[/color]" % [
+		item_name, rarity_color, rarity_name, description
+	]
+	
+	if is_instance_valid(btn):
+		var target_x = btn.global_position.x - 20
+		var screen_w = get_viewport().get_visible_rect().size.x
+		var half_w = screen_w / 2.0
+		
+		if player_id == 1:
+			target_x = clamp(target_x, 10.0, half_w - 260.0)
+		else:
+			target_x = clamp(target_x, half_w + 10.0, screen_w - 260.0)
+			
+		label.global_position = Vector2(
+			target_x,
+			btn.global_position.y + btn.size.y + 20
+		)
+	
+	var tw = create_tween().set_ease(Tween.EASE_OUT)
+	tw.tween_property(label, "modulate:a", 1.0, 0.2)
+
+func hide_relic_tooltip(player_id: int) -> void:
+	var label: RichTextLabel = _p1_tooltip_label if player_id == 1 else _p2_tooltip_label
+	if label == null:
+		return
+		
+	var tw = create_tween().set_ease(Tween.EASE_IN)
+	tw.tween_property(label, "modulate:a", 0.0, 0.15)
+
+func _get_dual_cursor() -> Node:
+	if not is_inside_tree():
+		return null
+	for child in get_tree().get_root().get_children():
+		var dc = child.find_child("DualCursorUI", true, false)
+		if dc != null:
+			return dc
+	return null
+
+func _snap_cursor_to_button(player_id: int, btn: Control) -> void:
+	var dc = _get_dual_cursor()
+	if dc == null:
+		return
+	var cursor = dc.cursor_p1 if player_id == 1 else dc.cursor_p2
+	if is_instance_valid(cursor) and is_instance_valid(btn):
+		var center_offset = btn.size / 2.0
+		cursor.global_position = btn.global_position + center_offset

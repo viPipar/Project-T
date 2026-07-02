@@ -3,20 +3,9 @@ extends Node
 enum Rarity {
 	COMMON,
 	RARE,
+	EPIC,
 	LEGENDARY,
 	CURSED
-}
-
-const ITEM_RARITY_MAP: Dictionary = {
-	"ring_str": Rarity.COMMON,
-	"iron_armor": Rarity.COMMON,
-	"sage_charm": Rarity.RARE,
-	"swift_boots": Rarity.RARE,
-	"potion_small": Rarity.COMMON,
-	"iron_sword": Rarity.COMMON,
-	"magic_ring": Rarity.RARE,
-	"berserker_axe": Rarity.LEGENDARY,
-	"cursed_amulet": Rarity.CURSED
 }
 
 var items: Dictionary:
@@ -40,9 +29,19 @@ func get_item(item_id: String) -> Dictionary:
 	item["name"] = json_data.get("display_name", item_id)
 	item["type"] = json_data.get("item_type", "equipment")
 	
-	# Determine rarity
-	var rarity = ITEM_RARITY_MAP.get(item_id, Rarity.COMMON)
+	# Determine rarity from JSON
+	var r_str = json_data.get("rarity", "common").to_lower()
+	var rarity = Rarity.COMMON
+	match r_str:
+		"common": rarity = Rarity.COMMON
+		"rare": rarity = Rarity.RARE
+		"epic": rarity = Rarity.EPIC
+		"legendary": rarity = Rarity.LEGENDARY
+		"cursed": rarity = Rarity.CURSED
 	item["rarity"] = rarity
+	
+	# Icon path from JSON
+	item["icon_path"] = json_data.get("icon_path", "res://assets/ui_assets/placeholder.jpeg")
 	
 	# Fallback description
 	if not item.has("description"):
@@ -56,7 +55,7 @@ func get_items_by_rarity(target_rarity: Rarity) -> Array[String]:
 		return result
 		
 	for item_id in StatDataDB.get_item_ids():
-		var r = ITEM_RARITY_MAP.get(item_id, Rarity.COMMON)
-		if r == target_rarity:
+		var item = get_item(item_id)
+		if not item.is_empty() and item.get("rarity") == target_rarity:
 			result.append(item_id)
 	return result
