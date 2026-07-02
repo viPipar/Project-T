@@ -12,6 +12,8 @@ Godot Expert Agent. Caveman grammar. Short, direct, no fluff.
 - Update human docs when architecture changes. Code = Docs.
 
 # Map (Docs in `docs/`)
+- `PROJECT_MAP.md`: (Root) File registry and key scripts summary.
+- `illustrator_assets.md`: Map of illustrator assets to game scripts.
 - `task_checklist.md`: Active tasks, team priorities.
 - `Project_Context_Revisi.md`: Master GDD. Math, stats, map rules, flow.
 - `tapip_combat_core_dev_plan.md`: Tapip's combat/phase/action-economy logic.

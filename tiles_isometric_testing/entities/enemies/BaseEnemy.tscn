@@ -1,6 +1,6 @@
 [gd_scene load_steps=13 format=3 uid="uid://bbdf8j3lnq4x3"]
 
-[ext_resource type="Script" path="res://entities/enemies/BaseEnemy.gd" id="1_h7x2k"]
+[ext_resource type="Script" uid="uid://nr1mnw4cp8pc" path="res://entities/enemies/BaseEnemy.gd" id="1_h7x2k"]
 [ext_resource type="Script" uid="uid://b5e8838ogl3f7" path="res://components/StatsComponent.gd" id="2_stats"]
 [ext_resource type="Script" uid="uid://c6x647xq2wo8i" path="res://components/ClassComponent.gd" id="3_class"]
 [ext_resource type="Texture2D" uid="uid://8h2eh3u353t5" path="res://assets/characters/insect1_placeholder/New Project (87)_00000.png" id="4_tex"]

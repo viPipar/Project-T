@@ -478,7 +478,10 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 							real_dmg = maxi(1, floori(real_dmg * 1.5))
 							print("[COMBAT] %s is VULNERABLE! Damage increased to %d" % [t.name, real_dmg])
 						
-						var applied = _apply_damage_to_target(t, real_dmg, attacker, "magical" if is_magical else "physical")
+						var final_damage_type = "magical" if is_magical else "physical"
+						if ability != null and ability.element_tag != "":
+							final_damage_type = ability.element_tag
+						var applied = _apply_damage_to_target(t, real_dmg, attacker, final_damage_type)
 						
 						var element_str = "magical" if is_magical else "physical"
 						if is_burst:
@@ -575,6 +578,10 @@ func _apply_damage_to_target(target: Node, amount: int, attacker: Node, damage_t
 		if target.has_method("take_damage"):
 			applied = target.take_damage(amount, attacker, damage_type)
 	
+	if (applied > 0 or amount > 0) and is_instance_valid(target):
+		if is_instance_valid(bridge) and is_instance_valid(bridge.vfx_controller) and bridge.vfx_controller.has_method("_spawn_hit_vfx"):
+			bridge.vfx_controller._spawn_hit_vfx(target, damage_type)
+			
 	return applied
 
 
