@@ -29,6 +29,7 @@ var _split_screen: SplitScreenManager = null
 var _stat_debug_panel: StatDebugPanel = null  # Debug stat manipulator (F1)
 var roguelike_ui_shell: CanvasLayer = null
 var _action_wheel_overlay: Control = null
+var _inspect_overlay: Control = null
 
 func _ready() -> void:
 	var cursor_scene := preload("res://world/SelectionCursor.tscn")
@@ -45,10 +46,10 @@ func _ready() -> void:
 	_setup_split_screen()
 
 	# ── Spawn Player 1 ────────────────────────────────────────────────────────
-	var p1: Node = _spawn_player_from_json("aria", "Aria", 1, Vector2i(5, 7))
+	var p1: Node = _spawn_player_from_json("aria", "Fighter", 1, Vector2i(5, 7))
 
 	# ── Spawn Player 2 ────────────────────────────────────────────────────────
-	var p2: Node = _spawn_player_from_json("kael", "Kael", 2, Vector2i(7, 7))
+	var p2: Node = _spawn_player_from_json("kael", "Wizard", 2, Vector2i(7, 7))
 
 	var p1_class := p1.get_node_or_null("ClassComponent") as ClassComponent
 	if p1_class != null:
@@ -115,6 +116,9 @@ func _ready() -> void:
 
 	# ── Battle Action Wheel Overlay ──────────────────────────────────────────
 	_spawn_action_wheel_overlay()
+
+	# ── Inspect Window Overlay ───────────────────────────────────────────────
+	_spawn_inspect_overlay(kb_cursor_p1, kb_cursor_p2)
 
 	_setup_god_rays()
 
@@ -200,7 +204,7 @@ func _spawn_enemy_from_json(
 	enemy.set("tint_color", tint_color)
 	world.entities.add_child(enemy)
 	StatDataDB.apply_entity_data(enemy, data)
-	enemy.call_deferred("place_at", StatDataDB.get_spawn_grid_pos(data, fallback_pos))
+	enemy.place_at(StatDataDB.get_spawn_grid_pos(data, fallback_pos))
 	return enemy
 
 
@@ -249,6 +253,24 @@ func _spawn_action_wheel_overlay() -> void:
 	
 	_action_wheel_overlay.visible = true
 	print("[Main] Action wheel overlay siap")
+
+func _spawn_inspect_overlay(c1: Node2D, c2: Node2D) -> void:
+	var inspect_script := load("res://ui/inspect/InspectOverlayController.gd")
+	if inspect_script == null:
+		push_warning("[Main] InspectOverlayController script tidak ditemukan!")
+		return
+	_inspect_overlay = inspect_script.new()
+	_inspect_overlay.name = "InspectOverlay"
+	_inspect_overlay.cursor_p1 = c1
+	_inspect_overlay.cursor_p2 = c2
+	
+	var canvas = CanvasLayer.new()
+	canvas.layer = 100
+	canvas.name = "InspectCanvas"
+	canvas.add_child(_inspect_overlay)
+	add_child(canvas)
+	
+	print("[Main] Inspect overlay siap")
 
 
 # ── SPLIT-SCREEN SETUP ───────────────────────────────────────────────────────

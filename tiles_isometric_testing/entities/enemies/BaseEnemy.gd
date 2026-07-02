@@ -65,7 +65,7 @@ func _ready() -> void:
 	if sprite != null:
 		_play_anim("idle_down")
 	if start_grid_pos.x >= 0 and start_grid_pos.y >= 0:
-		call_deferred("_deferred_place")
+		_deferred_place()
 		
 	var move_comp = get_node_or_null("MovementComponent")
 	if move_comp != null and move_comp.has_signal("step_started"):
@@ -92,8 +92,6 @@ func place_at(pos: Vector2i) -> void:
 	grid_pos = pos
 	GridManager.register_entity(pos, self, GridManager.EntityType.ENEMY)
 	position = IsoUtils.world_to_iso(pos)
-	z_index = IsoUtils.get_depth(pos)
-
 
 func dash(direction: Vector2i, distance: int, options: Dictionary = {}) -> Dictionary:
 	var move_comp := get_node_or_null("MovementComponent") as MovementComponent
@@ -428,6 +426,16 @@ func apply_custom_data(data: Dictionary) -> void:
 		_apply_spritesheet_animations(anim_config)
 	else:
 		_apply_idle_frames()
+		
+	if data.has("ai_brain"):
+		var brain_path = data["ai_brain"]
+		var ai_comp = get_node_or_null("AIComponent")
+		if ai_comp != null:
+			var loaded_brain = load(brain_path)
+			if loaded_brain != null:
+				ai_comp.brain = loaded_brain
+			else:
+				push_warning("BaseEnemy: Failed to load ai_brain from path: %s" % brain_path)
 		
 	if start_grid_pos.x >= 0 and start_grid_pos.y >= 0:
 		place_at(start_grid_pos)

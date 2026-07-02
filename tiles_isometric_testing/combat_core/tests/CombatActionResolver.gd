@@ -185,9 +185,6 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 				var a_px = IsoUtils.world_to_iso(t_grid)
 				var t_px = IsoUtils.world_to_iso(a_grid)
 				
-				attacker.z_index = IsoUtils.get_depth(t_grid)
-				target.z_index = IsoUtils.get_depth(a_grid)
-				
 				# Play sweeping teleport tween
 				var tw = create_tween().set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
 				tw.tween_property(attacker, "position", a_px, 0.5)
@@ -228,6 +225,10 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 	var dmg_total   : int = 0
 	
 	var dmg_mod := _get_damage_modifier(attacker, is_magical)
+	if ItemEffectApplier != null and ItemEffectApplier.has_method("get_combat_damage_modifier"):
+		var extra_mod = ItemEffectApplier.get_combat_damage_modifier(attacker, target, is_magical)
+		dmg_mod += extra_mod
+		
 	if dmg_mod > 0:
 		_dmg_formula += "+%d" % dmg_mod
 	elif dmg_mod < 0:
@@ -292,7 +293,6 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 					if is_instance_valid(GridManager) and GridManager.move_entity(old_pos, dash_dest, attacker):
 						attacker.set("grid_pos", dash_dest)
 						var end_px = IsoUtils.world_to_iso(dash_dest)
-						attacker.z_index = IsoUtils.get_depth(dash_dest)
 						var dash_tw = attacker.create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 						dash_tw.tween_property(attacker, "position", end_px, 0.15)
 						await dash_tw.finished
@@ -478,7 +478,10 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 							real_dmg = maxi(1, floori(real_dmg * 1.5))
 							print("[COMBAT] %s is VULNERABLE! Damage increased to %d" % [t.name, real_dmg])
 						
-						var applied = _apply_damage_to_target(t, real_dmg, attacker, "magical" if is_magical else "physical")
+						var final_damage_type = "magical" if is_magical else "physical"
+						if ability != null and ability.element_tag != "":
+							final_damage_type = ability.element_tag
+						var applied = _apply_damage_to_target(t, real_dmg, attacker, final_damage_type)
 						
 						var element_str = "magical" if is_magical else "physical"
 						if is_burst:
@@ -512,15 +515,32 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 					kb_tiles = 0
 					if ability != null:
 						kb_tiles = ability.knockback_tiles
+						if kb_tiles > 0 and attacker != null and InventoryManager != null and InventoryManager.has_item_node(attacker, "big_hand"):
+							kb_tiles += 1
+							print("[Combat] Big Hand triggered! Knockback increased to: %d" % kb_tiles)
+							
 						if ability.status_effect != "":
 							var effect_to_apply = ability.status_effect
 							if effect_to_apply == "random":
 								var random_effects = ["weakened", "vulnerable", "bleeding", "stunned", "frozen", "lacerate"]
 								effect_to_apply = random_effects.pick_random()
-							EventBus.on_status_applied.emit(t, effect_to_apply, ability.status_duration, ability.status_stacks)
+							
+							var dur = ability.status_duration
+							var stk = ability.status_stacks
+							if attacker != null and InventoryManager != null and InventoryManager.has_item_node(attacker, "boots_lust"):
+								dur *= 2
+								stk *= 2
+								print("[Combat] Boots o' Lust triggered! Status effect duration/stacks doubled: %d duration, %d stacks" % [dur, stk])
+								
+							EventBus.on_status_applied.emit(t, effect_to_apply, dur, stk)
 							
 						if crit and ability.ability_name == "Main Attack":
-							EventBus.on_status_applied.emit(t, "stunned", 1, 1)
+							var dur = 1
+							var stk = 1
+							if attacker != null and InventoryManager != null and InventoryManager.has_item_node(attacker, "boots_lust"):
+								dur *= 2
+								stk *= 2
+							EventBus.on_status_applied.emit(t, "stunned", dur, stk)
 					
 					if kb_tiles != 0 and not _knockback_done[0]:
 						var _t_pos = t.get("grid_pos")
@@ -556,7 +576,6 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 					var blockade = blockade_scene.instantiate()
 					blockade.set("grid_pos", spawn_pos)
 					blockade.position = IsoUtils.world_to_iso(spawn_pos)
-					blockade.z_index = IsoUtils.get_depth(spawn_pos)
 					if world: world.add_child(blockade)
 
 	if is_player:
@@ -575,6 +594,10 @@ func _apply_damage_to_target(target: Node, amount: int, attacker: Node, damage_t
 		if target.has_method("take_damage"):
 			applied = target.take_damage(amount, attacker, damage_type)
 	
+	if (applied > 0 or amount > 0) and is_instance_valid(target):
+		if is_instance_valid(bridge) and is_instance_valid(bridge.vfx_controller) and bridge.vfx_controller.has_method("_spawn_hit_vfx"):
+			bridge.vfx_controller._spawn_hit_vfx(target, damage_type)
+			
 	return applied
 
 

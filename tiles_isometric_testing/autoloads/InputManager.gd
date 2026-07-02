@@ -1,7 +1,32 @@
 extends Node
 
+func _ready() -> void:
+	if not InputMap.has_action("p1_inspect"):
+		InputMap.add_action("p1_inspect")
+		var key_tab := InputEventKey.new()
+		key_tab.physical_keycode = KEY_TAB
+		InputMap.action_add_event("p1_inspect", key_tab)
+	
+	if not InputMap.has_action("p2_inspect"):
+		InputMap.add_action("p2_inspect")
+		var key_y := InputEventKey.new()
+		key_y.physical_keycode = KEY_Y
+		InputMap.action_add_event("p2_inspect", key_y)
+
+func is_inspect_pressed(player_id: int) -> bool:
+	if killcam_active or is_in_menu:
+		return false
+	if player_id == 1:
+		return Input.is_action_just_pressed("p1_inspect")
+	elif player_id == 2:
+		return Input.is_action_just_pressed("p2_inspect")
+	return false
+
 var killcam_active: bool = false
 var is_in_menu: bool = false
+
+var relic_focus_p1: bool = false
+var relic_focus_p2: bool = false
 
 # Blok input per-player saat animasi dice combat berjalan
 var _player_blocked: Dictionary = {1: false, 2: false}
@@ -13,15 +38,18 @@ func set_player_blocked(player_id: int, blocked: bool) -> void:
 
 ## Cek apakah player sedang di-blok (misal: saat roll dadu)
 func is_player_blocked(player_id: int) -> bool:
-	return _player_blocked.get(player_id, false)
+	if player_id == 1:
+		return _player_blocked.get(1, false) or relic_focus_p1
+	else:
+		return _player_blocked.get(2, false) or relic_focus_p2
+
+## Cek menu blocked
+func is_player_menu_blocked(player_id: int) -> bool:
+	return _player_menu_blocked.get(player_id, false)
 
 ## Blok input gameplay untuk satu player saat UI modal miliknya terbuka.
 func set_player_menu_blocked(player_id: int, blocked: bool) -> void:
 	_player_menu_blocked[player_id] = blocked
-
-
-func is_player_menu_blocked(player_id: int) -> bool:
-	return _player_menu_blocked.get(player_id, false)
 
 # action = "move_up" | "move_down" | "move_left" | "move_right" | "end_turn"
 func _can_accept_input(player_id: int) -> bool:
@@ -30,6 +58,10 @@ func _can_accept_input(player_id: int) -> bool:
 	if _player_menu_blocked.get(player_id, false):
 		return false
 	if _player_blocked.get(player_id, false):
+		return false
+	if player_id == 1 and relic_focus_p1:
+		return false
+	if player_id == 2 and relic_focus_p2:
 		return false
 	if TurnManager != null and not TurnManager.can_player_act(player_id):
 		return false
@@ -52,6 +84,10 @@ func _can_accept_end_turn_input(player_id: int) -> bool:
 	if _player_menu_blocked.get(player_id, false):
 		return false
 	if _player_blocked.get(player_id, false):
+		return false
+	if player_id == 1 and relic_focus_p1:
+		return false
+	if player_id == 2 and relic_focus_p2:
 		return false
 	if TurnManager == null:
 		return true

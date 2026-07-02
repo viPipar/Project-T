@@ -47,6 +47,7 @@ const HIGHLIGHT_CONFIG: Dictionary = {
 	"skill":     { "node_name": "SkillHighlight",     "anim": "skill",  "z_offset": 2 },
 	"hover":     { "node_name": "HoverHighlight",     "anim": "hover",  "z_offset": 4 },
 	"danger":    { "node_name": "DangerHighlight",    "anim": "danger", "z_offset": 1 },
+	"skill_target": { "node_name": "SkillTarget", "anim": "select", "z_offset": 5 },
 	# ── Cursor highlights (multi-animasi, gunakan show_cursor()) ─────────────
 	# CursorP1Highlight punya animasi: valid(hijau), invalid(merah), entity(kuning), self(biru)
 	# CursorP2Highlight punya animasi: valid(ungu),  invalid(merah), entity(kuning), self(biru)
@@ -61,8 +62,10 @@ const CURSOR_STATES: Array[String] = ["valid", "invalid", "entity", "self"]
 
 # -- State internal -----------------------------------------------------------
 var _layer: Node2D = null                              # referensi ke HighlightLayer node
-var _active: Dictionary = {}                           # tipe → Array[AnimatedSprite2D]
-var _pool:   Dictionary = {}                           # tipe → Array[AnimatedSprite2D] (reuse)
+var _active: Dictionary = {}                           # tipe → Array[Node2D]
+var _pool:   Dictionary = {}                           # tipe → Array[Node2D] (reuse)
+
+var _shader: Shader = preload("res://ui/shared/hand_drawn_highlight.gdshader")
 
 
 # =============================================================================
@@ -84,52 +87,38 @@ func register_layer(layer: Node2D) -> void:
 # =============================================================================
 
 ## Tampilkan highlight untuk SATU tile.
-## [param grid_pos]  posisi grid (Vector2i)
-## [param type]      tipe highlight (String), lihat HIGHLIGHT_CONFIG
 func show_tile(grid_pos: Vector2i, type: String, player_id: int = 0) -> void:
-	if not _is_valid_type(type):
-		return
-	_place_sprite(grid_pos, type, "", player_id)
-
+	if not _is_valid_type(type): return
+	_place_rect(grid_pos, type, "", player_id)
 
 ## Tampilkan highlight untuk BANYAK tile sekaligus.
-## [param tiles]  Array[Vector2i] posisi grid
-## [param type]   tipe highlight (String)
 func show_tiles(tiles: Array, type: String, player_id: int = 0) -> void:
-	if not _is_valid_type(type):
-		return
+	if not _is_valid_type(type): return
 	for pos in tiles:
-		_place_sprite(pos, type, "", player_id)
-
+		_place_rect(pos, type, "", player_id)
 
 ## Hapus semua highlight untuk satu tipe tertentu.
 func clear(type: String) -> void:
-	if not _active.has(type):
-		return
-	for sprite in _active[type]:
-		_return_to_pool(sprite, type)
+	if not _active.has(type): return
+	for rect in _active[type]:
+		_return_to_pool(rect, type)
 	_active[type].clear()
-
 
 ## Hapus SEMUA highlight dari semua tipe (termasuk cursor).
 func clear_all() -> void:
 	for type in _active.keys():
 		clear(type)
 
-
 ## Ganti highlight: hapus tipe dulu, lalu isi ulang dengan tiles baru.
-## Berguna untuk update highlight setiap giliran tanpa duplicate.
 func replace_tiles(tiles: Array, type: String, player_id: int = 0) -> void:
 	clear(type)
 	show_tiles(tiles, type, player_id)
 
-
 ## Cek apakah tile tertentu sedang di-highlight oleh tipe tertentu.
 func is_highlighted(grid_pos: Vector2i, type: String) -> bool:
-	if not _active.has(type):
-		return false
-	for sprite in _active[type]:
-		if sprite.get_meta("grid_pos", Vector2i(-1, -1)) == grid_pos:
+	if not _active.has(type): return false
+	for rect in _active[type]:
+		if rect.get_meta("grid_pos", Vector2i(-1, -1)) == grid_pos:
 			return true
 	return false
 
@@ -138,137 +127,171 @@ func is_highlighted(grid_pos: Vector2i, type: String) -> bool:
 #  Public API — Cursor Highlights
 # =============================================================================
 
-## Tampilkan cursor highlight untuk satu player di tile tertentu.
-##
-## Contoh penggunaan:
-##   HighlightManager.show_cursor(Vector2i(3, 4), 1, "valid")
-##   HighlightManager.show_cursor(Vector2i(5, 2), 2, "invalid")
-##
-## [param grid_pos]  posisi grid (Vector2i)
-## [param player_id] nomor player (1 atau 2)
-## [param state]     "valid" | "invalid" | "entity" | "self"
 func show_cursor(grid_pos: Vector2i, player_id: int, state: String) -> void:
 	var type := "cursor_p%d" % player_id
-	if not _is_valid_type(type):
-		return
-	if not state in CURSOR_STATES:
-		push_warning("HighlightManager: state cursor '%s' tidak valid. Gunakan: %s" % [state, CURSOR_STATES])
-		return
-	# Cursor hanya 1 tile aktif sekaligus — clear dulu sebelum place
+	if not _is_valid_type(type): return
+	if not state in CURSOR_STATES: return
 	clear(type)
-	_place_sprite(grid_pos, type, state, player_id)
+	if state == "invalid": return
+	_place_rect(grid_pos, type, state, player_id)
 
 func show_back_cursor(grid_pos: Vector2i, player_id: int, state: String) -> void:
 	var type := "cursor_p%d_back" % player_id
-	if not _is_valid_type(type):
-		return
-	if not state in CURSOR_STATES:
-		push_warning("HighlightManager: state cursor '%s' tidak valid. Gunakan: %s" % [state, CURSOR_STATES])
-		return
-	# Cursor hanya 1 tile aktif sekaligus — clear dulu sebelum place
+	if not _is_valid_type(type): return
+	if not state in CURSOR_STATES: return
 	clear(type)
-	_place_sprite(grid_pos, type, state, player_id)
+	if state == "invalid": return
+	_place_rect(grid_pos, type, state, player_id)
 
-## Hapus cursor highlight untuk player tertentu.
-##
-## Contoh: HighlightManager.clear_cursor(1)
 func clear_cursor(player_id: int) -> void:
 	clear("cursor_p%d" % player_id)
 	
 func clear_cursor_back(player_id: int) -> void:
 	clear("cursor_p%d_back" % player_id)
 
-
-## Pindahkan cursor ke tile baru (clear + show dalam satu call).
-## Berguna dipanggil setiap frame jika posisi berubah.
-##
-## [param grid_pos]  posisi grid baru
-## [param player_id] nomor player (1 atau 2)
-## [param state]     "valid" | "invalid" | "entity" | "self"
 func move_cursor(grid_pos: Vector2i, player_id: int, state: String) -> void:
-	show_cursor(grid_pos, player_id, state)  # show_cursor sudah clear sebelum place
-	show_back_cursor(grid_pos,player_id,state)
+	show_cursor(grid_pos, player_id, state)
+	show_back_cursor(grid_pos, player_id, state)
+
 
 # =============================================================================
 #  Internal — Pool & Placement
 # =============================================================================
 
-## Tempatkan sprite highlight di grid_pos.
-## [param anim_override] jika tidak kosong, pakai animasi ini alih-alih cfg.anim
-## (digunakan oleh cursor yang satu node-template-nya punya banyak animasi)
-func _place_sprite(grid_pos: Vector2i, type: String, anim_override: String = "", player_id: int = 0) -> void:
-	
-	if _layer == null:
-		push_error("HighlightManager: layer belum diregister! Pastikan HighlightLayer ada di scene.")
-		return
+func _get_color_for_state(state: String, is_p1: bool) -> Color:
+	if state == "valid": return Color(0.2, 0.8, 0.3) if is_p1 else Color(0.7, 0.2, 0.9)
+	if state == "invalid": return Color(0.9, 0.1, 0.1)
+	if state == "entity": return Color(0.9, 0.8, 0.1)
+	if state == "self": return Color(0.1, 0.6, 1.0)
+	return Color(1, 1, 1)
+
+func _get_color_for_type(type: String) -> Color:
+	if type == "move_p1": return Color(0.6, 0.1, 0.1) # Merah agak hitam (Crimson/Dark Red)
+	if type == "move_p2": return Color(0.9, 0.9, 0.6) # Putih agak kuning (Pale Yellow)
+	if type.begins_with("move"): return Color(0.1, 0.6, 0.9) # Biru segar untuk gerak
+	if type == "attack": return Color(0.9, 0.1, 0.1)
+	if type == "skill_target": return Color(0.9, 0.1, 0.3) # Merah Pink/Crimson
+	if type == "select": return Color(0.9, 0.9, 0.9)
+	if type == "skill": return Color(0.7, 0.2, 0.9)
+	if type == "hover": return Color(0.9, 0.8, 0.1)
+	if type == "danger": return Color(0.9, 0.5, 0.1)
+	return Color(1,1,1)
+
+func _place_rect(grid_pos: Vector2i, type: String, state_override: String = "", player_id: int = 0) -> void:
+	if _layer == null: return
 
 	var cfg: Dictionary = HIGHLIGHT_CONFIG[type]
-	var anim: String    = anim_override if anim_override != "" else cfg.anim
-
-	# Ambil sprite dari pool, atau buat baru dari template di HighlightLayer
-	var sprite: AnimatedSprite2D = _get_from_pool(type)
-	if sprite == null:
-		sprite = _create_sprite(type, cfg)
-		if sprite == null:
-			return  # node template tidak ditemukan, skip
-
-	# Posisikan di tile
-	sprite.position = IsoUtils.world_to_iso(grid_pos)
-	#ngatur z-index
-	var template_node := _layer.get_node(cfg["node_name"]) as AnimatedSprite2D
-	var inspector_z_offset: int = template_node.z_index  # baca dari inspector
-	var inspector_pos_offset: Vector2 = template_node.position
-	sprite.position = IsoUtils.world_to_iso(grid_pos) + inspector_pos_offset  # ← pakai offset
-	sprite.z_index = IsoUtils.get_depth(grid_pos) + inspector_z_offset
-	sprite.set_meta("grid_pos", grid_pos)
+	var node: Node2D = _get_from_pool(type)
 	
+	if node == null:
+		node = Node2D.new()
+		# Node2D ini akan di-Y-Sort oleh HighlightLayer
+		node.y_sort_enabled = false
+		
+		if type == "skill_target":
+			var iso_wrapper = Node2D.new()
+			iso_wrapper.scale = Vector2(1.0, 0.5)
+			
+			var sprite = Sprite2D.new()
+			var tex = preload("res://assets/tiles/ability_highlight.png")
+			sprite.texture = tex
+			
+			# Rotasi 45 dan perhitungan scale agar pas dengan tile 256x128
+			sprite.rotation_degrees = 45
+			var s = 256.0 / (tex.get_width() * sqrt(2.0))
+			sprite.scale = Vector2(s, s)
+			
+			var mat = ShaderMaterial.new()
+			mat.shader = preload("res://ui/shared/shiny_sweep.gdshader")
+			sprite.material = mat
+			
+			iso_wrapper.add_child(sprite)
+			node.add_child(iso_wrapper)
+		else:
+			var rect = ColorRect.new()
+			rect.size = Vector2(256, 128)
+			rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			# Offset posisi visual relatif terhadap center
+			rect.position = Vector2(-128, -64)
+			
+			var mat = ShaderMaterial.new()
+			mat.shader = _shader
+			rect.material = mat
+			node.add_child(rect)
+			
+		node.visible = false
+		_layer.add_child(node)
+
+	# Tentukan warna
+	var base_color: Color
+	if type.begins_with("cursor_"):
+		var is_p1 = ("p1" in type)
+		base_color = _get_color_for_state(state_override, is_p1)
+	else:
+		base_color = _get_color_for_type(type)
+		
+	if type == "skill_target":
+		var iso_wrapper = node.get_child(0) as Node2D
+		var sprite = iso_wrapper.get_child(0) as Sprite2D
+		var mat = sprite.material as ShaderMaterial
+		mat.set_shader_parameter("base_color", base_color)
+		mat.set_shader_parameter("shine_color", Color(1.0, 1.0, 1.0, 1.0))
+		mat.set_shader_parameter("shine_speed", 1.5)
+	else:
+		var rect = node.get_child(0) as ColorRect
+		var mat = rect.material as ShaderMaterial
+		var fill = base_color
+		# Kurangi opacity fill agar tidak terlalu menyilaukan
+		fill.a = 0.25 
+		var edge = base_color
+		edge.v = min(edge.v + 0.3, 1.0)
+		# Kurangi opacity edge sedikit agar lebih soft
+		edge.a = 0.85 
+		
+		mat.set_shader_parameter("fill_color", fill)
+		mat.set_shader_parameter("edge_color", edge)
+
+	# Set posisi Node2D ke center tile tepat (untuk Y-Sort yang sempurna)
+	node.position = IsoUtils.world_to_iso(grid_pos)
+	
+	# Z-index dihapus karena kita pakai built-in Y-Sort
+	node.z_index = 0
+	node.set_meta("grid_pos", grid_pos)
+	
+	if type.begins_with("cursor_"):
+		node.move_to_front()
+	
+	# Multiplayer visibility
 	var vis_layer := 1
 	if player_id == 1 or type.ends_with("_p1") or type == "cursor_p1" or type == "cursor_p1_back":
 		vis_layer = 2
 	elif player_id == 2 or type.ends_with("_p2") or type == "cursor_p2" or type == "cursor_p2_back":
 		vis_layer = 4
-	sprite.visibility_layer = vis_layer
+	node.visibility_layer = vis_layer
 	
-	sprite.visible  = true
+	# Muncul dengan Tween Juicy
+	if not node.visible:
+		node.visible = true
+		node.scale = Vector2(0.5, 0.5)
+		# Pivot ada di (0,0) relatif ke Node2D, yang merupakan center lantai
+		var tw = node.create_tween()
+		tw.tween_property(node, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
-	# Mulai / ganti animasi jika perlu
-	if sprite.animation != anim or not sprite.is_playing():
-		sprite.play(anim)
-
-	_active[type].append(sprite)
-
-
-func _create_sprite(type: String, cfg: Dictionary) -> AnimatedSprite2D:
-	var template_path: String = cfg["node_name"] as String
-
-	if not _layer.has_node(template_path):
-		push_warning("HighlightManager: node '%s' tidak ditemukan di HighlightLayer." % template_path)
-		return null
-
-	var template := _layer.get_node(template_path) as AnimatedSprite2D
-	if template == null:
-		return null
-
-	var clone := template.duplicate() as AnimatedSprite2D
-	clone.visible = false
-	_layer.add_child(clone)
-	return clone
+	_active[type].append(node)
 
 
-func _get_from_pool(type: String) -> AnimatedSprite2D:
+func _get_from_pool(type: String) -> Node2D:
 	if _pool[type].is_empty():
 		return null
-	return _pool[type].pop_back() as AnimatedSprite2D
+	return _pool[type].pop_back() as Node2D
 
 
-func _return_to_pool(sprite: AnimatedSprite2D, type: String) -> void:
-	sprite.visible = false
-	sprite.stop()
-	_pool[type].append(sprite)
+func _return_to_pool(node: Node2D, type: String) -> void:
+	node.visible = false
+	_pool[type].append(node)
 
 
 func _is_valid_type(type: String) -> bool:
 	if not HIGHLIGHT_CONFIG.has(type):
-		push_warning("HighlightManager: tipe '%s' tidak ada di HIGHLIGHT_CONFIG." % type)
 		return false
 	return true

@@ -336,10 +336,25 @@ func _draw_wheel(page_index: int, wheel_center: Vector2, alpha: float, is_active
 		if not is_affordable: key_color.a *= 0.5
 		draw_string(font, anchor + Vector2(-46, -14), key_text, HORIZONTAL_ALIGNMENT_CENTER, 92, 14, key_color)
 		
-		var action_text := action["name"] as String if has_action else "Empty"
-		var label_color := Color(0.12, 0.14, 0.19, alpha) if is_hovered else (Color(1, 1, 1, alpha) if has_action else Color(0.58, 0.63, 0.71, 0.92 * alpha))
-		if not is_affordable: label_color = Color(0.4, 0.4, 0.4, alpha)
-		draw_multiline_string(font, anchor + Vector2(-66, 8), action_text, HORIZONTAL_ALIGNMENT_CENTER, 132, 17, -1, label_color)
+		var has_icon := false
+		if has_action and action.get("ability") != null:
+			var ability = action["ability"]
+			if ability.get("icon") != null and ability.icon is Texture2D:
+				has_icon = true
+				var icon_tex = ability.icon
+				var icon_size = Vector2(80, 80)
+				var icon_rect = Rect2(anchor - icon_size / 2.0 + Vector2(0, -10), icon_size)
+				
+				var icon_color = Color(1, 1, 1, alpha)
+				if not is_affordable: icon_color = Color(0.4, 0.4, 0.4, alpha)
+				draw_texture_rect(icon_tex, icon_rect, false, icon_color)
+		
+		if has_icon:
+			var action_text := action["name"] as String
+			var label_color := Color(0.12, 0.14, 0.19, alpha) if is_hovered else Color(1, 1, 1, alpha)
+			if not is_affordable: label_color = Color(0.4, 0.4, 0.4, alpha)
+			# Draw text slightly below the icon
+			draw_multiline_string(font, anchor + Vector2(-66, 45), action_text, HORIZONTAL_ALIGNMENT_CENTER, 132, 17, -1, label_color)
 
 
 func _draw_slice(wheel_center: Vector2, slot_index: int, is_hovered: bool, has_action: bool, is_affordable: bool, alpha: float) -> void:

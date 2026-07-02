@@ -206,9 +206,6 @@ func _begin_travel(path: Array[Vector2i], cost: int) -> void:
 	_start_step(_path_index)
 	move_started.emit(from, to)
 
-	# Update z_index at final tile
-	owner.z_index = IsoUtils.get_depth(to)
-
 
 func _process(delta: float) -> void:
 	if not _is_moving:

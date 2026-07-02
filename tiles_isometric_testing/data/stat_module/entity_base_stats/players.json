@@ -3,7 +3,7 @@
   "kind": "player_base_stats",
   "players": {
     "aria": {
-      "display_name": "Aria",
+      "display_name": "Fighter",
       "scene": "res://entities/player/Player.tscn",
       "player_id": 1,
       "class_id": "slayer",
@@ -30,7 +30,7 @@
       }
     },
     "kael": {
-      "display_name": "Kael",
+      "display_name": "Wizard",
       "scene": "res://entities/player/Player.tscn",
       "player_id": 2,
       "class_id": "scholar",

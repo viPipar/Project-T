@@ -183,7 +183,6 @@ func _sync_entity_position(entity: Node, tile: Vector2i) -> void:
 	var node_2d: Node2D = entity as Node2D
 	if node_2d == null:
 		return
-	node_2d.z_index = IsoUtils.get_depth(tile)
 	var end_px = IsoUtils.world_to_iso(tile)
 	var tw = node_2d.create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	tw.tween_property(node_2d, "position", end_px, 0.15)

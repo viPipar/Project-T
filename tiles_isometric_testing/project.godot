@@ -11,10 +11,8 @@ config_version=5
 [application]
 
 config/name="Tiles_Isometric_Testing"
-run/main_scene="res://ui/menu/SplashScreen.tscn"
+run/main_scene="uid://bv8gg8sp656ia"
 config/features=PackedStringArray("4.4", "GL Compatibility")
-boot_splash/bg_color=Color(0.1, 0.1, 0.1, 1)
-boot_splash/show_image=false
 
 [autoload]
 
@@ -28,8 +26,6 @@ ForcedMovementResolver="*res://autoloads/ForcedMovementResolver.gd"
 InputManager="*res://autoloads/InputManager.gd"
 DebugGrid="*res://world/DebugGrid.gd"
 ProjectileLine="*res://autoloads/ProjectileLine.gd"
-ProjectileSystem="*res://autoloads/ProjectileSystem.gd"
-EnvironmentInteractionHandler="*res://autoloads/EnvironmentInteractionHandler.gd"
 HighlightManager="*res://autoloads/HighlightManager.gd"
 DiceSystem="*res://components/dice/DiceSystem.gd"
 AttackCam="*res://ui/shared/AttackCam.tscn"

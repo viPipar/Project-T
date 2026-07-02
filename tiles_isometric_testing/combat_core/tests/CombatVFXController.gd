@@ -135,8 +135,8 @@ func _play_enemy_dice_sequence(
 	var center_roll_x := base_pos.x - 30
 	var center_ac_x := base_pos.x + 30
 	
-	var tw_fade_dice := create_tween()
 	if is_instance_valid(dice_visual):
+		var tw_fade_dice := create_tween()
 		tw_fade_dice.tween_property(dice_visual, "modulate:a", 0.0, 0.15)
 	
 	var tw_clash := create_tween().set_parallel(true)
@@ -193,25 +193,17 @@ func _play_enemy_dice_sequence(
 func _spawn_magic_projectile(attacker: Node, target: Node, element: String, tracking_array: Array = []) -> void:
 	print("[COMBAT] 🌠 Merender efek sihir elemen: %s" % element)
 	
-	var orb = Polygon2D.new()
-	var points = PackedVector2Array()
-	var radius = 10.0
-	for i in range(16):
-		var angle = (i / 16.0) * TAU
-		points.append(Vector2(cos(angle), sin(angle)) * radius)
-	orb.polygon = points
+	var orb = Sprite2D.new()
 	
-	match element:
-		"fire": orb.color = Color.ORANGE_RED
-		"water": orb.color = Color.DODGER_BLUE
-		"air": orb.color = Color.WHITE_SMOKE
-		"earth": orb.color = Color.SADDLE_BROWN
-		_: orb.color = Color.MEDIUM_PURPLE
-		
 	var start_pos = attacker.global_position + Vector2(0, -32)
 	orb.global_position = start_pos
 	
+	var projectile_element := element
+	if attacker != null and attacker.is_in_group("enemies"):
+		projectile_element = "enemy"
+	
 	orb.set_script(preload("res://combat_core/tests/HomingProjectile.gd"))
+	orb.set("element", projectile_element)
 	orb.set("tracking_array", tracking_array)
 	orb.set("fallback_target", target)
 	
@@ -224,3 +216,19 @@ func _spawn_magic_projectile(attacker: Node, target: Node, element: String, trac
 		
 	add_child(orb)
 	await orb.tree_exited
+
+func _spawn_hit_vfx(target: Node, element: String) -> void:
+	if not is_instance_valid(target):
+		return
+	
+	var hit_vfx = Sprite2D.new()
+	hit_vfx.set_script(preload("res://combat_core/tests/HitVFXPlayer.gd"))
+	hit_vfx.set("element", element)
+	
+	# Spawn at target position with an offset
+	hit_vfx.global_position = target.global_position + Vector2(0, -32)
+	
+	# Random slight offset for juice
+	hit_vfx.global_position += Vector2(randf_range(-10.0, 10.0), randf_range(-10.0, 10.0))
+	
+	add_child(hit_vfx)

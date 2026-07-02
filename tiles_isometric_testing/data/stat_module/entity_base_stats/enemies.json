@@ -147,6 +147,7 @@
 	  }
 	},
 	"beetle": {
+	  "ai_brain": "res://combat_core/ai/brains/DungslayerBrain.tres",
 	  "display_name": "Dungslayer",
 	  "scene": "res://entities/enemies/BaseEnemy.tscn",
 	  "sprite_folder": "res://assets/characters/big_beetle",

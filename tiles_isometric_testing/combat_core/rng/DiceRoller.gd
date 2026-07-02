@@ -24,6 +24,8 @@ func roll_dice(sides: int) -> int:
 ## Format yang diterima: "1D6", "2D8", "4D6", "D20" (tanpa angka depan = 1 dadu)
 func roll_from_string(dice_str: String) -> int:
 	var s := dice_str.to_upper().strip_edges()
+	if s == "" or s == "0": return 0
+	
 	var parts := s.split("D")
 	if parts.size() != 2:
 		push_error("[DiceRoller] Format dice tidak valid: '%s'" % dice_str)
@@ -69,6 +71,9 @@ func d20() -> int: return roll_dice(20)
 ## Result: { "total": int, "rolls": Array[int], "formula": String }
 func roll_detailed(dice_str: String) -> Dictionary:
 	var s := dice_str.to_upper().strip_edges()
+	if s == "" or s == "0":
+		return {"total": 0, "rolls": [], "formula": dice_str}
+		
 	var parts := s.split("D")
 	if parts.size() != 2:
 		return {"total": 0, "rolls": [], "formula": dice_str}
