@@ -100,8 +100,7 @@ func set_tile_walkable(pos: Vector2i, can_walk: bool) -> void:
 		if not can_walk:
 			_astar.set_point_solid(pos, true)
 		else:
-			# If an entity occupies the tile, keep it solid
-			_astar.set_point_solid(pos, _entities.has(pos))
+			_astar.set_point_solid(pos, false)
 
 
 ## True jika terrain walkable DAN tidak ada entity di tile ini.
@@ -128,14 +127,13 @@ func register_entity(pos: Vector2i, entity: Node, type: EntityType = EntityType.
 	if _entities.has(pos) and _entities[pos].node != entity:
 		push_warning("[GridManager] register_entity: tile %s sudah ada entity '%s', ditimpa!" % [pos, _entities[pos].node.name])
 	_entities[pos] = { "node": entity, "type": type }
-	if _astar != null and _walkable.get(pos, false):
-		_astar.set_point_solid(pos, true)
+	# Entitas tidak lagi memblokir AStar agar bisa dilewati dalam perhitungan pathing/highlight.
+	# (Tile akhir tetap divalidasi oleh can_enter_tile di tempat lain)
 
 
 func unregister_entity(pos: Vector2i) -> void:
 	_entities.erase(pos)
-	if _astar != null and _walkable.get(pos, false):
-		_astar.set_point_solid(pos, false)
+
 
 
 func move_entity(from: Vector2i, to: Vector2i, entity: Node) -> bool:
@@ -287,21 +285,9 @@ func find_path(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
 func get_path_cost(from: Vector2i, to: Vector2i) -> int:
 	if from == to:
 		return 0
-	var saved_slot = _entities.get(to, null)
-	var cleared := false
-	if saved_slot:
-		_entities.erase(to)
-		if _astar != null and _walkable.get(to, false):
-			_astar.set_point_solid(to, false)
-			cleared = true
 
 	var path := _astar.get_id_path(from, to)
 	var cost := -1 if path.is_empty() else path.size() - 1
-
-	if saved_slot:
-		_entities[to] = saved_slot
-		if cleared and _astar != null:
-			_astar.set_point_solid(to, true)
 
 	return cost
 
@@ -349,7 +335,8 @@ func get_reachable_tiles_pathing(origin: Vector2i, max_steps: int, mover: Node =
 			var next_tile: Vector2i = current + dir
 			if not _is_in_bounds(next_tile):
 				continue
-			if not can_enter_tile(next_tile, mover):
+			# Entities don't block pathing logic, only walls block
+			if not is_terrain_walkable(next_tile):
 				continue
 			var new_cost := current_cost + 1
 			if new_cost > max_steps:
@@ -360,7 +347,9 @@ func get_reachable_tiles_pathing(origin: Vector2i, max_steps: int, mover: Node =
 
 	for pos: Vector2i in cost.keys():
 		if pos != origin:
-			result.append(pos)
+			# Only add tiles to the final result if they are actually empty
+			if can_enter_tile(pos, mover):
+				result.append(pos)
 	return result
 
 

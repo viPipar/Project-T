@@ -135,8 +135,8 @@ func _play_enemy_dice_sequence(
 	var center_roll_x := base_pos.x - 30
 	var center_ac_x := base_pos.x + 30
 	
-	var tw_fade_dice := create_tween()
 	if is_instance_valid(dice_visual):
+		var tw_fade_dice := create_tween()
 		tw_fade_dice.tween_property(dice_visual, "modulate:a", 0.0, 0.15)
 	
 	var tw_clash := create_tween().set_parallel(true)
