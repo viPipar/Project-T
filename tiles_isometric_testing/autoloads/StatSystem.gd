@@ -172,8 +172,7 @@ func apply_damage(target: Node, amount: int, attacker: Node = null, damage_type:
 		return int(target.sub_hp(amount, attacker, damage_type))
 
 	if is_instance_valid(target) and target.has_method("take_damage"):
-		target.take_damage(amount)
-		return maxi(0, amount)
+		return int(target.take_damage(amount, attacker, damage_type))
 
 	push_warning("[StatSystem] Target tidak punya HealthComponent/take_damage(): %s" % str(target))
 	return 0
