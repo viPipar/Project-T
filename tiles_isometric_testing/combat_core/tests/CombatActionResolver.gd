@@ -1,6 +1,8 @@
 class_name CombatActionResolver
 extends Node
 
+static var always_success: bool = false
+
 var bridge: Node
 
 func _init(b: Node) -> void:
@@ -160,6 +162,10 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 		hit    = hit_result["hit"]
 		crit   = hit_result["crit"]
 		hit_modifier = total - raw
+		
+		if always_success:
+			hit = true
+			hit_result["hit"] = true
 
 	var defense_label := "Resist" if is_magical else "Armor"
 	print("[COMBAT] D20: %d (raw) + %d → %d  vs  %s: %d" % [raw, hit_modifier, total, defense_label, thresh])
@@ -277,6 +283,12 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 				else: attacker.set_facing(Vector2.UP)
 
 	# ── Mainkan Animasi Caster & UI ──
+	var all_targets = []
+	if target != null: all_targets.append(target)
+	all_targets.append_array(aoe_targets)
+	var active_pid = pid if pid != null else -1
+	_apply_viewport_focus(active_pid, attacker, all_targets)
+
 	bridge._set_player_busy(pid, true)
 	
 	var _played_attack := false
@@ -293,7 +305,10 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 					var t_pos: Vector2i = target.get("grid_pos") if target != null else Vector2i(-1, -1)
 					# Knockback FIRST to clear the tile if we are dashing into them
 					if dash_dest == t_pos and ability.knockback_tiles > 0 and not _knockback_done[0]:
-						ForcedMovementResolver.knockback_from_attack(attacker, target, ability.knockback_tiles)
+						var kb_power = ability.knockback_tiles
+						if InventoryManager != null and InventoryManager.has_item_node(attacker, "big_hand"):
+							kb_power += 1
+						ForcedMovementResolver.knockback_from_attack(attacker, target, kb_power)
 						_knockback_done[0] = true
 					# Single fast blitz dash to destination
 					if is_instance_valid(GridManager) and GridManager.move_entity(old_pos, dash_dest, attacker):
@@ -316,7 +331,10 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 				attacker.play_attack(_base_ability_id)
 				var am_e = get_node_or_null("/root/AudioManager")
 				if am_e != null:
-					am_e.play_sfx("sword_slice" if ability == null or ability.ability_type == 0 else "spell_impact")
+					if ability != null and ability.has_method("get_ability_sfx"):
+						am_e.play_sfx(ability.get_ability_sfx())
+					else:
+						am_e.play_sfx("sword_slice" if ability == null or ability.ability_type == 0 else "spell_impact")
 				bridge.vfx_controller._play_skill_cast_vfx(attacker, _base_ability_id, ability.ability_type if ability != null else 0, ability.element_tag if ability != null else "physical")
 				_played_attack = true
 				await get_tree().create_timer(0.6, false).timeout
@@ -346,7 +364,10 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 				attacker.play_attack(_base_ability_id)
 				var am_p = get_node_or_null("/root/AudioManager")
 				if am_p != null:
-					am_p.play_sfx("sword_slice" if ability == null or ability.ability_type == 0 else "spell_impact")
+					if ability != null and ability.has_method("get_ability_sfx"):
+						am_p.play_sfx(ability.get_ability_sfx())
+					else:
+						am_p.play_sfx("sword_slice" if ability == null or ability.ability_type == 0 else "spell_impact")
 				bridge.vfx_controller._play_skill_cast_vfx(attacker, _base_ability_id, ability.ability_type if ability != null else 0, ability.element_tag if ability != null else "physical")
 				_played_attack = true
 				await get_tree().create_timer(0.6, false).timeout
@@ -361,7 +382,10 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 			attacker.play_attack(_base_ability_id)
 			var am_pr = get_node_or_null("/root/AudioManager")
 			if am_pr != null:
-				am_pr.play_sfx("sword_slice" if ability.ability_type == 0 else "spell_impact")
+				if ability != null and ability.has_method("get_ability_sfx"):
+					am_pr.play_sfx(ability.get_ability_sfx())
+				else:
+					am_pr.play_sfx("sword_slice" if ability.ability_type == 0 else "spell_impact")
 			bridge.vfx_controller._play_skill_cast_vfx(attacker, _base_ability_id, ability.ability_type, ability.element_tag)
 			await get_tree().create_timer(0.2).timeout
 		if target != null:
@@ -413,6 +437,18 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 			elif ability != null and ability.is_projectile:
 				impact_sfx = "spell_impact" if ability.ability_type == 1 else "sword_slice"
 			am.play_sfx(impact_sfx)
+			
+		# Emit on_hit so AudioManager plays the elemental/sword hit sound!
+		if target != null:
+			var event_result = {
+				"element_tag": ability.element_tag if ability != null else "physical",
+				"knockback_tiles": ability.knockback_tiles if ability != null else 0,
+				"status_effect": ability.status_effect if ability != null else "",
+				"is_crit": crit
+			}
+			for k in hit_result.keys():
+				event_result[k] = hit_result[k]
+			EventBus.on_hit.emit(attacker, target, event_result)
 				
 		_hit_label(attacker, bool(crit))
 
@@ -650,6 +686,8 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 				await attacker.get_tree().create_timer(0.15, false).timeout # stagger launch
 	else:
 		print("[COMBAT] Serangan meleset!")
+		if target != null:
+			EventBus.on_miss.emit(attacker, target)
 
 	if ability != null and ("summon_blockade_front" in ability) and ability.summon_blockade_front and primary_target != null:
 		print("[COMBAT-DEBUG] Attempting to spawn blockade...")
@@ -727,6 +765,8 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 			print("[COMBAT] Failed to summon Blockade: No walkable tiles around target!")
 			print("[COMBAT-DEBUG] Checked fallback positions but none were walkable. GridManager._walkable might be false, or entities block them.")
 
+	_clear_viewport_focus()
+
 	if is_player:
 		EventBus.attackcam_finished.emit(attacker)
 	else:
@@ -744,10 +784,130 @@ func _apply_damage_to_target(target: Node, amount: int, attacker: Node, damage_t
 			applied = target.take_damage(amount, attacker, damage_type)
 	
 	if (applied > 0 or amount > 0) and is_instance_valid(target):
-		if is_instance_valid(bridge) and is_instance_valid(bridge.vfx_controller) and bridge.vfx_controller.has_method("_spawn_hit_vfx"):
+		if is_instance_valid(bridge) and is_instance_valid(bridge.vfx_controller):
 			bridge.vfx_controller._spawn_hit_vfx(target, damage_type)
 			
 	return applied
+
+
+var _focus_rect: ColorRect = null
+var _focus_ghosts: Array = []
+var _hidden_sprites: Array = []
+
+func _apply_viewport_focus(active_pid: int, caster: Node, targets: Array) -> void:
+	if active_pid != 1 and active_pid != 2: return
+	if not is_instance_valid(caster) or caster.is_queued_for_deletion(): return
+	
+	var active_layer = 2 if active_pid == 1 else 4
+	var inactive_layer = 4 if active_pid == 1 else 2
+	
+	_clear_viewport_focus()
+	
+	# 1. Background Dimming & Desaturation (z_index = 0)
+	var shader = Shader.new()
+	shader.code = """
+shader_type canvas_item;
+uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_nearest;
+uniform float focus_strength : hint_range(0.0, 1.0) = 0.0;
+
+void fragment() {
+	vec4 bg = texture(screen_texture, SCREEN_UV);
+	float gray = dot(bg.rgb, vec3(0.299, 0.587, 0.114));
+	vec3 desat = mix(bg.rgb, vec3(gray), focus_strength * 0.85);
+	vec3 dimmed = desat * (1.0 - focus_strength * 0.5);
+	COLOR = vec4(dimmed, 1.0);
+}
+"""
+	var mat = ShaderMaterial.new()
+	mat.shader = shader
+	mat.set_shader_parameter("focus_strength", 0.0)
+	
+	_focus_rect = ColorRect.new()
+	_focus_rect.material = mat
+	_focus_rect.size = Vector2(8000, 8000)
+	_focus_rect.position = caster.global_position - _focus_rect.size / 2.0
+	_focus_rect.z_index = 0 # Just above the TileMap, below the entities
+	_focus_rect.visibility_layer = active_layer
+	_focus_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	
+	var parent = caster.get_parent()
+	if is_instance_valid(parent) and not parent.is_queued_for_deletion():
+		parent.add_child(_focus_rect)
+		var tw = _focus_rect.create_tween().set_ease(Tween.EASE_OUT)
+		tw.tween_method(func(v): mat.set_shader_parameter("focus_strength", v), 0.0, 1.0, 0.3)
+	else:
+		_focus_rect.free()
+		_focus_rect = null
+	
+	# 2. Character Ghosting (0.3 opacity)
+	var all_entities = get_tree().get_nodes_in_group("enemies") + get_tree().get_nodes_in_group("players")
+	for ent in all_entities:
+		if not is_instance_valid(ent) or ent.is_queued_for_deletion():
+			continue
+		if ent == caster or targets.has(ent):
+			continue
+			
+		var sprite = ent.get("sprite") if ent.get("sprite") != null else ent.get("anim_sprite")
+		if is_instance_valid(sprite) and sprite is CanvasItem and not sprite.is_queued_for_deletion():
+			
+			var ghost = null
+			if sprite is AnimatedSprite2D:
+				ghost = AnimatedSprite2D.new()
+				ghost.sprite_frames = sprite.sprite_frames
+				ghost.animation = sprite.animation
+				ghost.frame = sprite.frame
+				ghost.flip_h = sprite.flip_h
+				ghost.flip_v = sprite.flip_v
+				if sprite.is_playing(): ghost.play()
+			elif sprite is Sprite2D:
+				ghost = Sprite2D.new()
+				ghost.texture = sprite.texture
+				ghost.hframes = sprite.hframes
+				ghost.vframes = sprite.vframes
+				ghost.frame = sprite.frame
+				ghost.flip_h = sprite.flip_h
+				ghost.flip_v = sprite.flip_v
+			
+			if ghost != null:
+				# Hide original from active player, keep for inactive player
+				sprite.visibility_layer = inactive_layer
+				_hidden_sprites.append(sprite)
+				
+				# Setup ghost properties
+				ghost.scale = sprite.scale
+				ghost.position = sprite.position
+				ghost.offset = sprite.offset
+				ghost.modulate = sprite.modulate
+				ghost.modulate.a = 0.3 # Target opacity requested by user
+				ghost.visibility_layer = active_layer
+				
+				var sprite_parent = sprite.get_parent()
+				if is_instance_valid(sprite_parent) and not sprite_parent.is_queued_for_deletion():
+					sprite_parent.add_child(ghost)
+					_focus_ghosts.append(ghost)
+				else:
+					ghost.free()
+
+func _clear_viewport_focus() -> void:
+	if is_instance_valid(_focus_rect) and not _focus_rect.is_queued_for_deletion():
+		var mat = _focus_rect.material as ShaderMaterial
+		if mat:
+			var tw = _focus_rect.create_tween().set_ease(Tween.EASE_IN)
+			tw.tween_method(func(v): mat.set_shader_parameter("focus_strength", v), 1.0, 0.0, 0.25)
+			tw.finished.connect(_focus_rect.queue_free)
+		else:
+			_focus_rect.queue_free()
+	_focus_rect = null
+	
+	for ghost in _focus_ghosts:
+		if is_instance_valid(ghost) and not ghost.is_queued_for_deletion():
+			ghost.queue_free()
+	_focus_ghosts.clear()
+	
+	for sprite in _hidden_sprites:
+		if is_instance_valid(sprite) and not sprite.is_queued_for_deletion():
+			sprite.visibility_layer = 1
+	_hidden_sprites.clear()
 
 
 func _apply_heal_to_target(target: Node, amount: int, source: Node) -> int:

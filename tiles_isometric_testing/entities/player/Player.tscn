@@ -1,7 +1,7 @@
-[gd_scene load_steps=163 format=3 uid="uid://b6a7hhjouptf1"]
+[gd_scene load_steps=164 format=3 uid="uid://b6a7hhjouptf1"]
 
 [ext_resource type="Script" uid="uid://bob1mosrfauus" path="res://entities/player/Player.gd" id="1_mab2k"]
-[ext_resource type="Texture2D" uid="uid://ku20f3w7cjo3" path="res://assets/shadow.png" id="2_fmb3c"]
+[ext_resource type="Shader" path="res://assets/shaders/hover_shadow.gdshader" id="2_fmb3c"]
 [ext_resource type="Texture2D" uid="uid://cx48fnr1yfpbf" path="res://assets/characters/p1_fighter/figther slash 1 17 fps.png" id="3_ax5yc"]
 [ext_resource type="Texture2D" uid="uid://bl75n86u0ct4u" path="res://assets/characters/p1_fighter/figther_slash_2_grid.png" id="4_ax5yc"]
 [ext_resource type="Texture2D" uid="uid://yg3pe5s4qx8d" path="res://assets/characters/p1_fighter/fighter mati 11 fps.png" id="5_npcl8"]
@@ -17,6 +17,12 @@
 [ext_resource type="Script" uid="uid://c6x647xq2wo8i" path="res://components/ClassComponent.gd" id="101_class"]
 [ext_resource type="Script" uid="uid://cmbb03lnpiv3i" path="res://components/HealthComponent.gd" id="102_health"]
 [ext_resource type="Script" uid="uid://5ppdu5jndc7b" path="res://components/ConditionComponent.gd" id="103_cond"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_static_shadow"]
+shader = ExtResource("2_fmb3c")
+shader_parameter/blur_amount = 0.4
+shader_parameter/opacity = 0.43
+shader_parameter/shadow_color = Color(0, 0, 0, 1)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_mab2k"]
 
@@ -1073,11 +1079,14 @@ animations = [{
 [node name="Player" type="CharacterBody2D"]
 script = ExtResource("1_mab2k")
 
-[node name="Shadow" type="Sprite2D" parent="."]
-modulate = Color(1, 1, 1, 0.431373)
-position = Vector2(-6, -10)
-scale = Vector2(0.295, 0.295)
-texture = ExtResource("2_fmb3c")
+[node name="Shadow" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_static_shadow")
+custom_minimum_size = Vector2(160, 80)
+offset_left = -80.0
+offset_top = -30.0
+offset_right = 80.0
+offset_bottom = 50.0
+mouse_filter = 2
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 rotation = 0.785398
@@ -1095,7 +1104,7 @@ offset = Vector2(18.495, 0)
 
 [node name="Player2Sprite" type="AnimatedSprite2D" parent="."]
 texture_filter = 1
-position = Vector2(0, -186)
+position = Vector2(-15, -170)
 scale = Vector2(0.35, 0.35)
 sprite_frames = SubResource("SpriteFrames_mq27t")
 animation = &"hit"

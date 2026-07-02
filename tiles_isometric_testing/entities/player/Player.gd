@@ -383,6 +383,7 @@ func _play_hurt_anim() -> void:
 
 func _begin_action_resolution() -> void:
 	_state = PlayerState.ACTING
+	_clear_targeting_highlights()
 	if is_instance_valid(MovementRangeManager) and MovementRangeManager.has_method("_refresh_player"):
 		MovementRangeManager._refresh_player(self)
 

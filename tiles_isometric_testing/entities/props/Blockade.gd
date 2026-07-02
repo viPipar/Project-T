@@ -25,7 +25,7 @@ func _ready() -> void:
 func get_armor() -> int:
 	return armor
 
-func take_damage(amount: int, attacker: Node, damage_type: String) -> int:
+func take_damage(amount: int, _attacker: Node = null, _damage_type: String = "physical") -> int:
 	if is_dead: return 0
 	
 	hp -= amount

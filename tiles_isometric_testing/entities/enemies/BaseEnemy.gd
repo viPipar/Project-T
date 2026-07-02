@@ -35,6 +35,7 @@ var _noise_tex: NoiseTexture2D = null
 var _hovering_players: Dictionary = {} # int -> bool
 var _is_my_turn: bool = false
 var raw_data: Dictionary = {}
+var _hover_shadow: ColorRect = null
 
 var base_sprite_scale: Vector2 = Vector2(0.75, 0.75)
 var base_sprite_offset: Vector2 = Vector2(14, -113)
@@ -70,6 +71,24 @@ func _ready() -> void:
 	var move_comp = get_node_or_null("MovementComponent")
 	if move_comp != null and move_comp.has_signal("step_started"):
 		move_comp.step_started.connect(_on_step_started)
+
+func _process(delta: float) -> void:
+	if _hover_shadow != null and is_instance_valid(_hover_shadow) and sprite != null and sprite.is_playing():
+		var total_frames = sprite.sprite_frames.get_frame_count(sprite.animation)
+		if total_frames > 1:
+			var t = float(sprite.frame) / float(total_frames - 1)
+			var pulse = sin(t * PI)
+			
+			var current_opacity = lerp(0.45, 0.35, pulse)
+			var current_blur = lerp(0.1, 0.3, pulse)
+			var current_scale = lerp(1.0, 0.8, pulse)
+			
+			var mat = _hover_shadow.material as ShaderMaterial
+			if mat != null:
+				mat.set_shader_parameter("opacity", current_opacity)
+				mat.set_shader_parameter("blur_amount", current_blur)
+				
+			_hover_shadow.scale = Vector2(current_scale, current_scale)
 
 func _on_step_started(from: Vector2i, to: Vector2i) -> void:
 	if sprite == null: return
@@ -311,12 +330,15 @@ func _update_tooltip_visibility() -> void:
 	var tooltip = get_node_or_null("EnemyStatTooltip")
 	if tooltip == null: return
 	
-	if _hovering_players.is_empty() and not _is_my_turn:
+	var p1_active = (_hovering_players.has(1) or _is_my_turn) and not (InputManager != null and InputManager.relic_focus_p1)
+	var p2_active = (_hovering_players.has(2) or _is_my_turn) and not (InputManager != null and InputManager.relic_focus_p2)
+	
+	if not p1_active and not p2_active:
 		tooltip.hide_tooltip()
 	else:
 		var layer_mask := 0
-		if _hovering_players.has(1) or _is_my_turn: layer_mask |= 2 # P1
-		if _hovering_players.has(2) or _is_my_turn: layer_mask |= 4 # P2
+		if p1_active: layer_mask |= 2 # P1
+		if p2_active: layer_mask |= 4 # P2
 		
 		var armor := 0
 		var ap := 0
@@ -334,8 +356,12 @@ func apply_wind_sway(strength: float = 60.0) -> void:
 
 
 func play_attack(ability_id: String) -> void:
-	if sprite != null and sprite.sprite_frames.has_animation("attack"):
-		_play_anim("attack")
+	var anim_to_play = "attack"
+	if ability_id != "" and sprite != null and sprite.sprite_frames.has_animation(ability_id):
+		anim_to_play = ability_id
+
+	if sprite != null and sprite.sprite_frames.has_animation(anim_to_play):
+		_play_anim(anim_to_play)
 		await sprite.animation_finished
 		_play_anim("idle_down")
 	elif sprite != null:
@@ -429,6 +455,27 @@ func apply_custom_data(data: Dictionary) -> void:
 		
 	_setup_sprite()
 	
+	if data.get("has_hover_shadow", false):
+		var static_shadow = get_node_or_null("Shadow")
+		if static_shadow != null:
+			static_shadow.hide()
+			
+		if _hover_shadow == null:
+			_hover_shadow = ColorRect.new()
+			_hover_shadow.name = "HoverShadow"
+			_hover_shadow.custom_minimum_size = Vector2(200, 200)
+			_hover_shadow.size = Vector2(200, 200)
+			_hover_shadow.position = Vector2(-100, -100)
+			_hover_shadow.pivot_offset = Vector2(100, 100)
+			_hover_shadow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			
+			var mat = ShaderMaterial.new()
+			mat.shader = load("res://assets/shaders/hover_shadow.gdshader")
+			_hover_shadow.material = mat
+			
+			add_child(_hover_shadow)
+			move_child(_hover_shadow, 0)
+	
 	var anim_config: Dictionary = data.get("sprite_animations", {})
 	if not anim_config.is_empty():
 		_apply_spritesheet_animations(anim_config)
@@ -457,7 +504,7 @@ func _apply_spritesheet_animations(anim_config: Dictionary) -> void:
 	if sprite_frames.has_animation("default"):
 		sprite_frames.remove_animation("default")
 	
-	var standard_anims = ["idle", "attack", "damage", "mati"]
+	var standard_anims = ["idle", "attack", "damage", "mati", "skill_1", "skill_2"]
 	
 	for anim_key in standard_anims:
 		if not anim_config.has(anim_key):
