@@ -38,11 +38,27 @@ func _process(delta: float) -> void:
 
 
 func _move_cursor(_delta: float) -> void:
-	# BG3-style: cursor SELALU di tengah viewport (posisi kamera).
-	# Kamera yang pan mengikuti input — cursor hanya mengikuti kamera.
-	if camera_ref != null and is_instance_valid(camera_ref):
-		global_position = camera_ref.global_position
-	# Jika belum ada camera_ref, biarkan di posisi terakhir
+	var relic_focus = false
+	if InputManager != null:
+		relic_focus = InputManager.relic_focus_p1 if player_id == 1 else InputManager.relic_focus_p2
+		
+	if not relic_focus:
+		if camera_ref != null and is_instance_valid(camera_ref):
+			global_position = camera_ref.global_position
+		return
+		
+	# Free cursor movement on grid!
+	var prefix := "p%d_" % player_id
+	var dir := Vector2i.ZERO
+	if Input.is_action_just_pressed(prefix + "move_up"): dir = Vector2i(-1, -1)
+	elif Input.is_action_just_pressed(prefix + "move_down"): dir = Vector2i(1, 1)
+	elif Input.is_action_just_pressed(prefix + "move_left"): dir = Vector2i(-1, 1)
+	elif Input.is_action_just_pressed(prefix + "move_right"): dir = Vector2i(1, -1)
+	
+	if dir != Vector2i.ZERO:
+		var new_tile = hovered_tile + dir
+		if new_tile.x >= 0 and new_tile.y >= 0 and new_tile.x < GridManager.grid_size.x and new_tile.y < GridManager.grid_size.y:
+			global_position = IsoUtils.world_to_iso(new_tile)
 
 
 func _update_hovered_tile() -> void:
@@ -56,8 +72,11 @@ func _update_hovered_tile() -> void:
 	elif clamp_to_range and not _is_tile_allowed(grid_pos, player):
 		target = _get_fallback_tile(player)
 
-	# JANGAN pernah ubah global_position visual agar dia tetap di tengah persis!
-	# global_position = IsoUtils.world_to_iso(target)
+	var relic_focus = false
+	if InputManager != null:
+		relic_focus = InputManager.relic_focus_p1 if player_id == 1 else InputManager.relic_focus_p2
+	if relic_focus and target.x >= 0:
+		global_position = IsoUtils.world_to_iso(target)
 
 	if target != hovered_tile:
 		hovered_tile = target
@@ -83,6 +102,31 @@ func _notify_entity_hover(new_tile: Vector2i) -> void:
 		new_entity.add_hover_player(player_id)
 		
 	_last_hovered_entity = new_entity
+	
+	var relic_focus = false
+	if InputManager != null:
+		relic_focus = InputManager.relic_focus_p1 if player_id == 1 else InputManager.relic_focus_p2
+	if relic_focus:
+		_notify_inspect_overlay(new_entity)
+
+
+func _notify_inspect_overlay(new_entity: Node) -> void:
+	if not is_inside_tree(): return
+	var main = get_tree().root.get_node_or_null("Main")
+	if main == null: return
+	
+	var inspect_overlay = main.get_node_or_null("InspectCanvas/InspectOverlay")
+	if inspect_overlay != null:
+		var window = inspect_overlay.get("_inspect_p1") if player_id == 1 else inspect_overlay.get("_inspect_p2")
+		var side = inspect_overlay.get("_left_side") if player_id == 1 else inspect_overlay.get("_right_side")
+		if window != null and side != null:
+			if is_instance_valid(new_entity):
+				var center = Vector2(side.size.x / 2.0, side.size.y / 2.0)
+				window.show_for_entity(new_entity, 0, center)
+				if get_node_or_null("/root/AudioManager"):
+					get_node("/root/AudioManager").play_sfx("ui_click")
+			else:
+				window.hide_window()
 
 
 func _get_tile_under_point(point: Vector2) -> Vector2i:
