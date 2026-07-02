@@ -431,6 +431,18 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 			elif ability != null and ability.is_projectile:
 				impact_sfx = "spell_impact" if ability.ability_type == 1 else "sword_slice"
 			am.play_sfx(impact_sfx)
+			
+		# Emit on_hit so AudioManager plays the elemental/sword hit sound!
+		if target != null:
+			var event_result = {
+				"element_tag": ability.element_tag if ability != null else "physical",
+				"knockback_tiles": ability.knockback_tiles if ability != null else 0,
+				"status_effect": ability.status_effect if ability != null else "",
+				"is_crit": crit
+			}
+			for k in hit_result.keys():
+				event_result[k] = hit_result[k]
+			EventBus.on_hit.emit(attacker, target, event_result)
 				
 		_hit_label(attacker, bool(crit))
 
@@ -668,6 +680,8 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 				await attacker.get_tree().create_timer(0.15, false).timeout # stagger launch
 	else:
 		print("[COMBAT] Serangan meleset!")
+		if target != null:
+			EventBus.on_miss.emit(attacker, target)
 
 	if ability != null and ("summon_blockade_front" in ability) and ability.summon_blockade_front and primary_target != null:
 		print("[COMBAT-DEBUG] Attempting to spawn blockade...")
