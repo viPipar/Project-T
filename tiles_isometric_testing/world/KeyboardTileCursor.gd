@@ -281,6 +281,12 @@ func _get_fallback_tile(player: Node) -> Vector2i:
 
 
 func _is_tile_allowed(tile: Vector2i, player: Node) -> bool:
+	var relic_focus = false
+	if InputManager != null:
+		relic_focus = InputManager.relic_focus_p1 if player_id == 1 else InputManager.relic_focus_p2
+	if relic_focus:
+		return true
+		
 	if not clamp_to_range:
 		return true
 	if player == null:
