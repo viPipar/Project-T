@@ -2,6 +2,7 @@ extends Node2D
 
 @export var font: Font
 func _ready():
+	hide() # Sembunyikan secara default agar tidak mengganggu cutscene
 	if font == null:
 		font = ThemeDB.fallback_font
 	queue_redraw()
