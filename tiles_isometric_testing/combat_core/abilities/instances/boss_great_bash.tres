@@ -1,0 +1,29 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://combat_core/abilities/BaseAbility.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/radial/fighter/GREAT BASH.png" id="2"]
+
+[resource]
+script = ExtResource("1")
+ability_name = "Boss Great Bash"
+icon = ExtResource("2")
+ability_description = "A massive 3x3 stomp that deals damage and stuns targets."
+ability_tag = "boss_great_bash"
+ability_type = 0
+element_tag = "physical"
+target_alignment = 0
+ally_targeting_dc = 10
+range_type = "square"
+range_size = 1
+is_projectile = false
+aoe_type = "target_square"
+aoe_size = 1
+damage_dice = "1D8"
+is_heal = false
+knockback_tiles = 0
+status_effect = "stunned"
+status_duration = 1
+status_stacks = 1
+cost_action = 1
+cost_bonus_action = 0
+cost_mana = 0

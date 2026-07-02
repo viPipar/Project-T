@@ -427,6 +427,16 @@ func apply_custom_data(data: Dictionary) -> void:
 	else:
 		_apply_idle_frames()
 		
+	if data.has("ai_brain"):
+		var brain_path = data["ai_brain"]
+		var ai_comp = get_node_or_null("AIComponent")
+		if ai_comp != null:
+			var loaded_brain = load(brain_path)
+			if loaded_brain != null:
+				ai_comp.brain = loaded_brain
+			else:
+				push_warning("BaseEnemy: Failed to load ai_brain from path: %s" % brain_path)
+		
 	if start_grid_pos.x >= 0 and start_grid_pos.y >= 0:
 		place_at(start_grid_pos)
 

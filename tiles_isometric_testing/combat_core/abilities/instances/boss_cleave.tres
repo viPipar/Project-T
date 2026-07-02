@@ -1,0 +1,33 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://combat_core/abilities/BaseAbility.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/radial/fighter/CLEAVE.png" id="2"]
+
+[resource]
+script = ExtResource("1")
+ability_name = "Boss Upgraded Cleave"
+icon = ExtResource("2")
+ability_description = "A massive sweep that knocks back enemies in a 2-tile radius."
+ability_tag = "boss_cleave"
+ability_type = 0
+element_tag = "physical"
+target_alignment = 0
+ally_targeting_dc = 10
+range_type = "square"
+range_size = 0
+is_projectile = false
+aoe_type = "self_radius"
+aoe_size = 2
+damage_primary_only = false
+summon_blockade_front = false
+is_burst_attack = false
+burst_retarget = false
+damage_dice = "2D6"
+is_heal = false
+knockback_tiles = 2
+status_effect = ""
+status_duration = 0
+status_stacks = 1
+cost_action = 1
+cost_bonus_action = 0
+cost_mana = 0

@@ -1,0 +1,33 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://combat_core/abilities/BaseAbility.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/radial/fighter/CLEAVE.png" id="2"]
+
+[resource]
+script = ExtResource("1")
+ability_name = "Boss Blockade"
+icon = ExtResource("2")
+ability_description = "Summons a fiery blockade to block line of sight."
+ability_tag = "boss_blockade"
+ability_type = 2
+element_tag = "earth"
+target_alignment = 0
+ally_targeting_dc = 10
+range_type = "diamond"
+range_size = 4
+is_projectile = true
+aoe_type = "none"
+aoe_size = 0
+damage_primary_only = true
+summon_blockade_front = true
+is_burst_attack = false
+burst_retarget = false
+damage_dice = "0"
+is_heal = false
+knockback_tiles = 0
+status_effect = ""
+status_duration = 0
+status_stacks = 1
+cost_action = 1
+cost_bonus_action = 0
+cost_mana = 0
