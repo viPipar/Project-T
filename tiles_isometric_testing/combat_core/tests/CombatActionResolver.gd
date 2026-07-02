@@ -170,6 +170,8 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 		if target != null and is_instance_valid(GridManager):
 			bridge._set_player_busy(pid, true)
 			if is_instance_valid(attacker) and attacker.has_method("play_attack"):
+				if attacker.has_method("face_target") and target != null:
+					attacker.face_target(target.get("grid_pos"))
 				attacker.play_attack(_base_ability_id)
 				var am_s = get_node_or_null("/root/AudioManager")
 				if am_s != null:
@@ -309,6 +311,8 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 		
 		if hit:
 			if is_instance_valid(attacker) and attacker.has_method("play_attack"):
+				if attacker.has_method("face_target") and target != null:
+					attacker.face_target(target.get("grid_pos"))
 				attacker.play_attack(_base_ability_id)
 				var am_e = get_node_or_null("/root/AudioManager")
 				if am_e != null:
@@ -337,6 +341,8 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 		# Then Attack & Dash
 		if hit:
 			if not _played_attack and is_instance_valid(attacker) and attacker.has_method("play_attack"):
+				if attacker.has_method("face_target") and target != null:
+					attacker.face_target(target.get("grid_pos"))
 				attacker.play_attack(_base_ability_id)
 				var am_p = get_node_or_null("/root/AudioManager")
 				if am_p != null:
@@ -350,6 +356,8 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 	# Projectile VFX
 	if hit and ability != null and ability.is_projectile:
 		if not _played_attack and is_instance_valid(attacker) and attacker.has_method("play_attack"):
+			if attacker.has_method("face_target") and target != null:
+				attacker.face_target(target.get("grid_pos"))
 			attacker.play_attack(_base_ability_id)
 			var am_pr = get_node_or_null("/root/AudioManager")
 			if am_pr != null:
