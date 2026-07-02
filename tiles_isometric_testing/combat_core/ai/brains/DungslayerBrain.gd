@@ -83,12 +83,23 @@ func decide_and_act(entity: Node, ai_component: AIComponent) -> void:
 	
 	if dist_to_target <= 1:
 		print("[AI:%s] Now adjacent! Unleashing Normal Attack!" % entity.name)
-		_perform_attack_tag_and_end(entity, ai_component, target, "main_attack")
+		EventBus.attackcam_started.emit(entity, target, "main_attack", target.get("grid_pos"))
+		await EventBus.combat_action_finished
+		
+		if boss_blockade_ability != null and is_instance_valid(target):
+			if not (target.has_method("is_dead") and target.is_dead()):
+				var alive_now = _get_alive_players(entity)
+				if alive_now.size() >= 2:
+					print("[AI:%s] Casting Blockade to block Line of Sight after attacking!" % entity.name)
+					_perform_attack_and_end(entity, ai_component, target, boss_blockade_ability)
+					return
+		
+		ai_component.end_turn()
 		return
 		
 	# Still out of melee range, cast Blockade!
-	if boss_blockade_ability != null:
-		print("[AI:%s] Target still out of range. Casting Blockade to block Line of Sight!" % entity.name)
+	if boss_blockade_ability != null and _get_alive_players(entity).size() >= 2:
+		print("[AI:%s] Target still out of range and both players alive. Casting Blockade!" % entity.name)
 		_perform_attack_and_end(entity, ai_component, target, boss_blockade_ability)
 		return
 		
