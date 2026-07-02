@@ -47,7 +47,8 @@ func _process(_delta: float) -> void:
 		new_state = "self"
 	elif GridManager.has_entity_at(target):
 		var reachable_adj := _has_reachable_adjacent(origin, target, _player.get_movement_left())
-		new_state = "entity" if reachable_adj else "invalid"
+		# "invalid" akan menyembunyikan kursor sama sekali (clean) di bawah musuh
+		new_state = "invalid"
 	else:
 		var cost := GridManager.get_path_cost(origin, target)
 		var reachable: bool = cost >= 0 and cost <= _player.get_movement_left()

@@ -200,7 +200,7 @@ func _spawn_enemy_from_json(
 	enemy.set("tint_color", tint_color)
 	world.entities.add_child(enemy)
 	StatDataDB.apply_entity_data(enemy, data)
-	enemy.call_deferred("place_at", StatDataDB.get_spawn_grid_pos(data, fallback_pos))
+	enemy.place_at(StatDataDB.get_spawn_grid_pos(data, fallback_pos))
 	return enemy
 
 

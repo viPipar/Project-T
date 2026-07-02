@@ -65,7 +65,7 @@ func _ready() -> void:
 	if sprite != null:
 		_play_anim("idle_down")
 	if start_grid_pos.x >= 0 and start_grid_pos.y >= 0:
-		call_deferred("_deferred_place")
+		_deferred_place()
 		
 	var move_comp = get_node_or_null("MovementComponent")
 	if move_comp != null and move_comp.has_signal("step_started"):
