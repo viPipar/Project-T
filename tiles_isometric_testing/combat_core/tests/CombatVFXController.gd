@@ -192,8 +192,7 @@ func _play_enemy_dice_sequence(
 
 func _spawn_magic_projectile(attacker: Node, target: Node, element: String, tracking_array: Array = []) -> void:
 	print("[COMBAT] 🌠 Merender efek sihir elemen: %s" % element)
-	
-	var orb = Sprite2D.new()
+	var orb = AnimatedSprite2D.new()
 	
 	var start_pos = attacker.global_position + Vector2(0, -32)
 	orb.global_position = start_pos
@@ -207,15 +206,92 @@ func _spawn_magic_projectile(attacker: Node, target: Node, element: String, trac
 	orb.set("tracking_array", tracking_array)
 	orb.set("fallback_target", target)
 	
-	if is_instance_valid(target):
-		var init_dir = (target.global_position + Vector2(0, -32) - start_pos).normalized()
-		# Wide anime-style spread (up to 100 degrees sideways)
-		var spread_angle = randf_range(-PI/1.8, PI/1.8) 
-		init_dir = init_dir.rotated(spread_angle)
-		orb.set("current_velocity", init_dir * randf_range(1600.0, 2000.0))
-		
 	add_child(orb)
-	await orb.tree_exited
+	
+	# For backwards compatibility with single projectiles:
+	# Instantly launch at target without spread
+	orb.launch_at(target)
+	await orb.impacted
+
+func _spawn_hover_burst(attacker: Node, targets: Array, element: String) -> Array:
+	var spawned: Array = []
+	var start_pos = attacker.global_position + Vector2(0, -32)
+	
+	var projectile_element := element
+	if attacker != null and attacker.is_in_group("enemies"):
+		projectile_element = "enemy"
+		
+	for i in range(targets.size()):
+		var orb = AnimatedSprite2D.new()
+		orb.global_position = start_pos
+		orb.set_script(preload("res://combat_core/tests/HomingProjectile.gd"))
+		orb.set("element", projectile_element)
+		add_child(orb)
+		orb.spread_out(start_pos, targets[i])
+		spawned.append(orb)
+		
+	return spawned
+
+func _play_skill_cast_vfx(caster: Node, ability_tag: String, ability_type: int, element_tag: String) -> void:
+	if not is_instance_valid(caster) or not get_tree():
+		return
+
+	var tag_lower := ability_tag.to_lower()
+	var tex_path := ""
+	var h := 6
+	var v := 5
+	var scale_f := 1.0
+	var fps := 24.0
+	var shake_power := 6.0
+
+	match tag_lower:
+		# Utility / self-target
+		"epimorphic", "autotomy":
+			tex_path = "res://assets/brackeys_vfx_bundle/predrawn/vortex_6x5.png"
+			shake_power = 4.0
+		"divine_departure", "grand_escape":
+			tex_path = "res://assets/brackeys_vfx_bundle/predrawn/lightstreaks_6x5.png"
+			shake_power = 5.0
+		# Boss specials
+		"boss_cleave", "boss_great_bash":
+			tex_path = "res://assets/brackeys_vfx_bundle/predrawn/explosion_6x5.png"
+			scale_f = 1.5
+			shake_power = 14.0
+		_:
+			match ability_type:
+				2: # UTILITY
+					tex_path = "res://assets/brackeys_vfx_bundle/predrawn/charge_7x6.png"
+					h = 7; v = 6
+					scale_f = 0.9
+					shake_power = 3.0
+				1: # MAGICAL
+					var el_lower := element_tag.to_lower()
+					match el_lower:
+						"fire":
+							tex_path = "res://assets/brackeys_vfx_bundle/predrawn/fire_ring_6x5.png"
+						"water", "ice":
+							tex_path = "res://assets/brackeys_vfx_bundle/predrawn/wavy_blue_6x5.png"
+						"wind", "air":
+							tex_path = "res://assets/brackeys_vfx_bundle/predrawn/wavy_purple_6x5.png"
+						"electric", "lightning":
+							tex_path = "res://assets/brackeys_vfx_bundle/predrawn/electric_ring_6x5.png"
+						_:
+							tex_path = "res://assets/brackeys_vfx_bundle/predrawn/star_explosion_6x5.png"
+				0: # PHYSICAL
+					tex_path = "res://assets/brackeys_vfx_bundle/predrawn/big_hit_6x5.png"
+
+	if tex_path.is_empty():
+		return
+
+	var vfx = Sprite2D.new()
+	vfx.set_script(preload("res://combat_core/tests/SkillCastVFX.gd"))
+	vfx.setup(tex_path, h, v, fps, scale_f)
+	vfx.global_position = caster.global_position + Vector2(0, -48)
+	add_child(vfx)
+
+	_apply_camera_shake(1, 0.15, shake_power)
+	_apply_camera_shake(2, 0.15, shake_power)
+
 
 func _spawn_hit_vfx(target: Node, element: String) -> void:
 	if not is_instance_valid(target):

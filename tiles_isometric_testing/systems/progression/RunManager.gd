@@ -8,6 +8,8 @@ signal layer_advanced(new_depth: int)
 signal node_map_generated(seed_value: int)
 signal node_traveled(node_id: int, node_type: int, depth: int)
 
+const RANDOM_NODE_MAP_SEED := -1
+
 var is_run_active: bool = false
 var current_depth: int = 1
 var max_depth: int = NodeGraph.TOTAL_LAYERS
@@ -20,12 +22,13 @@ var path_handler: PathHandler = null
 var node_map_seed: int = -1
 var pending_node_id: int = -1
 var pending_node_type: int = -1
+var configured_node_map_seed: int = RANDOM_NODE_MAP_SEED
 
 func _ready() -> void:
 	if EventBus != null:
 		EventBus.combat_ended.connect(_on_combat_ended)
 
-func start_run(new_seed: int = -1) -> void:
+func start_run(new_seed: int = RANDOM_NODE_MAP_SEED) -> void:
 	if is_run_active:
 		push_warning("RunManager: Attempted to start a run while one is already active.")
 		ensure_node_map()
@@ -40,7 +43,7 @@ func start_run(new_seed: int = -1) -> void:
 	pending_node_type = -1
 
 	# Reset player, inventory, and economy systems here once their run APIs are final.
-	_generate_node_map(new_seed)
+	_generate_node_map(_resolve_node_map_seed(new_seed))
 	run_started.emit()
 
 func end_run(victory: bool) -> void:
@@ -73,12 +76,12 @@ func advance_layer() -> void:
 	else:
 		layer_advanced.emit(current_depth)
 
-func ensure_node_map(new_seed: int = -1) -> void:
+func ensure_node_map(new_seed: int = RANDOM_NODE_MAP_SEED) -> void:
 	if not is_run_active:
 		start_run(new_seed)
 		return
 	if node_graph == null or path_handler == null:
-		_generate_node_map(new_seed)
+		_generate_node_map(_resolve_node_map_seed(new_seed))
 
 func get_node_graph() -> NodeGraph:
 	ensure_node_map()
@@ -87,6 +90,19 @@ func get_node_graph() -> NodeGraph:
 func get_path_handler() -> PathHandler:
 	ensure_node_map()
 	return path_handler
+
+func get_node_map_seed() -> int:
+	ensure_node_map()
+	return node_map_seed
+
+func set_configured_node_map_seed(seed_value: int) -> void:
+	configured_node_map_seed = seed_value
+
+func use_random_node_map_seed() -> void:
+	configured_node_map_seed = RANDOM_NODE_MAP_SEED
+
+func get_configured_node_map_seed() -> int:
+	return configured_node_map_seed
 
 func get_current_map_node():
 	if node_graph == null or path_handler == null or path_handler.current_node_id == -1:
@@ -155,7 +171,7 @@ func restore_node_map_state(state: Dictionary) -> void:
 	pending_node_id = int(state.get("pending_node_id", -1))
 	pending_node_type = int(state.get("pending_node_type", -1))
 
-func _generate_node_map(new_seed: int = -1) -> void:
+func _generate_node_map(new_seed: int = RANDOM_NODE_MAP_SEED) -> void:
 	node_graph = NodeGraph.new()
 	node_graph.generate(new_seed)
 	node_map_seed = node_graph.seed_value
@@ -164,6 +180,11 @@ func _generate_node_map(new_seed: int = -1) -> void:
 	path_handler.init(node_graph)
 	max_depth = node_graph.get_total_depth()
 	node_map_generated.emit(node_map_seed)
+
+func _resolve_node_map_seed(requested_seed: int) -> int:
+	if requested_seed != RANDOM_NODE_MAP_SEED:
+		return requested_seed
+	return configured_node_map_seed
 
 func _clear_node_map_state() -> void:
 	node_graph = null

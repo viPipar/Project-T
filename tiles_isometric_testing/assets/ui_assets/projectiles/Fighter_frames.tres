@@ -1,0 +1,147 @@
+[gd_resource type="SpriteFrames" load_steps=20 format=3 uid="uid://dgjcrktt3j6s8"]
+
+[ext_resource type="Texture2D" uid="uid://6ybv26i52ow1" path="res://assets/ui_assets/projectiles/Fighter.png" id="1_gvlnx"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_be23r"]
+atlas = ExtResource("1_gvlnx")
+region = Rect2(0, 0, 1024, 1024)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_seyau"]
+atlas = ExtResource("1_gvlnx")
+region = Rect2(1024, 0, 1024, 1024)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3s6st"]
+atlas = ExtResource("1_gvlnx")
+region = Rect2(2048, 0, 1024, 1024)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1ml82"]
+atlas = ExtResource("1_gvlnx")
+region = Rect2(3072, 0, 1024, 1024)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_iph65"]
+atlas = ExtResource("1_gvlnx")
+region = Rect2(4096, 0, 1024, 1024)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_scdoi"]
+atlas = ExtResource("1_gvlnx")
+region = Rect2(5120, 0, 1024, 1024)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_m0lkw"]
+atlas = ExtResource("1_gvlnx")
+region = Rect2(0, 2048, 1024, 1024)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_d5ygk"]
+atlas = ExtResource("1_gvlnx")
+region = Rect2(1024, 2048, 1024, 1024)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vmm7u"]
+atlas = ExtResource("1_gvlnx")
+region = Rect2(2048, 2048, 1024, 1024)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_pmpc7"]
+atlas = ExtResource("1_gvlnx")
+region = Rect2(3072, 2048, 1024, 1024)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1pnqc"]
+atlas = ExtResource("1_gvlnx")
+region = Rect2(4096, 2048, 1024, 1024)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lhe0w"]
+atlas = ExtResource("1_gvlnx")
+region = Rect2(5120, 2048, 1024, 1024)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_t2phi"]
+atlas = ExtResource("1_gvlnx")
+region = Rect2(0, 1024, 1024, 1024)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_he3j2"]
+atlas = ExtResource("1_gvlnx")
+region = Rect2(1024, 1024, 1024, 1024)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0nxrn"]
+atlas = ExtResource("1_gvlnx")
+region = Rect2(2048, 1024, 1024, 1024)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fm5t7"]
+atlas = ExtResource("1_gvlnx")
+region = Rect2(3072, 1024, 1024, 1024)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2mfht"]
+atlas = ExtResource("1_gvlnx")
+region = Rect2(4096, 1024, 1024, 1024)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1xwx3"]
+atlas = ExtResource("1_gvlnx")
+region = Rect2(5120, 1024, 1024, 1024)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_be23r")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_seyau")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3s6st")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1ml82")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_iph65")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_scdoi")
+}],
+"loop": false,
+"name": &"entry",
+"speed": 12.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_m0lkw")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_d5ygk")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vmm7u")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_pmpc7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1pnqc")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_lhe0w")
+}],
+"loop": false,
+"name": &"impact",
+"speed": 12.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_t2phi")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_he3j2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0nxrn")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fm5t7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2mfht")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1xwx3")
+}],
+"loop": true,
+"name": &"loop",
+"speed": 12.0
+}]
