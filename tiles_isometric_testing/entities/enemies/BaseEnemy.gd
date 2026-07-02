@@ -79,6 +79,14 @@ func _on_step_started(from: Vector2i, to: Vector2i) -> void:
 	elif delta.x < 0 or delta.y > 0:
 		sprite.flip_h = false
 
+func face_target(target_grid_pos: Vector2i) -> void:
+	if sprite == null: return
+	var delta = target_grid_pos - grid_pos
+	if delta.x > 0 or delta.y < 0:
+		sprite.flip_h = true
+	elif delta.x < 0 or delta.y > 0:
+		sprite.flip_h = false
+
 
 
 func get_grid_pos() -> Vector2i:

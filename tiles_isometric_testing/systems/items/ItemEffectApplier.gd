@@ -70,6 +70,13 @@ func recalculate_player_stats(player_node: Node, player_id: int) -> void:
 	if is_instance_valid(hc):
 		if not hc.hp_changed.is_connected(_on_hp_changed.bind(player_node, player_id)):
 			hc.hp_changed.connect(_on_hp_changed.bind(player_node, player_id))
+		# Holy Ring: bonus heal
+		var heal_key = "holy_ring_%d" % player_id
+		if not hc.healed.is_connected(_on_healed.bind(player_node, player_id)):
+			hc.healed.connect(_on_healed.bind(player_node, player_id))
+		# Clock o' Chronos: revive on down
+		if not hc.downed.is_connected(_on_downed.bind(player_node, player_id)):
+			hc.downed.connect(_on_downed.bind(player_node, player_id))
 		# Force trigger one time
 		_on_hp_changed(hc.current_hp, hc.max_hp, player_node, player_id)
 
@@ -117,6 +124,26 @@ func _on_hp_changed(current: int, max_hp: int, player_node: Node, player_id: int
 	else:
 		if stats.get_mod_sources().has("greathorn_staff_bonus"):
 			stats.remove_mod_source("greathorn_staff_bonus")
+
+func _on_healed(_amount: int, player_node: Node, player_id: int) -> void:
+	if not InventoryManager.has_item(player_id, "holy_ring"):
+		return
+	var bonus = randi_range(1, 6)
+	var hc = player_node.get_node_or_null("HealthComponent")
+	if hc:
+		hc.heal(bonus)
+		EventNotifier.show_message("Holy Ring: +%d Bonus Heal!" % bonus, Color.MEDIUM_SPRING_GREEN)
+
+func _on_downed(attacker: Node, player_node: Node, player_id: int) -> void:
+	if not InventoryManager.has_item(player_id, "clock_chronos"):
+		return
+	if player_node.get_meta("clock_chronos_revived", false):
+		return
+	player_node.set_meta("clock_chronos_revived", true)
+	var hc = player_node.get_node_or_null("HealthComponent")
+	if hc:
+		hc.revive(0.01)
+		EventNotifier.show_message("Clock o' Chronos: Revived with 1% HP!", Color.LIGHT_SKY_BLUE)
 
 func _on_combat_hud_ready(player_id: int, ap_mgr: Node, mov_mgr: Node, resource_mgr: Node) -> void:
 	_managers[player_id] = {
@@ -274,24 +301,35 @@ func _on_entity_died(entity: Node, killer: Node) -> void:
 		return
 	var player_id = int(kpid)
 	
-	# 1. Blade o' Wrath: Kill Enemy → Gain +1 Flat Damage stack (max 7)
+	# 1. Blade o' Wrath: Kill Enemy → Gain +1 Flat Damage stack (no max)
 	if InventoryManager.has_item(player_id, "blade_wrath"):
 		var current = killer.get_meta("blade_wrath_stacks", 0)
-		var next = min(current + 1, 7)
+		var next = current + 1
 		killer.set_meta("blade_wrath_stacks", next)
 		var stats = killer.get_node_or_null("StatsComponent") as StatsComponent
 		if stats != null:
 			stats.set_mod_source("blade_wrath_stacks", {"physical_damage": next, "magical_damage": next})
-		EventNotifier.show_message("Blade o' Wrath: Stack %d/7 (+%d DMG)" % [next, next], Color.RED)
+		EventNotifier.show_message("Blade o' Wrath: Stack %d (+%d DMG)" % [next, next], Color.RED)
 		
-	# 2. Mask o' Gluttony: Heals +10 HP on kill
+	# 2. Berserker Axe: Kill Enemy → +1d4 STR (stacks)
+	if InventoryManager.has_item(player_id, "berserker_axe"):
+		var roll = randi_range(1, 4)
+		var current_str = killer.get_meta("berserker_str_stacks", 0)
+		var next_str = current_str + roll
+		killer.set_meta("berserker_str_stacks", next_str)
+		var stats = killer.get_node_or_null("StatsComponent") as StatsComponent
+		if stats != null:
+			stats.set_mod_source("berserker_axe_buff", {"str": next_str})
+		EventNotifier.show_message("Berserker Axe: +%d STR (total %d)" % [roll, next_str], Color.ORANGE_RED)
+
+	# 3. Mask o' Gluttony: Heals +10 HP on kill
 	if InventoryManager.has_item(player_id, "mask_gluttony"):
 		var hc = killer.get_node_or_null("HealthComponent")
 		if hc:
 			hc.heal(10)
 			EventNotifier.show_message("Mask o' Gluttony heals +10 HP!", Color.GREEN)
 			
-	# 3. Skywalker: +2 tiles movement on kill
+	# 4. Skywalker: +2 tiles movement on kill
 	if InventoryManager.has_item(player_id, "skywalker"):
 		var mov_mgr = _managers.get(player_id, {}).get("mov")
 		if mov_mgr:
@@ -299,7 +337,7 @@ func _on_entity_died(entity: Node, killer: Node) -> void:
 			mov_mgr.movement_changed.emit(mov_mgr.current_tiles, mov_mgr.max_tiles)
 			EventNotifier.show_message("Skywalker: +2 Moves!", Color.AQUA)
 			
-	# 4. Holymoly Necklace: +1 slot cap / +1 Charge
+	# 5. Holymoly Necklace: +1 slot cap / +1 Charge
 	if InventoryManager.has_item(player_id, "holymoly_necklace"):
 		if player_id == 1:
 			var ec = _managers.get(player_id, {}).get("res")
@@ -309,7 +347,7 @@ func _on_entity_died(entity: Node, killer: Node) -> void:
 			if ss: ss.restore_slots(1, 1)
 		EventNotifier.show_message("Holymoly Necklace: +1 Charge/Spell Slot!", Color.MEDIUM_PURPLE)
 		
-	# 5. Red Cape: First kill in this Combat → +2 All Stats until combat ends
+	# 6. Red Cape: First kill in this Combat → +2 All Stats until combat ends
 	if InventoryManager.has_item(player_id, "red_cape") and not killer.has_meta("red_cape_triggered"):
 		killer.set_meta("red_cape_triggered", true)
 		var stats = killer.get_node_or_null("StatsComponent") as StatsComponent
@@ -319,12 +357,12 @@ func _on_entity_died(entity: Node, killer: Node) -> void:
 			})
 		EventNotifier.show_message("Red Cape triggered: +2 All Stats!", Color.CRIMSON)
 		
-	# 6. Egg Pouch: +10 coins on kill
+	# 7. Egg Pouch: +10 coins on kill
 	if InventoryManager.has_item(player_id, "egg_pouch") and CoinEconomy != null:
 		CoinEconomy.add_coins(player_id, 10)
 		EventNotifier.show_message("Egg Pouch: +10 Coins!", Color.YELLOW)
 		
-	# 7. White Robe: Ally kills an enemy → +1 BAP
+	# 8. White Robe: Ally kills an enemy → +1 BAP
 	# Trigger white robe for the OTHER player
 	var ally_id = 2 if player_id == 1 else 1
 	var ally = _get_player_by_id(ally_id)
@@ -349,12 +387,12 @@ func _on_turn_started(entity: Node, player_id: int) -> void:
 				EventNotifier.show_message("Crown o' Pride heals +%d HP!" % amt, Color.GOLD)
 		entity.set_meta("was_hit_since_last_turn", false)
 		
-	# Gauntlet o' Sloth: gain lazy stack if didn't move
+	# Gauntlet o' Sloth: gain lazy stack if didn't move (no max)
 	if InventoryManager.has_item(player_id, "gauntlet_sloth"):
 		if not entity.get_meta("moved_this_turn", false):
 			var current = entity.get_meta("lazy_stacks", 0)
-			entity.set_meta("lazy_stacks", min(current + 1, 5))
-			EventNotifier.show_message("Gauntlet o' Sloth: Lazy Stack (%d/5)" % min(current + 1, 5), Color.GOLDENROD)
+			entity.set_meta("lazy_stacks", current + 1)
+			EventNotifier.show_message("Gauntlet o' Sloth: Lazy Stack (%d)" % (current + 1), Color.GOLDENROD)
 		entity.set_meta("moved_this_turn", false)
 		
 	# Sleeping Bag & Sleeping Pouch recovery
@@ -410,6 +448,7 @@ func reset() -> void:
 	# Clear metadata on players when run resets
 	for player in get_tree().get_nodes_in_group("players"):
 		player.remove_meta("blade_wrath_stacks")
+		player.remove_meta("berserker_str_stacks")
 		player.remove_meta("lazy_stacks")
 		player.remove_meta("was_hit_since_last_turn")
 		player.remove_meta("moved_this_turn")
@@ -419,6 +458,7 @@ func reset() -> void:
 		var stats = player.get_node_or_null("StatsComponent") as StatsComponent
 		if stats != null:
 			stats.remove_mod_source("blade_wrath_stacks")
+			stats.remove_mod_source("berserker_axe_buff")
 			stats.remove_mod_source("red_cape_buff")
 			stats.remove_mod_source("robe_envy_hit")
 			stats.remove_mod_source("ant_fang_bonus")

@@ -74,9 +74,22 @@ var bg_panel: Panel = null
 # ── BUILD UI ──────────────────────────────────────────────────────────────────
 
 func _ready() -> void:
+	# Move self to a top-level CanvasLayer so it always renders above RoguelikeUIShell (layer 100)
+	if is_inside_tree() and not get_parent() is CanvasLayer:
+		var layer = CanvasLayer.new()
+		layer.layer = 129
+		layer.name = "StatDebugCanvasLayer"
+		var p = get_parent()
+		call_deferred("_reparent_to_layer", p, layer)
+
 	_build_ui()
 	_find_entities()
 	_refresh_all()
+
+func _reparent_to_layer(old_parent: Node, layer: CanvasLayer) -> void:
+	old_parent.remove_child(self)
+	old_parent.add_child(layer)
+	layer.add_child(self)
 
 
 func _build_ui() -> void:
@@ -100,22 +113,16 @@ func _build_ui() -> void:
 	bg_panel.add_theme_stylebox_override("panel", style)
 	add_child(bg_panel)
 
-	# ── Scroll container ──────────────────────────────────────────────────────
-	var scroll := ScrollContainer.new()
-	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	add_child(scroll)
-
-	var vbox := VBoxContainer.new()
-	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	vbox.add_theme_constant_override("separation", 4)
-	scroll.add_child(vbox)
+	# ── Main VBox ─────────────────────────────────────────────────────────────
+	var main_vbox := VBoxContainer.new()
+	main_vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(main_vbox)
 
 	# ── Header ────────────────────────────────────────────────────────────────
 	var header_container = MarginContainer.new()
 	header_container.mouse_filter = Control.MOUSE_FILTER_STOP
 	header_container.gui_input.connect(_on_header_gui_input)
-	vbox.add_child(header_container)
+	main_vbox.add_child(header_container)
 
 	var header := Label.new()
 	header.text = "🎛  STAT DEBUG MANIPULATOR"
@@ -131,16 +138,26 @@ func _build_ui() -> void:
 	hint.add_theme_color_override("font_color", Color(0.6, 0.6, 0.7))
 	hint.add_theme_font_size_override("font_size", 10)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vbox.add_child(hint)
+	main_vbox.add_child(hint)
 
-	_add_separator(vbox)
+	_add_separator(main_vbox)
+
+	# ── Scroll container ──────────────────────────────────────────────────────
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	main_vbox.add_child(scroll)
+
+	var vbox := VBoxContainer.new()
+	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	vbox.add_theme_constant_override("separation", 4)
+	scroll.add_child(vbox)
 
 	# ── Resize Handle ─────────────────────────────────────────────────────────
 	var resize_handle = ColorRect.new()
 	resize_handle.color = Color(1, 1, 1, 0.15)
 	resize_handle.custom_minimum_size = Vector2(25, 25)
-	resize_handle.size_flags_horizontal = Control.SIZE_SHRINK_END
-	resize_handle.size_flags_vertical = Control.SIZE_SHRINK_END
+	resize_handle.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
 	resize_handle.mouse_default_cursor_shape = Control.CURSOR_FDIAGSIZE
 	resize_handle.gui_input.connect(_on_resize_gui_input)
 	add_child(resize_handle)
@@ -469,6 +486,7 @@ func _on_button_held(stat_key: String, player_id: int, delta: int, btn: Button) 
 	_held_callback = _step_stat.bind(stat_key, player_id, delta)
 	_hold_timer    = 0.0
 	_hold_triggered = false
+	_step_stat(stat_key, player_id, delta)
 
 
 func _on_button_released() -> void:
