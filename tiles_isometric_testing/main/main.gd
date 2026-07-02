@@ -1,10 +1,17 @@
 # main/main.gd
 # Tanggung jawab:
-#   Entry scene utama — orchestrator roguelike loop.
-#   Handles MAP → COMBAT → LOOT → MAP flow.
+#   Entry scene utama untuk spawn player/enemy, cursor, debug UI, dan combat bridge.
+#   Base stat entity sekarang dibaca dari StatDataDB JSON.
+#
+# Cara pakai:
+#   Jalankan Main.tscn.
+#   Ubah data aktif di res://data/stat_module/entity_base_stats/*.json.
+#
+# Cara evaluasi:
+#   1. Ubah vit/str/acc Aria atau Goblin di JSON.
+#   2. Jalankan ulang Main.tscn.
+#   3. Tekan F1 dan pastikan debug stats mengikuti JSON.
 extends Node2D
-
-enum GameState { MAP, COMBAT, LOOT, GAME_OVER }
 
 @onready var world: Node2D = $World
 @onready var debug_panel: Control = $DebugUI/Root/DebugPanel
@@ -12,7 +19,6 @@ enum GameState { MAP, COMBAT, LOOT, GAME_OVER }
 @onready var debug_tooltip: Label = $DebugUI/Root/DebugTooltip
 @onready var ui_root: Control = $DebugUI/Root
 
-var _game_state: int = GameState.MAP
 var _show_debug_panel:  bool = false
 var _show_dice_sandbox: bool = false
 var _show_debug_grid:   bool = false
@@ -20,33 +26,30 @@ var _show_f3_debug:     bool = false
 var _show_squiggles:    bool = false
 var _squiggle_noise:    NoiseTexture2D = null
 var _split_screen: SplitScreenManager = null
-var _stat_debug_panel: StatDebugPanel = null
+var _stat_debug_panel: StatDebugPanel = null  # Debug stat manipulator (F1)
 var roguelike_ui_shell: CanvasLayer = null
 var _action_wheel_overlay: Control = null
 var _inspect_overlay: Control = null
-var _combat_bridge: Node = null
-var _kb_cursor_p1: Node2D = null
-var _kb_cursor_p2: Node2D = null
-var _pause_menu: CanvasLayer = null
 
 func _ready() -> void:
 	var cursor_scene := preload("res://world/SelectionCursor.tscn")
-
-	GridManager.load_walls_for_map(1)
-
-	# ── Roguelike Shell ──────────────────────────────────────────────────────
+	
+	# Instantiate Roguelike UI early
 	var shell_scene = load("res://ui/roguelike/RoguelikeUIShell.tscn")
 	if shell_scene:
 		roguelike_ui_shell = shell_scene.instantiate()
 		add_child(roguelike_ui_shell)
 
+	GridManager.load_walls_for_map(1) # manggil mapping
+
 	# ── Setup Split-Screen ────────────────────────────────────────────────────
 	_setup_split_screen()
 
-	# ── Spawn Players ─────────────────────────────────────────────────────────
-	var bottom_y := GridManager.grid_size.y - 2
-	var p1: Node = _spawn_player_from_json("aria", "Fighter", 1, Vector2i(5, bottom_y))
-	var p2: Node = _spawn_player_from_json("kael", "Wizard", 2, Vector2i(7, bottom_y))
+	# ── Spawn Player 1 ────────────────────────────────────────────────────────
+	var p1: Node = _spawn_player_from_json("aria", "Fighter", 1, Vector2i(5, 7))
+
+	# ── Spawn Player 2 ────────────────────────────────────────────────────────
+	var p2: Node = _spawn_player_from_json("kael", "Wizard", 2, Vector2i(7, 7))
 
 	var p1_class := p1.get_node_or_null("ClassComponent") as ClassComponent
 	if p1_class != null:
@@ -59,7 +62,7 @@ func _ready() -> void:
 	TurnManager.register_player(p1)
 	TurnManager.register_player(p2)
 
-	# ── Selection Cursors ────────────────────────────────────────────────────
+	# ── Spawn Selection Cursor ────────────────────────────────────────────────
 	var c1 = cursor_scene.instantiate()
 	var c2 = cursor_scene.instantiate()
 	world.entities.add_child(c1)
@@ -67,63 +70,59 @@ func _ready() -> void:
 	c1.bind(p1)
 	c2.bind(p2)
 
-	# ── Keyboard Cursors ─────────────────────────────────────────────────────
-	_kb_cursor_p1 = Node2D.new()
-	_kb_cursor_p1.name = "KeyboardTileCursor_P1"
-	_kb_cursor_p1.set_script(load("res://world/KeyboardTileCursor.gd"))
-	_kb_cursor_p1.set("player_id", 1)
-	world.entities.add_child(_kb_cursor_p1)
-	_kb_cursor_p1.global_position = p1.position
-	p1.bind_cursor(_kb_cursor_p1)
+	# ── Spawn Keyboard Cursors ────────────────────────────────────────────────
+	var kb_cursor_p1 := Node2D.new()
+	kb_cursor_p1.name = "KeyboardTileCursor_P1"
+	kb_cursor_p1.set_script(load("res://world/KeyboardTileCursor.gd"))
+	kb_cursor_p1.set("player_id", 1)
+	world.entities.add_child(kb_cursor_p1)
+	kb_cursor_p1.global_position = p1.position
+	p1.bind_cursor(kb_cursor_p1)
 
-	_kb_cursor_p2 = Node2D.new()
-	_kb_cursor_p2.name = "KeyboardTileCursor_P2"
-	_kb_cursor_p2.set_script(load("res://world/KeyboardTileCursor.gd"))
-	_kb_cursor_p2.set("player_id", 2)
-	world.entities.add_child(_kb_cursor_p2)
-	_kb_cursor_p2.global_position = p2.position
-	p2.bind_cursor(_kb_cursor_p2)
+	var kb_cursor_p2 := Node2D.new()
+	kb_cursor_p2.name = "KeyboardTileCursor_P2"
+	kb_cursor_p2.set_script(load("res://world/KeyboardTileCursor.gd"))
+	kb_cursor_p2.set("player_id", 2)
+	world.entities.add_child(kb_cursor_p2)
+	kb_cursor_p2.global_position = p2.position
+	p2.bind_cursor(kb_cursor_p2)
 
-	# ── Camera Focus ─────────────────────────────────────────────────────────
+	# ── Fokus kamera ke posisi spawn + bind camera_ref ke cursor ────────────
 	if _split_screen != null:
 		_split_screen.focus_camera(1, p1.position)
 		_split_screen.focus_camera(2, p2.position)
-		_kb_cursor_p1.set("camera_ref", _split_screen.cam_p1)
-		_kb_cursor_p2.set("camera_ref", _split_screen.cam_p2)
+		# Bind camera ke cursor agar cursor selalu terkunci di tengah viewport
+		kb_cursor_p1.set("camera_ref", _split_screen.cam_p1)
+		kb_cursor_p2.set("camera_ref", _split_screen.cam_p2)
 
-	# ── Non-visual Overlays ───────────────────────────────────────────────────
+	# ── Spawn enemy placeholder untuk testing combat_core ─────────────────────
+	_spawn_enemy_from_json("goblin", "Goblin Mosquito", Vector2i(5, 5), Color(0.3, 0.9, 0.3, 1.0))
+	_spawn_enemy_from_json("orc", "Orc Grasshopper", Vector2i(8, 4), Color(0.9, 0.4, 0.1, 1.0))
+	_spawn_enemy_from_json("beetle", "Elite Beetle", Vector2i(9, 7), Color(0.1, 0.6, 0.9, 1.0))
+
+	# ── CombatTestBridge ──────────────────────────────────────────────────────
+	var bridge := Node.new()
+	bridge.name = "CombatTestBridge"
+	bridge.set_script(load("res://combat_core/tests/CombatTestBridge.gd"))
+	add_child(bridge)
+
+	TurnManager.start_battle()
+
+	# ── Floating Text Manager (damage/heal/miss popups) ───────────────────────
 	_spawn_floating_text_manager()
-	_spawn_stat_debug_panel()
-	_spawn_action_wheel_overlay()
-	_spawn_inspect_overlay(_kb_cursor_p1, _kb_cursor_p2)
 
-	# ── Pause Menu ───────────────────────────────────────────────────────────
-	_pause_menu = load("res://ui/menu/PauseMenu.gd").new()
-	add_child(_pause_menu)
-	_pause_menu.continue_pressed.connect(_on_pause_continue)
-	_pause_menu.quit_pressed.connect(_on_pause_quit)
+	# ── Stat Debug Panel ─────────────────────────────────────────────────────
+	_spawn_stat_debug_panel()
+
+	# ── Battle Action Wheel Overlay ──────────────────────────────────────────
+	_spawn_action_wheel_overlay()
+
+	# ── Inspect Window Overlay ───────────────────────────────────────────────
+	_spawn_inspect_overlay(kb_cursor_p1, kb_cursor_p2)
+
+	_setup_god_rays()
 
 	_apply_debug_visibility()
-
-	# ── Game Flow Signals ─────────────────────────────────────────────────────
-	EventBus.start_combat.connect(_on_start_combat)
-	EventBus.combat_ended.connect(_on_combat_ended)
-	EventBus.entity_died.connect(_on_entity_died)
-	if roguelike_ui_shell:
-		roguelike_ui_shell.screen_changed.connect(_on_shell_screen_changed)
-
-	# ── Start Roguelike Run ───────────────────────────────────────────────────
-	if RunManager:
-		RunManager.start_run()
-
-	# ── Show Map ──────────────────────────────────────────────────────────────
-	if roguelike_ui_shell:
-		roguelike_ui_shell.show_screen("res://ui/roguelike/MapScreen.tscn")
-	_game_state = GameState.MAP
-	InputManager.is_in_menu = true
-
-	# ── God rays last — contains await, purely cosmetic ─────────────────────
-	_setup_god_rays()
 
 
 func _setup_god_rays() -> void:
@@ -274,118 +273,6 @@ func _spawn_inspect_overlay(c1: Node2D, c2: Node2D) -> void:
 	print("[Main] Inspect overlay siap")
 
 
-# ── GAME FLOW ──────────────────────────────────────────────────────────────────
-
-func _on_start_combat(node_type: int) -> void:
-	if _game_state != GameState.MAP:
-		return
-	_enter_combat_mode(node_type)
-
-func _enter_combat_mode(node_type: int) -> void:
-	_game_state = GameState.COMBAT
-	InputManager.is_in_menu = false
-
-	if roguelike_ui_shell:
-		roguelike_ui_shell.hide_ui()
-
-	_clear_enemies()
-	_spawn_enemies_for_node(node_type)
-
-	TurnManager.reset_battle()
-
-	_combat_bridge = Node.new()
-	_combat_bridge.name = "CombatTestBridge"
-	_combat_bridge.set_script(load("res://combat_core/tests/CombatTestBridge.gd"))
-	add_child(_combat_bridge)
-
-	TurnManager.start_battle()
-
-func _on_shell_screen_changed(screen_path: String) -> void:
-	if screen_path.contains("MapScreen"):
-		_game_state = GameState.MAP
-		InputManager.is_in_menu = true
-	elif screen_path.contains("LootScreen"):
-		_game_state = GameState.LOOT
-
-func _on_combat_ended(result: String) -> void:
-	if _game_state == GameState.COMBAT:
-		if result == "victory":
-			_clear_enemies()
-			if _combat_bridge:
-				_combat_bridge.queue_free()
-				_combat_bridge = null
-			TurnManager._battle_finished = true
-			if roguelike_ui_shell:
-				roguelike_ui_shell.show_screen("res://ui/roguelike/LootScreen.tscn")
-		elif result == "defeat":
-			_game_state = GameState.GAME_OVER
-			_clear_enemies()
-			if _combat_bridge:
-				_combat_bridge.queue_free()
-				_combat_bridge = null
-			TurnManager._battle_finished = true
-			EventNotifier.show_message("Party Defeated!", Color.RED)
-			await get_tree().create_timer(1.5).timeout
-			var result_screen = load("res://ui/roguelike/RunResultScreen.gd").new()
-			result_screen.set_state(false)
-			add_child(result_screen)
-
-func _on_pause_continue() -> void:
-	if _pause_menu:
-		_pause_menu.hide_pause()
-
-func _on_pause_quit() -> void:
-	if _pause_menu:
-		_pause_menu.visible = false
-	get_tree().paused = false
-	get_tree().change_scene_to_file("res://ui/menu/MainMenu.tscn")
-
-func _on_entity_died(entity: Node, _killer: Node) -> void:
-	if _game_state != GameState.COMBAT:
-		return
-	if entity.is_in_group("enemies"):
-		var any_alive := false
-		for e in get_tree().get_nodes_in_group("enemies"):
-			if not is_instance_valid(e):
-				continue
-			var alive: Variant = e.get("is_alive")
-			if alive == null:
-				var hc := e.get_node_or_null("HealthComponent") as HealthComponent
-				if hc != null and not hc.is_dead() and not hc.is_downed():
-					any_alive = true
-					break
-			elif bool(alive):
-				any_alive = true
-				break
-		if not any_alive:
-			EventBus.combat_ended.emit("victory")
-
-func _spawn_enemies_for_node(node_type: int) -> void:
-	var center := 8
-	var top := 4
-	match node_type:
-		NodeGraph.NodeType.BATTLE:
-			_spawn_enemy_from_json("goblin", "Goblin", Vector2i(center - 3, top + 2), Color(0.3, 0.9, 0.3, 1.0))
-			_spawn_enemy_from_json("orc", "Orc", Vector2i(center + 2, top), Color(0.9, 0.4, 0.1, 1.0))
-			_spawn_enemy_from_json("beetle", "Beetle", Vector2i(center + 1, top + 3), Color(0.1, 0.6, 0.9, 1.0))
-		NodeGraph.NodeType.ELITE:
-			_spawn_enemy_from_json("orc", "Elite Orc", Vector2i(center - 2, top + 1), Color(0.9, 0.2, 0.1, 1.0))
-			_spawn_enemy_from_json("beetle", "Elite Beetle", Vector2i(center + 2, top + 2), Color(0.9, 0.4, 0.1, 1.0))
-		NodeGraph.NodeType.BOSS:
-			_spawn_enemy_from_json("beetle", "Boss Beetle", Vector2i(center, top + 1), Color(0.9, 0.1, 0.1, 1.0))
-		_:
-			_spawn_enemy_from_json("goblin", "Goblin", Vector2i(center - 2, top + 1), Color(0.3, 0.9, 0.3, 1.0))
-			_spawn_enemy_from_json("orc", "Orc", Vector2i(center + 2, top), Color(0.9, 0.4, 0.1, 1.0))
-
-func _clear_enemies() -> void:
-	for e in get_tree().get_nodes_in_group("enemies"):
-		if is_instance_valid(e):
-			if e.has_method("get_grid_pos"):
-				var gp = e.get_grid_pos()
-				if GridManager.get_entity_at(gp) == e:
-					GridManager.unregister_entity(gp)
-			e.queue_free()
-
 # ── SPLIT-SCREEN SETUP ───────────────────────────────────────────────────────
 
 func _setup_split_screen() -> void:
@@ -411,12 +298,6 @@ func _setup_split_screen() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("pause_menu") and _game_state != GameState.GAME_OVER:
-		if _pause_menu and _pause_menu.visible:
-			_pause_menu.hide_pause()
-		elif _pause_menu:
-			_pause_menu.show_pause()
-		return
 	if event is InputEventKey and event.pressed and not event.echo:
 		match event.keycode:
 			KEY_F1:
@@ -436,9 +317,6 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_T:
 				print("--- 'T' KEY DETECTED ---")
 				_run_all_tests()
-			KEY_M:
-				if _game_state == GameState.MAP and roguelike_ui_shell != null:
-					roguelike_ui_shell.toggle()
 			_:
 				return
 		_apply_debug_visibility()
