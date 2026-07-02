@@ -171,6 +171,10 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 			bridge._set_player_busy(pid, true)
 			if is_instance_valid(attacker) and attacker.has_method("play_attack"):
 				attacker.play_attack(_base_ability_id)
+				var am_s = get_node_or_null("/root/AudioManager")
+				if am_s != null:
+					am_s.play_sfx("sword_slice" if ability == null or ability.ability_type == 0 else "spell_impact")
+				bridge.vfx_controller._play_skill_cast_vfx(attacker, _base_ability_id, ability.ability_type if ability != null else 0, ability.element_tag if ability != null else "physical")
 				await get_tree().create_timer(0.2).timeout
 				
 			var a_grid = attacker.get("grid_pos")
@@ -306,6 +310,10 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 		if hit:
 			if is_instance_valid(attacker) and attacker.has_method("play_attack"):
 				attacker.play_attack(_base_ability_id)
+				var am_e = get_node_or_null("/root/AudioManager")
+				if am_e != null:
+					am_e.play_sfx("sword_slice" if ability == null or ability.ability_type == 0 else "spell_impact")
+				bridge.vfx_controller._play_skill_cast_vfx(attacker, _base_ability_id, ability.ability_type if ability != null else 0, ability.element_tag if ability != null else "physical")
 				_played_attack = true
 				await get_tree().create_timer(0.6, false).timeout
 		
@@ -330,6 +338,10 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 		if hit:
 			if not _played_attack and is_instance_valid(attacker) and attacker.has_method("play_attack"):
 				attacker.play_attack(_base_ability_id)
+				var am_p = get_node_or_null("/root/AudioManager")
+				if am_p != null:
+					am_p.play_sfx("sword_slice" if ability == null or ability.ability_type == 0 else "spell_impact")
+				bridge.vfx_controller._play_skill_cast_vfx(attacker, _base_ability_id, ability.ability_type if ability != null else 0, ability.element_tag if ability != null else "physical")
 				_played_attack = true
 				await get_tree().create_timer(0.6, false).timeout
 			
@@ -339,6 +351,10 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 	if hit and ability != null and ability.is_projectile:
 		if not _played_attack and is_instance_valid(attacker) and attacker.has_method("play_attack"):
 			attacker.play_attack(_base_ability_id)
+			var am_pr = get_node_or_null("/root/AudioManager")
+			if am_pr != null:
+				am_pr.play_sfx("sword_slice" if ability.ability_type == 0 else "spell_impact")
+			bridge.vfx_controller._play_skill_cast_vfx(attacker, _base_ability_id, ability.ability_type, ability.element_tag)
 			await get_tree().create_timer(0.2).timeout
 		if target != null:
 			var is_burst_check = ability.get("is_burst_attack") if "is_burst_attack" in ability else false
@@ -362,18 +378,33 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 					affected_pids.append(target_pid)
 			else:
 				affected_enemies.append(t)
-				
-		_shake_cameras(8.0 if not crit else 15.0, affected_pids)
 		
-		# Shake non-players
+		# HUGE SCREEN SHAKE
+		_shake_cameras(15.0 if not crit else 20.0, affected_pids)
+		
+		# Shake non-players violently
 		for e in affected_enemies:
 			if is_instance_valid(e):
 				var tw = create_tween()
 				var o_x = e.position.x
-				tw.tween_property(e, "position:x", o_x - 6, 0.04)
-				tw.tween_property(e, "position:x", o_x + 6, 0.04)
-				tw.tween_property(e, "position:x", o_x - 3, 0.04)
-				tw.tween_property(e, "position:x", o_x, 0.04)
+				var o_y = e.position.y
+				tw.tween_property(e, "position:x", o_x - 12, 0.03)
+				tw.parallel().tween_property(e, "position:y", o_y - 4, 0.03)
+				tw.tween_property(e, "position:x", o_x + 12, 0.03)
+				tw.parallel().tween_property(e, "position:y", o_y + 4, 0.03)
+				tw.tween_property(e, "position:x", o_x - 6, 0.03)
+				tw.tween_property(e, "position:y", o_y, 0.03)
+				tw.tween_property(e, "position:x", o_x, 0.03)
+		
+		# Direct impact SFX (not relying only on EventBus)
+		var am = get_node_or_null("/root/AudioManager")
+		if am != null:
+			var impact_sfx = "impact_heavy_%d" % (randi() % 3 + 1)
+			if crit and ability != null and ability.ability_type == 1:
+				impact_sfx = "explosion_impact"
+			elif ability != null and ability.is_projectile:
+				impact_sfx = "spell_impact" if ability.ability_type == 1 else "sword_slice"
+			am.play_sfx(impact_sfx)
 				
 		_hit_label(attacker, bool(crit))
 
@@ -692,7 +723,7 @@ func _shake_cameras(power: float = 3.0, affected_pids: Array = []) -> void:
 			var cid = c.get("player_id")
 			if cid != null and not affected_pids.has(cid):
 				continue
-			c.shake(power * 0.08, 0.2)
+			c.shake(clampf(power * 0.06, 0.2, 1.0), 0.5 if power > 12.0 else 0.35)
 
 
 func _slow_mo_kill() -> void:
