@@ -55,7 +55,7 @@
       "stat_mods": {
         "con": 3
       },
-      "description": "Per turn without moving → +1 Lazy Stack (max 5). Next attack: consume all stacks for +[stack]d4."
+      "description": "Per turn without moving → +1 Lazy Stack (no max). Next attack: consume all stacks for +[stack]d4."
     },
     "clock_chronos": {
       "display_name": "Clock o' Chronos",
@@ -200,13 +200,24 @@
       },
       "description": "Knockback Enemy 1 tile → Give 1 additional knockback tile."
     },
+    "berserker_axe": {
+      "display_name": "Berserker Axe",
+      "item_type": "weapon",
+      "equip_slot": "hand_right",
+      "rarity": "legendary",
+      "icon_path": "res://assets/ui_assets/placeholder.jpeg",
+      "stat_mods": {
+        "str": 2
+      },
+      "description": "Kill Enemy → +1d4 STR (stacks rest of combat)."
+    },
     "book_chronos_topos": {
       "display_name": "Book of Chronos and Topos",
       "item_type": "accessory",
       "rarity": "epic",
       "icon_path": "res://assets/ui_assets/item_icons/epic/BOOK OF CRONOS AND TOPOS.png",
       "stat_mods": {
-        "ap": 1
+        "action_points": 1
       },
       "description": "+1 Action Point."
     },
@@ -216,7 +227,7 @@
       "rarity": "epic",
       "icon_path": "res://assets/ui_assets/item_icons/epic/BOOK OF SEVEN DEADLY SINS.png",
       "stat_mods": {
-        "bap": 1
+        "bonus_action_points": 1
       },
       "description": "+1 Bonus Action Point."
     },
