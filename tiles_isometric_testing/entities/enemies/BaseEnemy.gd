@@ -311,12 +311,15 @@ func _update_tooltip_visibility() -> void:
 	var tooltip = get_node_or_null("EnemyStatTooltip")
 	if tooltip == null: return
 	
-	if _hovering_players.is_empty() and not _is_my_turn:
+	var p1_active = (_hovering_players.has(1) or _is_my_turn) and not (InputManager != null and InputManager.relic_focus_p1)
+	var p2_active = (_hovering_players.has(2) or _is_my_turn) and not (InputManager != null and InputManager.relic_focus_p2)
+	
+	if not p1_active and not p2_active:
 		tooltip.hide_tooltip()
 	else:
 		var layer_mask := 0
-		if _hovering_players.has(1) or _is_my_turn: layer_mask |= 2 # P1
-		if _hovering_players.has(2) or _is_my_turn: layer_mask |= 4 # P2
+		if p1_active: layer_mask |= 2 # P1
+		if p2_active: layer_mask |= 4 # P2
 		
 		var armor := 0
 		var ap := 0

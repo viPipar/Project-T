@@ -57,6 +57,11 @@ func _process(_delta: float) -> void:
 func _handle_input(player_id: int, window: InspectWindow, cursor: Node2D, side: Control) -> void:
 	if not is_instance_valid(cursor): return
 	
+	# If in relic/unified focus, SplitScreenManager handles the inspect window!
+	var relic_focus = InputManager.relic_focus_p1 if player_id == 1 else InputManager.relic_focus_p2
+	if relic_focus:
+		return
+	
 	# Toggle window on inspect button press
 	if InputManager.has_method("is_inspect_pressed") and InputManager.is_inspect_pressed(player_id):
 		if window._is_visible:
