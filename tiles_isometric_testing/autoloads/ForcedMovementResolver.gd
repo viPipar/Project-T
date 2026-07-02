@@ -13,6 +13,10 @@
 #   3. Pastikan target mundur jika tile kosong, atau kena true damage saat mentok.
 extends Node
 
+# Dash guide:
+#   ForcedMovementResolver.dash_entity(player, Vector2i.RIGHT, 3)
+#   entity.dash(Vector2i.RIGHT, 3) if entity wrapper exists.
+
 const DEFAULT_COLLISION_DAMAGE := 5
 const DEFAULT_DAMAGE_PER_POWER := 2
 const DEFAULT_DAMAGE_TYPE := "true_damage"
@@ -30,6 +34,14 @@ func knockback_from_attack(attacker: Node, target: Node, power: int, options: Di
 	var target_pos: Vector2i = _get_entity_grid_pos(target)
 	var direction: Vector2i = get_direction_from_to(attacker_pos, target_pos)
 	return knockback_entity(target, power, direction, attacker, options)
+
+
+func dash_entity(entity: Node, direction: Vector2i, distance: int, source: Node = null, options: Dictionary = {}) -> Dictionary:
+	var dash_options := options.duplicate(true)
+	dash_options["movement_kind"] = "dash"
+	var result := knockback_entity(entity, distance, direction, source, dash_options)
+	result["kind"] = "dash"
+	return result
 
 
 func knockback_entity(entity: Node, power: int, direction: Vector2i, source: Node = null, options: Dictionary = {}) -> Dictionary:

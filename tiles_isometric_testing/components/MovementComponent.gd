@@ -1,6 +1,10 @@
 extends Node
 class_name MovementComponent
 
+# New dash guide:
+#   movement.dash(Vector2i.RIGHT, 3)
+#   movement.dash(Vector2i.RIGHT, 3, {"free_dash": false})
+
 # ─────────────────────────────────────────────────────────────────────────────
 #  MovementComponent
 #
@@ -128,6 +132,27 @@ func interact_move_to(entity_tile: Vector2i) -> bool:
 	return true
 
 
+## Forced dash API.
+## Example: movement.dash(Vector2i.RIGHT, 3)
+## Default is a free dash. Pass {"free_dash": false} to spend movement_left.
+func dash(direction: Vector2i, distance: int, options: Dictionary = {}) -> Dictionary:
+	var from := _owner_grid_pos()
+	if _owner_is_downed() or _is_moving:
+		return _make_dash_result(false, "blocked", from, from)
+
+	var result := ForcedMovementResolver.dash_entity(owner, direction, distance, owner, options)
+	if bool(result.get("success", false)):
+		var to: Vector2i = result.get("to", from)
+		if not bool(options.get("free_dash", true)):
+			movement_left = maxi(0, movement_left - int(result.get("moved_steps", 0)))
+		if to != from:
+			move_started.emit(from, to)
+			move_finished.emit(from, to)
+			EventBus.player_moved.emit(owner, from, to)
+			_trigger_environment_at(to, "dash_finished", from)
+	return result
+
+
 func has_movement() -> bool:
 	if _owner_is_downed():
 		return false
@@ -201,6 +226,7 @@ func _process(delta: float) -> void:
 			var dest: Vector2i = _path[_path.size() - 1]
 			move_finished.emit(_path[0], dest)
 			EventBus.player_moved.emit(owner, _path[0], dest)
+			_trigger_environment_at(dest, "move_finished", _path[0])
 		else:
 			_travel_t -= 1.0
 			_start_step(_path_index)
@@ -259,6 +285,27 @@ func _owner_is_downed() -> bool:
 		return bool(owner.is_downed())
 	var health := owner.get_node_or_null("HealthComponent") as HealthComponent
 	return health != null and health.is_downed()
+
+
+func _trigger_environment_at(tile: Vector2i, reason: String, from_tile: Vector2i) -> void:
+	if EnvironmentInteractionHandler == null:
+		return
+	EnvironmentInteractionHandler.trigger_tile(owner, tile, {
+		"reason": reason,
+		"from": from_tile,
+	})
+
+
+func _make_dash_result(success: bool, reason: String, from: Vector2i, to: Vector2i) -> Dictionary:
+	return {
+		"kind": "dash",
+		"success": success,
+		"reason": reason,
+		"from": from,
+		"to": to,
+		"moved_steps": 0,
+		"collided": false,
+	}
 
 
 func _walkable_neighbours(center: Vector2i) -> Array[Vector2i]:

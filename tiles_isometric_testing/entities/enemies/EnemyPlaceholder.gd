@@ -6,6 +6,7 @@
 #   var enemy := preload("res://entities/enemies/EnemyPlaceholder.tscn").instantiate()
 #   enemy.place_at(Vector2i(5, 5))
 #   enemy.take_damage(6, player)
+#   enemy.dash(Vector2i.LEFT, 2)
 #
 # Cara evaluasi:
 #   1. Jalankan Main.tscn.
@@ -71,6 +72,13 @@ func place_at(pos: Vector2i) -> void:
 	GridManager.register_entity(pos, self, GridManager.EntityType.ENEMY)
 	position = IsoUtils.world_to_iso(pos)
 	z_index = IsoUtils.get_depth(pos)
+
+
+func dash(direction: Vector2i, distance: int, options: Dictionary = {}) -> Dictionary:
+	var move_comp := get_node_or_null("MovementComponent") as MovementComponent
+	if move_comp != null and move_comp.has_method("dash"):
+		return move_comp.dash(direction, distance, options)
+	return ForcedMovementResolver.dash_entity(self, direction, distance, self, options)
 
 
 func _deferred_place() -> void:

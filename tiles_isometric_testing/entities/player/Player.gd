@@ -6,6 +6,7 @@
 #   var player := preload("res://entities/player/Player.tscn").instantiate()
 #   player.place_at(Vector2i(5, 7))
 #   player.take_damage(4, enemy)
+#   player.dash(Vector2i.RIGHT, 3)
 #
 # Cara evaluasi:
 #   1. Jalankan Main.tscn.
@@ -133,6 +134,13 @@ func _on_confirm() -> void:
 	if target.x < 0:
 		return
 	_update_facing_from_to(grid_pos, target)
+
+	var interaction := EnvironmentInteractionHandler.interact_at(self, target, {
+		"reason": "confirm",
+		"player_id": player_id,
+	})
+	if bool(interaction.get("handled", false)):
+		return
 
 	var occupant := GridManager.get_entity_at(target)
 	var entity_type := GridManager.get_entity_type(target)
@@ -420,6 +428,12 @@ func place_at(pos: Vector2i) -> void:
 	GridManager.register_entity(pos, self, GridManager.EntityType.PLAYER)
 	position = IsoUtils.world_to_iso(pos)
 	z_index  = IsoUtils.get_depth(pos)
+
+
+func dash(direction: Vector2i, distance: int, options: Dictionary = {}) -> Dictionary:
+	if movement != null and movement.has_method("dash"):
+		return movement.dash(direction, distance, options)
+	return ForcedMovementResolver.dash_entity(self, direction, distance, self, options)
 
 
 func take_damage(amount: int, attacker: Node = null, damage_type: String = "physical") -> int:

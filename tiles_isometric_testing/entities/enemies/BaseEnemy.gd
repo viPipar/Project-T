@@ -6,6 +6,7 @@
 #   var enemy := preload("res://entities/enemies/BaseEnemy.tscn").instantiate()
 #   enemy.enemy_data = some_enemy_data
 #   enemy.place_at(Vector2i(8, 5))
+#   enemy.dash(Vector2i.LEFT, 2)
 #
 # Cara evaluasi:
 #   1. Buka BaseEnemy.tscn dan pastikan child component lengkap.
@@ -93,6 +94,12 @@ func place_at(pos: Vector2i) -> void:
 	GridManager.register_entity(pos, self, GridManager.EntityType.ENEMY)
 	position = IsoUtils.world_to_iso(pos)
 	z_index = IsoUtils.get_depth(pos)
+
+
+func dash(direction: Vector2i, distance: int, options: Dictionary = {}) -> Dictionary:
+	if movement != null and movement.has_method("dash"):
+		return movement.dash(direction, distance, options)
+	return ForcedMovementResolver.dash_entity(self, direction, distance, self, options)
 
 
 # -----------------------------------------------------------------------------
