@@ -15,6 +15,137 @@ var p1_choice: int = -1
 var p2_choice: int = -1
 var timer: Timer = null
 
+func _get_live_player(player_id: int) -> Node:
+	for p in get_tree().get_nodes_in_group("players"):
+		var pid = p.get("player_id")
+		if pid != null and int(pid) == player_id:
+			return p
+	return null
+
+func _get_player_ids() -> Array[int]:
+	var result: Array[int] = []
+	for p in get_tree().get_nodes_in_group("players"):
+		var pid = p.get("player_id")
+		if pid != null and not result.has(int(pid)):
+			result.append(int(pid))
+	if result.is_empty():
+		result = [1, 2]
+	return result
+
+func _get_player_lck(player_id: int) -> int:
+	var player := _get_live_player(player_id)
+	if player != null:
+		if StatSystem != null:
+			return StatSystem.get_lck(player)
+		if player.has_node("StatsComponent"):
+			return player.get_node("StatsComponent").get_stat("lck")
+
+	if RunManager != null:
+		var state: Dictionary = RunManager.get_player_state(player_id)
+		var lck := int(state.get("base_stats", {}).get("lck", 0))
+		for effect in state.get("active_effects", []):
+			if effect is Dictionary:
+				var mods: Dictionary = {}
+				var raw_mods = effect.get("mods", {})
+				if raw_mods is Dictionary:
+					mods = raw_mods as Dictionary
+				lck += int(mods.get("lck", 0))
+		return maxi(0, lck)
+	return 0
+
+func _add_item(player_id: int, item_id: String) -> void:
+	if InventoryManager != null:
+		InventoryManager.add_item(player_id, item_id)
+	elif RunManager != null and RunManager.has_method("add_run_item"):
+		RunManager.add_run_item(player_id, item_id, false)
+
+func _heal_player(player_id: int, amount: int) -> void:
+	var player := _get_live_player(player_id)
+	if player != null:
+		var hc = player.get_node_or_null("HealthComponent")
+		if hc != null and hc.has_method("heal"):
+			hc.heal(amount)
+	if RunManager != null and RunManager.has_method("heal_run_player"):
+		RunManager.heal_run_player(player_id, amount)
+
+func _damage_player(player_id: int, amount: int) -> void:
+	var player := _get_live_player(player_id)
+	if player != null:
+		var hc = player.get_node_or_null("HealthComponent")
+		if hc != null and hc.has_method("take_damage"):
+			hc.take_damage(amount, null, "true_damage")
+	if RunManager != null and RunManager.has_method("damage_run_player"):
+		RunManager.damage_run_player(player_id, amount)
+
+func _damage_player_percent(player_id: int, percent: float) -> void:
+	var player := _get_live_player(player_id)
+	var max_hp := 20
+	if player != null:
+		var hc = player.get_node_or_null("HealthComponent")
+		if hc != null:
+			max_hp = int(hc.get("max_hp")) if hc.get("max_hp") != null else max_hp
+			if hc.has_method("take_damage"):
+				hc.take_damage(int(max_hp * percent), null, "true_damage")
+	if RunManager != null:
+		if RunManager.has_method("get_run_max_hp"):
+			max_hp = RunManager.get_run_max_hp(player_id)
+		if RunManager.has_method("damage_run_player"):
+			RunManager.damage_run_player(player_id, int(max_hp * percent))
+
+func _add_coins(player_id: int, amount: int) -> void:
+	if CoinEconomy != null:
+		CoinEconomy.add_coins(player_id, amount)
+	elif RunManager != null and RunManager.has_method("add_run_coins"):
+		RunManager.add_run_coins(player_id, amount, false)
+
+func _deduct_coin_percent(player_id: int, percent: float) -> void:
+	if CoinEconomy != null:
+		var balance = CoinEconomy.get_balance(player_id)
+		CoinEconomy.deduct_coins(player_id, int(balance * percent))
+	elif RunManager != null:
+		var state: Dictionary = RunManager.get_player_state(player_id)
+		RunManager.add_run_coins(player_id, -int(int(state.get("coins", 0)) * percent), false)
+
+func _add_base_stat(player_id: int, stat_key: String, amount: int) -> void:
+	var player := _get_live_player(player_id)
+	var normalized_key := RunPlayerState.normalize_stat_key(stat_key)
+	if player != null:
+		var stats = player.get_node_or_null("StatsComponent")
+		if stats != null and stats.has_method("add_base_stat"):
+			stats.add_base_stat(normalized_key, amount)
+	if RunManager != null and RunManager.has_method("add_run_base_stat"):
+		RunManager.add_run_base_stat(player_id, normalized_key, amount)
+
+func _apply_until_rest_debuff(player_id: int, stat_key: String, amount: int) -> void:
+	var normalized_key := RunPlayerState.normalize_stat_key(stat_key)
+	var source_id := "debuff:luck_%s" % normalized_key
+	if RunManager != null and RunManager.has_method("apply_run_effect"):
+		RunManager.apply_run_effect(player_id, {
+			"id": "luck_%s" % normalized_key,
+			"kind": "debuff",
+			"source_id": source_id,
+			"mods": {normalized_key: amount},
+			"stacks": 1,
+			"duration_type": "until_rest",
+			"remaining": -1,
+		})
+		return
+
+	var player := _get_live_player(player_id)
+	if player != null:
+		player.set_meta("luck_debuff_attr", normalized_key)
+		player.set_meta("luck_debuff_amount", amount)
+		var stats = player.get_node_or_null("StatsComponent")
+		if stats != null and stats.has_method("set_mod_source"):
+			stats.set_mod_source(source_id, {normalized_key: amount})
+
+func _snapshot_run() -> void:
+	if RunManager != null:
+		if RunManager.has_method("snapshot_all_players"):
+			RunManager.snapshot_all_players()
+		elif RunManager.has_method("save_run_to_disk"):
+			RunManager.save_run_to_disk()
+
 func _setup_timer() -> void:
 	if timer == null:
 		timer = Timer.new()
@@ -73,15 +204,12 @@ func _resolve_event(choice_index: int) -> void:
 	if dc > 0:
 		# Calculate Average Luck modifier of players
 		var avg_lck = 0.0
-		var players = get_tree().get_nodes_in_group("players")
-		if players.size() > 0:
+		var player_ids := _get_player_ids()
+		if player_ids.size() > 0:
 			var total_lck = 0
-			for p in players:
-				if StatSystem != null:
-					total_lck += StatSystem.get_lck(p)
-				elif p.has_node("StatsComponent"):
-					total_lck += p.get_node("StatsComponent").lck
-			avg_lck = float(total_lck) / players.size()
+			for player_id in player_ids:
+				total_lck += _get_player_lck(player_id)
+			avg_lck = float(total_lck) / player_ids.size()
 			
 		var luck_mod = floor(avg_lck / 5.0)
 		var roll = randi_range(1, 20)
@@ -103,6 +231,7 @@ func _resolve_event(choice_index: int) -> void:
 		# Auto success
 		_apply_reward_or_penalty(choice)
 		event_resolved.emit(true, choice)
+	_snapshot_run()
 
 func _apply_reward_or_penalty(outcome: Dictionary) -> void:
 	var reward_type = outcome.get("reward", "")
@@ -114,19 +243,16 @@ func _apply_reward_or_penalty(outcome: Dictionary) -> void:
 		else:
 			EventNotifier.show_message("Luck Succeeded! +%d HP" % amount, Color.GREEN)
 			
-		for p in get_tree().get_nodes_in_group("players"):
-			var hc = p.get_node_or_null("HealthComponent")
-			if hc:
-				if reward_type == "damage" and hc.has_method("take_damage"):
-					hc.take_damage(amount, null, "true_damage")
-				elif reward_type == "heal" and hc.has_method("heal"):
-					hc.heal(amount)
+		for player_id in _get_player_ids():
+			if reward_type == "damage":
+				_damage_player(player_id, amount)
+			elif reward_type == "heal":
+				_heal_player(player_id, amount)
 					
 	elif reward_type == "random_item":
 		var reward = EventDropGenerator.generate_drop("normal")
 		EventNotifier.show_message("Luck Succeeded! You found %s!" % reward, Color.GOLD)
-		if InventoryManager != null:
-			InventoryManager.add_item(1, reward)
+		_add_item(1, reward)
 
 func _apply_win_outcome() -> void:
 	var roll = randf()
@@ -148,9 +274,8 @@ func _apply_win_outcome() -> void:
 		EventNotifier.show_message("Luck Win: Found %s and %s!" % [item1, item2], Color.GOLD)
 		var am = get_node_or_null("/root/AudioManager")
 		if am != null: am.play_sfx("reveal_rare")
-		if InventoryManager != null:
-			InventoryManager.add_item(1, item1)
-			InventoryManager.add_item(2, item2)
+		_add_item(1, item1)
+		_add_item(2, item2)
 			
 	elif roll < 0.65:
 		# 25% -> Full HP Restore (both players 100% HP)
@@ -158,13 +283,8 @@ func _apply_win_outcome() -> void:
 		EventNotifier.show_message("Luck Win: Full HP Restore for both players!", Color.GREEN)
 		var am = get_node_or_null("/root/AudioManager")
 		if am != null: am.play_sfx("victory")
-		for p in get_tree().get_nodes_in_group("players"):
-			var hc = p.get_node_or_null("HealthComponent")
-			if hc != null:
-				if hc.has_method("heal_to_full"):
-					hc.heal_to_full()
-				elif hc.has_method("heal"):
-					hc.heal(9999)
+		for player_id in _get_player_ids():
+			_heal_player(player_id, 9999)
 					
 	elif roll < 0.85:
 		# 20% -> Reward: 1 Legendary item
@@ -173,8 +293,7 @@ func _apply_win_outcome() -> void:
 		EventNotifier.show_message("Luck Win: Found Legendary %s!" % item, Color.GOLD)
 		var am = get_node_or_null("/root/AudioManager")
 		if am != null: am.play_sfx("reveal_legendary")
-		if InventoryManager != null:
-			InventoryManager.add_item(1, item)
+		_add_item(1, item)
 			
 	elif roll < 0.95:
 		# 10% -> Gold Windfall (+200 Coin each player)
@@ -182,9 +301,8 @@ func _apply_win_outcome() -> void:
 		EventNotifier.show_message("Luck Win: Gold Windfall! +200 Coins each!", Color.YELLOW)
 		var am = get_node_or_null("/root/AudioManager")
 		if am != null: am.play_sfx("reveal_rare")
-		if CoinEconomy != null:
-			CoinEconomy.add_coins(1, 200)
-			CoinEconomy.add_coins(2, 200)
+		_add_coins(1, 200)
+		_add_coins(2, 200)
 			
 	else:
 		# 5% -> Stat Boost (permanent +2 to random attribute, both)
@@ -195,13 +313,8 @@ func _apply_win_outcome() -> void:
 		EventNotifier.show_message("Luck Win: Permanent +2 to %s for both players!" % attr_display, Color.CYAN)
 		var am = get_node_or_null("/root/AudioManager")
 		if am != null: am.play_sfx("reveal_rare")
-		for p in get_tree().get_nodes_in_group("players"):
-			var stats = p.get_node_or_null("StatsComponent")
-			if stats != null:
-				var current_val = stats.get(attr)
-				stats.set(attr, current_val + 2)
-				if stats.has_method("emit_changed"):
-					stats.emit_changed()
+		for player_id in _get_player_ids():
+			_add_base_stat(player_id, attr, 2)
 
 func _apply_lose_outcome() -> void:
 	var roll = randf()
@@ -211,12 +324,8 @@ func _apply_lose_outcome() -> void:
 		EventNotifier.show_message("Luck Failure: -50% HP Penalty for both players!", Color.RED)
 		var am = get_node_or_null("/root/AudioManager")
 		if am != null: am.play_sfx("ui_error")
-		for p in get_tree().get_nodes_in_group("players"):
-			var hc = p.get_node_or_null("HealthComponent")
-			if hc != null:
-				var max_hp = hc.get("max_hp") if hc.get("max_hp") != null else 20
-				if hc.has_method("take_damage"):
-					hc.take_damage(int(max_hp * 0.5), null, "true_damage")
+		for player_id in _get_player_ids():
+			_damage_player_percent(player_id, 0.5)
 					
 	elif roll < 0.60:
 		# 25% -> Cursed Item: 1 random debuff item added to inventory (cannot be discarded until next Rest)
@@ -230,8 +339,7 @@ func _apply_lose_outcome() -> void:
 		EventNotifier.show_message("Luck Failure: Received Cursed Item %s!" % item, Color.PURPLE)
 		var am = get_node_or_null("/root/AudioManager")
 		if am != null: am.play_sfx("ui_error")
-		if InventoryManager != null:
-			InventoryManager.add_item(1, item)
+		_add_item(1, item)
 			
 	elif roll < 0.80:
 		# 20% -> Surprise Elite Battle
@@ -247,11 +355,8 @@ func _apply_lose_outcome() -> void:
 		EventNotifier.show_message("Luck Failure: -30% Coin Loss from wallets!", Color.ORANGE)
 		var am = get_node_or_null("/root/AudioManager")
 		if am != null: am.play_sfx("ui_cancel")
-		if CoinEconomy != null:
-			var p1_bal = CoinEconomy.get_balance(1)
-			var p2_bal = CoinEconomy.get_balance(2)
-			CoinEconomy.deduct_coins(1, int(p1_bal * 0.3))
-			CoinEconomy.deduct_coins(2, int(p2_bal * 0.3))
+		_deduct_coin_percent(1, 0.3)
+		_deduct_coin_percent(2, 0.3)
 			
 	else:
 		# 5% -> Attribute Debuff: -3 to random attribute (removable at Rest)
@@ -262,14 +367,5 @@ func _apply_lose_outcome() -> void:
 		EventNotifier.show_message("Luck Failure: Debuffed -3 %s (Removable at Rest campfire)" % attr_display, Color.MAGENTA)
 		var am = get_node_or_null("/root/AudioManager")
 		if am != null: am.play_sfx("ui_error")
-		for p in get_tree().get_nodes_in_group("players"):
-			p.set_meta("luck_debuff_attr", attr)
-			p.set_meta("luck_debuff_amount", -3)
-			
-			var stats = p.get_node_or_null("StatsComponent")
-			if stats != null:
-				var current_val = stats.get(attr)
-				stats.set(attr, current_val - 3)
-				if stats.has_method("emit_changed"):
-					stats.emit_changed()
-
+		for player_id in _get_player_ids():
+			_apply_until_rest_debuff(player_id, attr, -3)

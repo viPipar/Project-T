@@ -10,29 +10,32 @@ var _inventories: Dictionary = {
 
 const MAX_ITEMS = 6
 
-func add_item(player_id: int, item_id: String) -> void:
+func add_item(player_id: int, item_id: String) -> bool:
 	if not _inventories.has(player_id):
-		return
+		return false
 		
 	if _inventories[player_id].size() >= MAX_ITEMS:
 		print("[InventoryManager] P%d inventory full! Max %d items." % [player_id, MAX_ITEMS])
 		if EventNotifier != null:
 			EventNotifier.show_message("P%d Inventory Full! Max %d items." % [player_id, MAX_ITEMS], Color.RED)
-		return
+		return false
 		
 	_inventories[player_id].append(item_id)
 	print("[InventoryManager] Added %s to P%d inventory." % [item_id, player_id])
 	item_added.emit(player_id, item_id)
+	return true
 
-func remove_item(player_id: int, item_id: String) -> void:
+func remove_item(player_id: int, item_id: String) -> bool:
 	if not _inventories.has(player_id):
-		return
+		return false
 		
 	var inv: Array = _inventories[player_id]
 	if item_id in inv:
 		inv.erase(item_id)
 		print("[InventoryManager] Removed %s from P%d inventory." % [item_id, player_id])
 		item_removed.emit(player_id, item_id)
+		return true
+	return false
 
 func get_player_items(player_id: int) -> Array:
 	if not _inventories.has(player_id):
@@ -56,6 +59,38 @@ func reset() -> void:
 	_inventories[1].clear()
 	_inventories[2].clear()
 	print("[InventoryManager] Inventories reset.")
+
+func set_player_items(player_id: int, items: Array, emit_changes: bool = false) -> void:
+	if not _inventories.has(player_id):
+		return
+
+	var old_items: Array = _inventories[player_id].duplicate()
+	var clean_items: Array = []
+	for item in items:
+		var item_id := str(item).strip_edges()
+		if item_id != "" and clean_items.size() < MAX_ITEMS:
+			clean_items.append(item_id)
+
+	_inventories[player_id] = clean_items
+	if not emit_changes:
+		return
+
+	for old_item in old_items:
+		if not clean_items.has(old_item):
+			item_removed.emit(player_id, str(old_item))
+	for new_item in clean_items:
+		if not old_items.has(new_item):
+			item_added.emit(player_id, str(new_item))
+
+func get_state() -> Dictionary:
+	return {
+		"1": get_player_items(1),
+		"2": get_player_items(2),
+	}
+
+func restore_state(state: Dictionary, emit_changes: bool = false) -> void:
+	set_player_items(1, state.get("1", state.get(1, [])), emit_changes)
+	set_player_items(2, state.get("2", state.get(2, [])), emit_changes)
 
 # ── CONTESTED PICK SYSTEM (REBUTAN) ───────────────────────────────────────────
 

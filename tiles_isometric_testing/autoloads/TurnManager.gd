@@ -224,7 +224,7 @@ func is_player_downed(player_id: int) -> bool:
 func _get_enemies() -> Array[Node]:
 	var result: Array[Node] = []
 	for e in get_tree().get_nodes_in_group("enemies"):
-		if e != null:
+		if e != null and not e.is_in_group("skip_turn"):
 			result.append(e)
 	return result
 

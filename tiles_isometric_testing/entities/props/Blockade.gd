@@ -13,6 +13,7 @@ var enemy_name: String = "Rock Blockade"
 
 func _ready() -> void:
 	add_to_group("enemies") # Need to be targetable by players and enemies
+	add_to_group("skip_turn") # But should not take turns
 	if grid_pos.x >= 0:
 		GridManager.register_entity(grid_pos, self, GridManager.EntityType.NPC) # NPC or ENEMY to block path
 		

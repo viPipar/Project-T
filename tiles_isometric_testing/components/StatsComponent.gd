@@ -417,15 +417,15 @@ func bonus_movement_tiles() -> int:
 
 
 func bonus_spell_slots_l1() -> int:
-	return maxi(0, _div(get_stat("att"), 5) + get_mod_total("spell_slots_l1"))
+	return maxi(0, _div(get_stat("att"), 10) + get_mod_total("spell_slots_l1"))
 
 
 func bonus_spell_slots_l2() -> int:
-	return maxi(0, _div(get_stat("att"), 10) + get_mod_total("spell_slots_l2"))
+	return maxi(0, _div(get_stat("att"), 15) + get_mod_total("spell_slots_l2"))
 
 
 func bonus_spell_slots_l3() -> int:
-	return maxi(0, _div(get_stat("att"), 15) + get_mod_total("spell_slots_l3"))
+	return maxi(0, _div(get_stat("att"), 20) + get_mod_total("spell_slots_l3"))
 
 
 func get_spell_slots_l1() -> int:

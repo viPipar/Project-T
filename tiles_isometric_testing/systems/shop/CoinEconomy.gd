@@ -12,6 +12,12 @@ var wallets: Dictionary = {
 func get_balance(player_id: int) -> int:
 	return wallets.get(player_id, 0)
 
+func set_balance(player_id: int, amount: int) -> void:
+	if not wallets.has(player_id):
+		return
+	wallets[player_id] = maxi(0, amount)
+	balance_changed.emit(player_id, wallets[player_id])
+
 func add_coins(player_id: int, amount: int) -> void:
 	if not wallets.has(player_id): return
 	
@@ -68,3 +74,13 @@ func reset() -> void:
 	wallets[2] = 9999
 	balance_changed.emit(1, 9999)
 	balance_changed.emit(2, 9999)
+
+func get_state() -> Dictionary:
+	return {
+		"1": wallets.get(1, 0),
+		"2": wallets.get(2, 0),
+	}
+
+func restore_state(state: Dictionary) -> void:
+	set_balance(1, int(state.get("1", state.get(1, wallets.get(1, 0)))))
+	set_balance(2, int(state.get("2", state.get(2, wallets.get(2, 0)))))

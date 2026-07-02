@@ -624,6 +624,15 @@ func _apply_facing_flip() -> void:
 		elif _facing == "right":
 			anim_sprite.flip_h = true
 
+func face_target(target_grid_pos: Vector2i) -> void:
+	if anim_sprite == null: return
+	var delta = target_grid_pos - grid_pos
+	if delta.x > 0 or delta.y < 0:
+		_facing = "right"
+	elif delta.x < 0 or delta.y > 0:
+		_facing = "left"
+	_apply_facing_flip()
+
 
 func _on_died(_killer: Node) -> void:
 	print("[Player] %s kalah." % char_name)
