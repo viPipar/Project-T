@@ -1,4 +1,4 @@
-[gd_scene load_steps=163 format=3 uid="uid://b6a7hhjouptf1"]
+[gd_scene load_steps=164 format=3 uid="uid://b6a7hhjouptf1"]
 
 [ext_resource type="Script" uid="uid://bob1mosrfauus" path="res://entities/player/Player.gd" id="1_mab2k"]
 [ext_resource type="Shader" path="res://assets/shaders/hover_shadow.gdshader" id="2_fmb3c"]
@@ -23,6 +23,7 @@ shader = ExtResource("2_fmb3c")
 shader_parameter/blur_amount = 0.4
 shader_parameter/opacity = 0.43
 shader_parameter/shadow_color = Color(0, 0, 0, 1)
+
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_mab2k"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_minwf"]
