@@ -299,15 +299,17 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 						EventBus.player_moved.emit(attacker, old_pos, dash_dest)
 	
 	if not is_player and target != null:
-		# ENEMY: Attack first, dash, then dice
-		if is_instance_valid(attacker) and attacker.has_method("play_attack"):
-			attacker.play_attack(_base_ability_id)
-			_played_attack = true
-			await get_tree().create_timer(0.6, false).timeout
-		
-		await execute_dash.call()
+		# ENEMY: Dice first, then attack & dash
 		var safe_pid = pid if pid != null else -1
 		await bridge.vfx_controller._play_enemy_dice_sequence(attacker, raw, total, thresh, hit_modifier, hit, crit, safe_pid)
+		
+		if hit:
+			if is_instance_valid(attacker) and attacker.has_method("play_attack"):
+				attacker.play_attack(_base_ability_id)
+				_played_attack = true
+				await get_tree().create_timer(0.6, false).timeout
+		
+		await execute_dash.call()
 
 	var _has_overlay = false
 	if is_player:

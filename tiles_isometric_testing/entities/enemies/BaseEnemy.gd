@@ -66,6 +66,19 @@ func _ready() -> void:
 		_play_anim("idle_down")
 	if start_grid_pos.x >= 0 and start_grid_pos.y >= 0:
 		call_deferred("_deferred_place")
+		
+	var move_comp = get_node_or_null("MovementComponent")
+	if move_comp != null and move_comp.has_signal("step_started"):
+		move_comp.step_started.connect(_on_step_started)
+
+func _on_step_started(from: Vector2i, to: Vector2i) -> void:
+	if sprite == null: return
+	var delta = to - from
+	if delta.x > 0 or delta.y < 0:
+		sprite.flip_h = true
+	elif delta.x < 0 or delta.y > 0:
+		sprite.flip_h = false
+
 
 
 func get_grid_pos() -> Vector2i:
