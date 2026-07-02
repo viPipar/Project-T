@@ -24,8 +24,6 @@ var pending_node_type: int = -1
 func _ready() -> void:
 	if EventBus != null:
 		EventBus.combat_ended.connect(_on_combat_ended)
-		if not EventBus.entity_died.is_connected(_on_entity_died):
-			EventBus.entity_died.connect(_on_entity_died)
 
 func start_run(new_seed: int = -1) -> void:
 	if is_run_active:
@@ -38,14 +36,10 @@ func start_run(new_seed: int = -1) -> void:
 	current_depth = 1
 	p1_saved_energy = -1
 	p2_saved_slots.clear()
-	if InventoryManager != null and InventoryManager.has_method("reset"):
-		InventoryManager.reset()
-	if CoinEconomy != null and CoinEconomy.has_method("reset"):
-		CoinEconomy.reset()
-
 	pending_node_id = -1
 	pending_node_type = -1
 
+	# Reset player, inventory, and economy systems here once their run APIs are final.
 	_generate_node_map(new_seed)
 	run_started.emit()
 
@@ -78,21 +72,6 @@ func advance_layer() -> void:
 		end_run(true)
 	else:
 		layer_advanced.emit(current_depth)
-
-func _on_entity_died(entity: Node, _killer: Node) -> void:
-	if not is_run_active:
-		return
-	if entity.is_in_group("players"):
-		var any_alive := false
-		for p in get_tree().get_nodes_in_group("players"):
-			if not is_instance_valid(p):
-				continue
-			var hc := p.get_node_or_null("HealthComponent") as HealthComponent
-			if hc != null and not hc.is_dead() and not hc.is_downed():
-				any_alive = true
-				break
-		if not any_alive:
-			end_run(false)
 
 func ensure_node_map(new_seed: int = -1) -> void:
 	if not is_run_active:

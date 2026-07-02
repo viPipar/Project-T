@@ -10,7 +10,7 @@ extends Control
 @onready var master_slider: HSlider = $Overlays/SettingsPanel/MarginContainer/VBox/VolumeSettings/MasterContainer/MasterSlider
 @onready var fullscreen_checkbox: CheckButton = $Overlays/SettingsPanel/MarginContainer/VBox/DisplaySettings/FullscreenCheckbox
 
-const LOADING_SCENE_PATH = "res://ui/loading/LoadingScreen.tscn"
+const GAMEPLAY_SCENE_PATH = "res://main/Main.tscn"
 
 func _ready() -> void:
 	# Hide all overlay panels
@@ -44,16 +44,17 @@ func _setup_settings_ui() -> void:
 
 # --- Main Button Signals ---
 func _on_start_game_pressed() -> void:
+	# Play transition sound and fade to black
 	fade_overlay.visible = true
 	fade_overlay.color = Color(0, 0, 0, 0)
 	
 	var tween = create_tween()
 	tween.tween_property(fade_overlay, "color:a", 1.0, 0.6)
 	tween.tween_callback(func():
-		if ResourceLoader.exists(LOADING_SCENE_PATH):
-			get_tree().change_scene_to_file(LOADING_SCENE_PATH)
+		if ResourceLoader.exists(GAMEPLAY_SCENE_PATH):
+			get_tree().change_scene_to_file(GAMEPLAY_SCENE_PATH)
 		else:
-			push_error("[MainMenu] Loading scene not found: %s" % LOADING_SCENE_PATH)
+			push_error("[MainMenu] Gameplay scene not found: %s" % GAMEPLAY_SCENE_PATH)
 	)
 
 func _on_how_to_play_pressed() -> void:
@@ -69,13 +70,8 @@ func _on_exit_pressed() -> void:
 	get_tree().quit()
 
 # --- Overlay Control ---
-func _hide_all_overlays() -> void:
-	how_to_play_panel.visible = false
-	settings_panel.visible = false
-	credits_panel.visible = false
-
 func _show_overlay(panel: PanelContainer) -> void:
-	_hide_all_overlays()
+	# Play open panel sound if needed (AudioManager handles generic buttons automatically, but we can do custom open)
 	panel.visible = true
 	panel.modulate.a = 0.0
 	panel.scale = Vector2(0.9, 0.9)
