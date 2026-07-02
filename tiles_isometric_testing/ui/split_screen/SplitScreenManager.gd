@@ -563,6 +563,8 @@ func _toggle_relic_focus(player_id: int) -> void:
 			
 	if not active:
 		_hide_inspect_window(player_id)
+		if InputManager != null:
+			InputManager.set_meta("relic_focus_just_deactivated_p%d" % player_id, true)
 		# Trigger refreshing tooltips on active hovered enemies since relic_focus flags cleared
 		for enemy in get_tree().get_nodes_in_group("enemies"):
 			if is_instance_valid(enemy) and enemy.has_method("_update_tooltip_visibility"):
