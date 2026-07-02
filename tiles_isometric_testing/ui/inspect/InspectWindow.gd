@@ -171,22 +171,24 @@ func show_for_entity(entity: Node, layer_mask: int, viewport_center: Vector2) ->
 		_conditions_label.text = "[color=#888888]None[/color]"
 		
 	# Use deferred so size calculation is correct after adding children
+	_is_visible = true
 	call_deferred("_finalize_position", viewport_center)
 
 func _finalize_position(viewport_center: Vector2) -> void:
+	if not _is_visible:
+		return
+		
 	_panel.reset_size() # Force recalculate size
 	var panel_size = _panel.get_minimum_size()
 	# Center it on the specified viewport center (local to the side container)
 	position = viewport_center - (panel_size / 2.0)
 	
-	if not _is_visible:
-		_is_visible = true
-		visible = true
-		modulate.a = 0.0
-		scale = Vector2(0.8, 0.8)
-		var tw = create_tween().set_parallel(true)
-		tw.tween_property(self, "modulate:a", 1.0, 0.15).set_ease(Tween.EASE_OUT)
-		tw.tween_property(self, "scale", Vector2.ONE, 0.15).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	visible = true
+	modulate.a = 0.0
+	scale = Vector2(0.8, 0.8)
+	var tw = create_tween().set_parallel(true)
+	tw.tween_property(self, "modulate:a", 1.0, 0.15).set_ease(Tween.EASE_OUT)
+	tw.tween_property(self, "scale", Vector2.ONE, 0.15).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 func hide_window() -> void:
 	if _is_visible:
