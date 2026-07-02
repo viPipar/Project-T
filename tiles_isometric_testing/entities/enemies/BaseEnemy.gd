@@ -330,8 +330,8 @@ func _update_tooltip_visibility() -> void:
 	var tooltip = get_node_or_null("EnemyStatTooltip")
 	if tooltip == null: return
 	
-	var p1_active = (_hovering_players.has(1) or _is_my_turn) and not (InputManager != null and InputManager.relic_focus_p1)
-	var p2_active = (_hovering_players.has(2) or _is_my_turn) and not (InputManager != null and InputManager.relic_focus_p2)
+	var p1_active = (_hovering_players.has(1) or _is_my_turn)
+	var p2_active = (_hovering_players.has(2) or _is_my_turn)
 	
 	if not p1_active and not p2_active:
 		tooltip.hide_tooltip()
@@ -555,12 +555,7 @@ func _play_anim(anim_name: String) -> void:
 	if anim_name.begins_with("idle"):
 		anim_key = "idle"
 		
-	if anim_frame_widths.has(anim_key) and anim_frame_widths.has("idle"):
-		var idle_w = float(anim_frame_widths["idle"])
-		var current_w = float(anim_frame_widths[anim_key])
-		if current_w > 0:
-			var multiplier = idle_w / current_w
-			sprite.scale = base_sprite_scale * multiplier
+	sprite.scale = base_sprite_scale
 
 
 func _load_frames_from_spritesheet(path: String, fw: int, fh: int, cols: int, rows: int, total_frames: int) -> Array[Texture2D]:
