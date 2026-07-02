@@ -182,3 +182,7 @@ pause_menu={
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 2d/snap/snap_2d_transforms_to_pixel=true
+
+[gui]
+
+theme/custom_font="res://assets/ui_assets/Metamorphous-Regular.ttf"

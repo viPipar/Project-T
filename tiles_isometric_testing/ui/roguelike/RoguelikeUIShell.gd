@@ -24,21 +24,21 @@ func _ready() -> void:
 		CoinEconomy.balance_changed.connect(func(_p_id, _new_bal): _update_wallets())
 		
 	_update_wallets()
-	_apply_neobrutalism()
+	_apply_fantasy_style()
 
 func _setup_dual_cursor() -> void:
 	dual_cursor = DualCursorUI.new()
 	dual_cursor.root_container = screen_container
 	
 	var c1 = ColorRect.new()
-	c1.color = NeobrutalStyle.COLOR_RED
+	c1.color = FantasyStyle.COLOR_BLOOD
 	c1.custom_minimum_size = Vector2(20, 20)
 	c1.size = Vector2(20, 20)
 	add_child(c1)
 	dual_cursor.cursor_p1 = c1
 	
 	var c2 = ColorRect.new()
-	c2.color = NeobrutalStyle.COLOR_CYAN
+	c2.color = FantasyStyle.COLOR_SAPPHIRE
 	c2.custom_minimum_size = Vector2(20, 20)
 	c2.size = Vector2(20, 20)
 	add_child(c2)
@@ -46,14 +46,14 @@ func _setup_dual_cursor() -> void:
 	
 	add_child(dual_cursor)
 
-func _apply_neobrutalism() -> void:
+func _apply_fantasy_style() -> void:
 	var bg = $Container/Background
 	if bg:
-		bg.color = NeobrutalStyle.COLOR_WHITE
+		bg.color = FantasyStyle.COLOR_PARCHMENT
 		
 	var header = $Container/Header
 	if header:
-		var style = NeobrutalStyle.get_panel(NeobrutalStyle.COLOR_PINK)
+		var style = FantasyStyle.get_panel(FantasyStyle.COLOR_CRIMSON)
 		style.border_width_bottom = 6
 		style.shadow_offset = Vector2.ZERO # Flush to top
 		
@@ -66,7 +66,10 @@ func _apply_neobrutalism() -> void:
 	# Style text
 	p1_wallet.add_theme_color_override("font_color", Color.BLACK)
 	p2_wallet.add_theme_color_override("font_color", Color.BLACK)
-	$Container/Header/Title.add_theme_color_override("font_color", Color.BLACK)
+	var title_lbl = $Container/Header/Title
+	if title_lbl:
+		title_lbl.add_theme_color_override("font_color", Color.BLACK)
+		FantasyStyle.apply_title_font(title_lbl)
 
 func show_screen(screen_scene_path: String) -> void:
 	visible = true

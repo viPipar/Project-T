@@ -11,7 +11,7 @@ func _ready() -> void:
 	# Add Neobrutalism to the background
 	var bg = Panel.new()
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg.add_theme_stylebox_override("panel", NeobrutalStyle.get_panel(NeobrutalStyle.COLOR_WHITE))
+	bg.add_theme_stylebox_override("panel", FantasyStyle.get_panel(FantasyStyle.COLOR_PARCHMENT))
 	add_child(bg)
 	move_child(bg, 0)
 	
@@ -28,7 +28,7 @@ func _ready() -> void:
 	leave_btn.text = "🏃 Leave Shop"
 	leave_btn.position = Vector2(20, 20)
 	leave_btn.add_theme_font_size_override("font_size", 24)
-	NeobrutalStyle.apply_to_button(leave_btn, NeobrutalStyle.COLOR_PINK)
+	FantasyStyle.apply_to_button(leave_btn, FantasyStyle.COLOR_CRIMSON)
 	leave_btn.pressed.connect(func():
 		var current = get_parent()
 		var shell = null
@@ -45,7 +45,7 @@ func _ready() -> void:
 	)
 	add_child(leave_btn)
 	
-	NeobrutalStyle.apply_to_button(reroll_btn, NeobrutalStyle.COLOR_RED)
+	FantasyStyle.apply_to_button(reroll_btn, FantasyStyle.COLOR_BLOOD)
 	reroll_btn.text = "Reroll Shop (%d Coins)" % REROLL_COST
 	
 	# Add Patungan P1 -> P2 Button
@@ -53,7 +53,7 @@ func _ready() -> void:
 	p1_to_p2_btn.text = "💰 P1 Send Half to P2"
 	p1_to_p2_btn.position = Vector2(20, 100)
 	p1_to_p2_btn.add_theme_font_size_override("font_size", 18)
-	NeobrutalStyle.apply_to_button(p1_to_p2_btn, NeobrutalStyle.COLOR_CYAN)
+	FantasyStyle.apply_to_button(p1_to_p2_btn, FantasyStyle.COLOR_SAPPHIRE)
 	p1_to_p2_btn.pressed.connect(func():
 		if CoinEconomy != null:
 			CoinEconomy.send_half(1, 2)
@@ -65,7 +65,7 @@ func _ready() -> void:
 	p2_to_p1_btn.text = "💰 P2 Send Half to P1"
 	p2_to_p1_btn.position = Vector2(20, 160)
 	p2_to_p1_btn.add_theme_font_size_override("font_size", 18)
-	NeobrutalStyle.apply_to_button(p2_to_p1_btn, NeobrutalStyle.COLOR_YELLOW)
+	FantasyStyle.apply_to_button(p2_to_p1_btn, FantasyStyle.COLOR_GOLD)
 	p2_to_p1_btn.pressed.connect(func():
 		if CoinEconomy != null:
 			CoinEconomy.send_half(2, 1)
@@ -130,7 +130,7 @@ func _populate_shop() -> void:
 		item_card.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		
 		if stock.purchased:
-			NeobrutalStyle.apply_to_button(item_card, NeobrutalStyle.COLOR_GRAY)
+			FantasyStyle.apply_to_button(item_card, FantasyStyle.COLOR_LEATHER)
 			item_card.disabled = true
 			var l = Label.new()
 			l.text = "SOLD OUT"
@@ -142,12 +142,12 @@ func _populate_shop() -> void:
 			continue
 			
 		# Color based on rarity
-		var color = NeobrutalStyle.COLOR_WHITE
-		if stock.data.rarity == ItemRegistry.Rarity.COMMON: color = NeobrutalStyle.COLOR_CYAN
-		if stock.data.rarity == ItemRegistry.Rarity.RARE: color = NeobrutalStyle.COLOR_PINK
-		if stock.data.rarity == ItemRegistry.Rarity.LEGENDARY: color = NeobrutalStyle.COLOR_YELLOW
+		var color = FantasyStyle.COLOR_PARCHMENT
+		if stock.data.rarity == ItemRegistry.Rarity.COMMON: color = FantasyStyle.COLOR_SAPPHIRE
+		if stock.data.rarity == ItemRegistry.Rarity.RARE: color = FantasyStyle.COLOR_CRIMSON
+		if stock.data.rarity == ItemRegistry.Rarity.LEGENDARY: color = FantasyStyle.COLOR_GOLD
 		
-		NeobrutalStyle.apply_to_button(item_card, color)
+		FantasyStyle.apply_to_button(item_card, color)
 		
 		var vbox = VBoxContainer.new()
 		vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
