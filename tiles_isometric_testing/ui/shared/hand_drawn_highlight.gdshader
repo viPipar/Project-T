@@ -11,6 +11,12 @@ uniform float wobble_strength : hint_range(0.0, 0.1) = 0.015;
 // Pulse parameters
 uniform float pulse_speed : hint_range(0.0, 10.0) = 3.0;
 
+// Border hiding uniforms for adjacent tile highlights
+uniform bool hide_tl = false;
+uniform bool hide_tr = false;
+uniform bool hide_bl = false;
+uniform bool hide_br = false;
+
 // Pseudo-random noise function
 float hash(vec2 p) {
     return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
@@ -41,6 +47,22 @@ void fragment() {
     
     // Draw the bright edge
     float is_edge = smoothstep(1.0 - edge_thickness, 1.0 - edge_thickness + 0.02, dist);
+    
+    // Conditionally hide edge segments based on adjacent neighbors in isometric projection
+    float dx = noise_uv.x - center.x;
+    float dy = noise_uv.y - center.y;
+    if (is_edge > 0.0) {
+        if (dx < 0.0 && dy < 0.0 && hide_tl) {
+            is_edge = 0.0;
+        } else if (dx > 0.0 && dy < 0.0 && hide_tr) {
+            is_edge = 0.0;
+        } else if (dx < 0.0 && dy > 0.0 && hide_bl) {
+            is_edge = 0.0;
+        } else if (dx > 0.0 && dy > 0.0 && hide_br) {
+            is_edge = 0.0;
+        }
+    }
+    
     final_color = mix(final_color, edge_color, is_edge);
     
     // Multiply master alpha based on distance field to cut out the diamond shape

@@ -90,12 +90,14 @@ func register_layer(layer: Node2D) -> void:
 func show_tile(grid_pos: Vector2i, type: String, player_id: int = 0) -> void:
 	if not _is_valid_type(type): return
 	_place_rect(grid_pos, type, "", player_id)
+	_update_borders(type)
 
 ## Tampilkan highlight untuk BANYAK tile sekaligus.
 func show_tiles(tiles: Array, type: String, player_id: int = 0) -> void:
 	if not _is_valid_type(type): return
 	for pos in tiles:
 		_place_rect(pos, type, "", player_id)
+	_update_borders(type)
 
 ## Hapus semua highlight untuk satu tipe tertentu.
 func clear(type: String) -> void:
@@ -134,6 +136,7 @@ func show_cursor(grid_pos: Vector2i, player_id: int, state: String) -> void:
 	clear(type)
 	if state == "invalid": return
 	_place_rect(grid_pos, type, state, player_id)
+	_update_borders(type)
 
 func show_back_cursor(grid_pos: Vector2i, player_id: int, state: String) -> void:
 	var type := "cursor_p%d_back" % player_id
@@ -142,6 +145,7 @@ func show_back_cursor(grid_pos: Vector2i, player_id: int, state: String) -> void
 	clear(type)
 	if state == "invalid": return
 	_place_rect(grid_pos, type, state, player_id)
+	_update_borders(type)
 
 func clear_cursor(player_id: int) -> void:
 	clear("cursor_p%d" % player_id)
@@ -295,3 +299,33 @@ func _is_valid_type(type: String) -> bool:
 	if not HIGHLIGHT_CONFIG.has(type):
 		return false
 	return true
+
+
+func _update_borders(type: String) -> void:
+	if not _active.has(type): return
+	# Buat lookup set posisi aktif untuk tipe highlight ini
+	var active_positions: Dictionary = {}
+	for rect in _active[type]:
+		var pos = rect.get_meta("grid_pos", Vector2i(-1, -1))
+		if pos.x >= 0:
+			active_positions[pos] = rect
+	
+	# Update uniform shader tiap rect berdasarkan keberadaan tetangga
+	for pos in active_positions:
+		var rect_node = active_positions[pos] as Node2D
+		var color_rect = rect_node.get_child(0) as ColorRect
+		if color_rect == null or color_rect.material == null:
+			continue
+		var mat = color_rect.material as ShaderMaterial
+		if mat == null:
+			continue
+			
+		var hide_tl = active_positions.has(pos + Vector2i(-1, 0))
+		var hide_tr = active_positions.has(pos + Vector2i(0, -1))
+		var hide_bl = active_positions.has(pos + Vector2i(0, 1))
+		var hide_br = active_positions.has(pos + Vector2i(1, 0))
+		
+		mat.set_shader_parameter("hide_tl", hide_tl)
+		mat.set_shader_parameter("hide_tr", hide_tr)
+		mat.set_shader_parameter("hide_bl", hide_bl)
+		mat.set_shader_parameter("hide_br", hide_br)
