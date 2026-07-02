@@ -8,16 +8,8 @@ var _inventories: Dictionary = {
 	2: []  # Player 2 items
 }
 
-const MAX_ITEMS = 6
-
 func add_item(player_id: int, item_id: String) -> void:
 	if not _inventories.has(player_id):
-		return
-		
-	if _inventories[player_id].size() >= MAX_ITEMS:
-		print("[InventoryManager] P%d inventory full! Max %d items." % [player_id, MAX_ITEMS])
-		if EventNotifier != null:
-			EventNotifier.show_message("P%d Inventory Full! Max %d items." % [player_id, MAX_ITEMS], Color.RED)
 		return
 		
 	_inventories[player_id].append(item_id)
