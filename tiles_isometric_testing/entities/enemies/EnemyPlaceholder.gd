@@ -19,6 +19,9 @@ extends CharacterBody2D
 @export var start_grid_pos: Vector2i = Vector2i(-1, -1)
 @export var max_hp: int = 30
 
+@export_dir var sprite_folder: String = ""
+@export var is_2x2: bool = false
+
 @onready var sprite: AnimatedSprite2D = $AnimatedSprite2D
 @onready var stats: StatsComponent = $StatsComponent
 @onready var class_comp: ClassComponent = $ClassComponent
@@ -32,6 +35,11 @@ var _death_started: bool = false
 var _noise_tex: NoiseTexture2D = null
 var _hovering_players: Dictionary = {} # int -> bool
 var _is_my_turn: bool = false
+var raw_data: Dictionary = {}
+
+var base_sprite_scale: Vector2 = Vector2(0.75, 0.75)
+var base_sprite_offset: Vector2 = Vector2(14, -113)
+var anim_frame_widths: Dictionary = {}
 
 const INSECT_DIR := "res://assets/characters/insect1_placeholder"
 
@@ -56,7 +64,7 @@ func _ready() -> void:
 		add_child(tooltip)
 		
 	if sprite != null:
-		sprite.play("idle_down")
+		_play_anim("idle_down")
 	if start_grid_pos.x >= 0 and start_grid_pos.y >= 0:
 		call_deferred("_deferred_place")
 
@@ -66,11 +74,20 @@ func get_grid_pos() -> Vector2i:
 
 
 func place_at(pos: Vector2i) -> void:
-	if GridManager.get_entity_at(grid_pos) == self:
-		GridManager.unregister_entity(grid_pos)
+	if is_2x2:
+		for offset in [Vector2i(0,0), Vector2i(1,0), Vector2i(0,1), Vector2i(1,1)]:
+			var old_tile = grid_pos + offset
+			if GridManager.get_entity_at(old_tile) == self:
+				GridManager.unregister_entity(old_tile)
+	else:
+		if GridManager.get_entity_at(grid_pos) == self:
+			GridManager.unregister_entity(grid_pos)
+			
 	grid_pos = pos
 	GridManager.register_entity(pos, self, GridManager.EntityType.ENEMY)
 	position = IsoUtils.world_to_iso(pos)
+	if is_2x2:
+		position.y += IsoUtils.TILE_H / 2.0 # 64px shift down to visually center in 2x2 grid
 	z_index = IsoUtils.get_depth(pos)
 
 
@@ -192,6 +209,13 @@ func _on_hp_changed(new_hp: int, new_max_hp: int) -> void:
 
 func _on_health_damaged(amount: int) -> void:
 	print("[%s] Menerima %d damage. HP: %d/%d" % [enemy_name, amount, current_hp, max_hp])
+	if sprite != null and sprite.sprite_frames.has_animation("damage") and is_alive:
+		_play_anim("damage")
+		# Return to idle after a short delay
+		get_tree().create_timer(0.4).timeout.connect(func():
+			if is_alive and sprite.animation == "damage":
+				_play_anim("idle_down")
+		)
 
 
 func _on_health_died(killer: Node) -> void:
@@ -212,13 +236,28 @@ func _die(killer: Node = null, emit_bus: bool = true) -> void:
 	print("[%s] Kalah." % enemy_name)
 	if emit_bus and EventBus != null:
 		EventBus.entity_died.emit(self, killer)
-	if GridManager.get_entity_at(grid_pos) == self:
-		GridManager.unregister_entity(grid_pos)
+		
+	# Unregister footprint
+	if is_2x2:
+		for offset in [Vector2i(0,0), Vector2i(1,0), Vector2i(0,1), Vector2i(1,1)]:
+			var old_tile = grid_pos + offset
+			if GridManager.get_entity_at(old_tile) == self:
+				GridManager.unregister_entity(old_tile)
+	else:
+		if GridManager.get_entity_at(grid_pos) == self:
+			GridManager.unregister_entity(grid_pos)
+			
 	remove_from_group("enemies")
 
 	if sprite != null:
-		_play_dissolve_death()
-		await get_tree().create_timer(1.2).timeout
+		if sprite.sprite_frames.has_animation("mati"):
+			_play_anim("mati")
+			await sprite.animation_finished
+			_play_dissolve_death()
+			await get_tree().create_timer(1.2).timeout
+		else:
+			_play_dissolve_death()
+			await get_tree().create_timer(1.2).timeout
 	else:
 		await get_tree().create_timer(0.4).timeout
 	queue_free()
@@ -291,9 +330,11 @@ func apply_wind_sway(strength: float = 60.0) -> void:
 
 
 func play_attack(ability_id: String) -> void:
-	# A placeholder for enemy attack animation
-	# Currently just bumps the enemy sprite towards the target direction briefly
-	if sprite != null:
+	if sprite != null and sprite.sprite_frames.has_animation("attack"):
+		_play_anim("attack")
+		await sprite.animation_finished
+		_play_anim("idle_down")
+	elif sprite != null:
 		var tw = create_tween()
 		tw.tween_property(sprite, "position:y", sprite.position.y + 15, 0.1).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		tw.tween_property(sprite, "position:y", sprite.position.y, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
@@ -355,7 +396,130 @@ func _find_nearest_player() -> Node:
 
 func _setup_sprite() -> void:
 	if sprite != null:
-		sprite.modulate = tint_color
+		if sprite_folder == "":
+			sprite.modulate = tint_color
+		else:
+			sprite.modulate = Color.WHITE
+
+
+func apply_custom_data(data: Dictionary) -> void:
+	raw_data = data
+	is_2x2 = data.get("is_2x2", false)
+	sprite_folder = data.get("sprite_folder", "")
+	
+	if data.has("sprite_scale"):
+		var s = float(data["sprite_scale"])
+		base_sprite_scale = Vector2(s, s)
+	else:
+		base_sprite_scale = Vector2(0.75, 0.75)
+		
+	if data.has("sprite_offset"):
+		var raw_offset = data["sprite_offset"]
+		if typeof(raw_offset) == TYPE_ARRAY and raw_offset.size() >= 2:
+			base_sprite_offset = Vector2(float(raw_offset[0]), float(raw_offset[1]))
+	else:
+		base_sprite_offset = Vector2(14, -113)
+
+	if sprite != null:
+		sprite.scale = base_sprite_scale
+		sprite.position = base_sprite_offset
+		
+	_setup_sprite()
+	
+	var anim_config: Dictionary = data.get("sprite_animations", {})
+	if not anim_config.is_empty():
+		_apply_spritesheet_animations(anim_config)
+	else:
+		_apply_idle_frames()
+		
+	if start_grid_pos.x >= 0 and start_grid_pos.y >= 0:
+		place_at(start_grid_pos)
+
+
+func _apply_spritesheet_animations(anim_config: Dictionary) -> void:
+	if sprite == null: return
+	
+	anim_frame_widths.clear()
+	var sprite_frames := SpriteFrames.new()
+	if sprite_frames.has_animation("default"):
+		sprite_frames.remove_animation("default")
+	
+	var standard_anims = ["idle", "attack", "damage", "mati"]
+	
+	for anim_key in standard_anims:
+		if not anim_config.has(anim_key):
+			continue
+			
+		var cfg: Dictionary = anim_config[anim_key]
+		var file_name: String = cfg.get("file", "")
+		if file_name == "":
+			continue
+			
+		var full_path = sprite_folder + "/" + file_name
+		var fw: int = int(cfg.get("frame_w", 512))
+		var fh: int = int(cfg.get("frame_h", 512))
+		var cols: int = int(cfg.get("cols", 1))
+		var rows: int = int(cfg.get("rows", 1))
+		var total_frames: int = int(cfg.get("frames", 1))
+		
+		anim_frame_widths[anim_key] = fw
+		
+		var frames := _load_frames_from_spritesheet(full_path, fw, fh, cols, rows, total_frames)
+		if frames.is_empty():
+			continue
+			
+		var target_names: Array[String] = []
+		if anim_key == "idle":
+			target_names = ["idle_down", "idle_left", "idle_right", "idle_up"]
+		else:
+			target_names = [anim_key]
+			
+		for target_name in target_names:
+			if not sprite_frames.has_animation(target_name):
+				sprite_frames.add_animation(target_name)
+			sprite_frames.set_animation_speed(target_name, 12.0 if anim_key == "idle" else 15.0)
+			sprite_frames.set_animation_loop(target_name, anim_key == "idle")
+			for frame in frames:
+				sprite_frames.add_frame(target_name, frame)
+				
+	sprite.sprite_frames = sprite_frames
+	_play_anim("idle_down")
+
+
+func _play_anim(anim_name: String) -> void:
+	if sprite == null: return
+	
+	sprite.play(anim_name)
+	
+	var anim_key = anim_name
+	if anim_name.begins_with("idle"):
+		anim_key = "idle"
+		
+	if anim_frame_widths.has(anim_key) and anim_frame_widths.has("idle"):
+		var idle_w = float(anim_frame_widths["idle"])
+		var current_w = float(anim_frame_widths[anim_key])
+		if current_w > 0:
+			var multiplier = idle_w / current_w
+			sprite.scale = base_sprite_scale * multiplier
+
+
+func _load_frames_from_spritesheet(path: String, fw: int, fh: int, cols: int, rows: int, total_frames: int) -> Array[Texture2D]:
+	var result: Array[Texture2D] = []
+	var tex = load(path) as Texture2D
+	if tex == null:
+		push_warning("EnemyPlaceholder: Gagal memuat spritesheet: %s" % path)
+		return result
+		
+	for i in range(total_frames):
+		var col = i % cols
+		var row = i / cols
+		
+		var atlas := AtlasTexture.new()
+		atlas.atlas = tex
+		atlas.region = Rect2(col * fw, row * fh, fw, fh)
+		result.append(atlas)
+		
+	return result
 
 
 func _apply_idle_frames() -> void:

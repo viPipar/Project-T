@@ -119,12 +119,18 @@ func apply_entity_data(entity: Node, data: Dictionary) -> void:
 	if entity == null or data.is_empty():
 		return
 
+	if "raw_data" in entity:
+		entity.set("raw_data", data)
+
 	_apply_identity_data(entity, data)
 	apply_base_stats(entity, _get_dictionary(data, "base_stats"))
 	_apply_class_data(entity, data)
 	_apply_movement_data(entity, data)
 	_apply_health_data(entity, data)
 	_apply_combat_data(entity, data)
+
+	if entity.has_method("apply_custom_data"):
+		entity.apply_custom_data(data)
 
 
 func apply_base_stats(entity: Node, base_stats: Dictionary) -> void:

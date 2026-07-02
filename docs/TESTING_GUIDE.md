@@ -54,6 +54,18 @@ res://data/stat_module/buff_stat_mods/class_buffs.json
 res://data/stat_module/condition_stat_mods/status_effects.json
 ```
 
+## Status VFX Manual Test
+
+1. Run `res://main/Main.tscn`.
+2. Select P1, pick **Divine Departure** from the action wheel, and hit an enemy.
+   - Confirm the enemy shows a **grey tint** and **yellow star(s) orbiting** their head in an isometric oval. Number of stars = turns remaining.
+3. Let the enemy's turn pass and confirm the star count decrements each turn, disappearing when the stun expires.
+4. Pick **Thrust** and hit an enemy. Confirm a **pulsing red tint** (Vulnerable).
+5. Pick any **Fire** ability (e.g. Ring o' Fire). Confirm **flame particles** and **orange tint** on the enemy.
+6. Kill a stunned/burning enemy. Confirm **all particles stop** and **tint resets to white** on death — no visual artifacts on the corpse.
+
+> **Note:** `StatusVisualizerComponent` is auto-injected by `ConditionComponent._ready()`. No manual scene setup is needed. The main attack now also applies a **1-turn Stun on a critical hit**.
+
 ## Universal Test Shortcut
 
 `Main.tscn` has a `T` shortcut that runs:

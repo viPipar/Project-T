@@ -152,7 +152,8 @@ Game
 │   │   ├── Damage / Heal Roller
 │   │   │   └── Dice Pool (D4 / D6 / D8 / D10 / D12 / D20 / multi-dice)
 │   │   ├── Critical Hit Resolver
-│   │   │   └── Natural Crit Threshold = 20 − floor(ACC/10)
+│   │   │   ├── Natural Crit Threshold = 20 − floor(ACC/10)
+│   │   │   └── Main Attack crit → applies Stunned (1 turn) as bonus effect
 │   │   └── Luck Event Roller
 │   │       └── D20 + floor(LCK/5)
 │   │
@@ -177,15 +178,19 @@ Game
 │   │   │   ├── Air + Earth → Erosion (armor −)
 │   │   │   └── Fire + Air → Conflagration (spread AoE)
 │   │   ├── DoT / Persistent Effect Ticker
-│   │   └── Status Particle FX Manager                   ← #15 (new)
-│   │       ├── Per-entity particle emitter (attached to entity node)
+│   │   └── Status Particle FX Manager                   ← #15 ✅ IMPLEMENTED
+│   │       ├── StatusVisualizerComponent (CPUParticles2D, auto-injected by ConditionComponent)
 │   │       ├── Bleeding  → red drip particles
-│   │       ├── Stun      → star / spark particles
-│   │       ├── Fire tag  → flame particles
-│   │       ├── Water tag → water droplet particles
-│   │       ├── Earth tag → dust/rock chip particles
-│   │       ├── Air tag   → swirl/wind particles
-│   │       └── [Extendable for each new status]
+│   │       ├── Stun      → N stars orbiting isometric oval (N = turns remaining)
+│   │       ├── Fire tag  → flame particles + deep-orange tint
+│   │       ├── Water tag → water droplet particles + cyan tint
+│   │       ├── Earth tag → dust/rock chip particles + brown tint
+│   │       ├── Air tag   → horizontal wind gust particles + light cyan tint
+│   │       ├── Magma     → fire particles + orange tint (pulsing)
+│   │       ├── Mud       → earth particles + dark brown tint
+│   │       ├── Conflagration → fire particles + fire tint (pulsing)
+│   │       ├── Vulnerable / Weakened → tint only (pulsing red / purple)
+│   │       └── Death cleanup → all particles disabled + tint reset on entity death
 │   │
 │   ├── Stat System
 │   │   ├── Attribute Manager (VIT / STR / INT / CON / ACC / DEX / MOV / ATT / LCK)

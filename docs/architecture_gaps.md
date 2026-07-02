@@ -59,3 +59,21 @@ Combat actions (like multi-hit burst damage, counter-attacks, or environmental t
 
 **The Solution (Implemented):**
 A global sweep was performed across the entire combat core (TurnManager, CombatTestBridge, StatSystem, AI Components). All checks against dynamic nodes are now guarded with `is_instance_valid(target)`. `EnemyPhaseManager` also actively scrubs dead queue entries before executing AI turns, ensuring absolute stability during combat chain-reactions.
+
+## 6. Status Effect Visual Feedback (StatusVisualizerComponent)
+**Status:** 🟢 Resolved
+**Owner:** Gilang
+
+**The Problem:**
+Status effects (Stun, Bleed, Fire, etc.) applied via `ConditionComponent` had no visual feedback on the entity. It was impossible for players to tell at a glance what statuses were active.
+
+**The Solution (Implemented):**
+`StatusVisualizerComponent` is a modular `CPUParticles2D`-based system auto-injected at runtime by `ConditionComponent._ready()`.
+
+Key design decisions:
+- **Auto-detection**: On `_ready`, the component scans all `AnimatedSprite2D` / `Sprite2D` children of the parent and builds a `target_sprites` array, correctly handling multi-sprite entities like the Player.
+- **Isometric star orbit**: The Stun effect uses a mathematical `sin/cos` loop in `_process` to move a point-emitter along a wide, flat oval above the entity's head. The number of star emitters spawned equals the number of Stun turns remaining (reads from `ConditionComponent.get_condition_turns()`). This bypasses `CPUParticles2D`'s orbit system, which always forces a circular orbit ignoring node scale.
+- **Tint priority**: Pulsing tints (Vulnerable, Magma, Conflagration) override static tints (Stunned, Weakened) so critical information is never hidden.
+- **Death cleanup**: Listens to `HealthComponent.died` and immediately disables all particles, kills active tweens, and resets sprite modulation to `Color.WHITE`.
+- **Crit stun on Main Attack**: `CombatActionResolver` applies a 1-turn Stun on any critical hit from the Main Attack ability.
+

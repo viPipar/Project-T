@@ -95,14 +95,14 @@ func _ready() -> void:
 func _load_resources() -> void:
 	for key in SFX_PATHS.keys():
 		var path = SFX_PATHS[key]
-		if ResourceLoader.exists(path):
+		if FileAccess.file_exists(path) and ResourceLoader.exists(path):
 			sound_effects[key] = load(path)
 		else:
 			push_warning("[AudioManager] SFX path not found: %s" % path)
 
 	for key in BGM_PATHS.keys():
 		var path = BGM_PATHS[key]
-		if ResourceLoader.exists(path):
+		if FileAccess.file_exists(path) and ResourceLoader.exists(path):
 			bgm_tracks[key] = load(path)
 		else:
 			push_warning("[AudioManager] BGM path not found: %s" % path)
@@ -112,26 +112,26 @@ func _load_resources() -> void:
 		if i == 10:
 			name_str = "Ambient 10 .mp3"
 		var path = "res://assets/music/" + name_str
-		if ResourceLoader.exists(path):
+		if FileAccess.file_exists(path) and ResourceLoader.exists(path):
 			var key = "ambient_%d" % i
 			bgm_tracks[key] = load(path)
 			ambient_tracks.append(key)
 	for i in range(1, 6):
 		var path = "res://assets/music/Light Ambient %d (Loop).mp3" % i
-		if ResourceLoader.exists(path):
+		if FileAccess.file_exists(path) and ResourceLoader.exists(path):
 			var key = "light_ambient_%d" % i
 			bgm_tracks[key] = load(path)
 			light_ambient_tracks.append(key)
 	for i in range(1, 6):
 		var suffix = ".mp3" if i == 1 else " (Loop).mp3"
 		var path = "res://assets/music/Night Ambient %d%s" % [i, suffix]
-		if ResourceLoader.exists(path):
+		if FileAccess.file_exists(path) and ResourceLoader.exists(path):
 			var key = "night_ambient_%d" % i
 			bgm_tracks[key] = load(path)
 			night_ambient_tracks.append(key)
 	for i in range(1, 6):
 		var path = "res://assets/music/Action %d (Loop).mp3" % i
-		if ResourceLoader.exists(path):
+		if FileAccess.file_exists(path) and ResourceLoader.exists(path):
 			var key = "action_%d" % i
 			bgm_tracks[key] = load(path)
 			action_tracks.append(key)
