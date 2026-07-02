@@ -1,10 +1,12 @@
-[gd_resource type="Resource" load_steps=2 format=3]
+[gd_resource type="Resource" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://combat_core/abilities/BaseAbility.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/radial/fighter/EPIMORPHIC.png" id="2"]
 
 [resource]
 script = ExtResource("1")
 ability_name = "Epimorphic"
+icon = ExtResource("2")
 ability_tag = "self-heal-test"
 ability_type = 0
 element_tag = "physical"

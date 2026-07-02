@@ -6,6 +6,7 @@ enum TargetAlignment { ENEMY_ONLY, ALLY_ONLY, SELF_ONLY, ANY }
 
 @export_group("Identity")
 @export var ability_name    : String = "New Ability"
+@export var icon            : Texture2D
 @export_multiline var ability_description: String = ""
 @export var ability_tag     : String = "ability_base"
 @export var ability_type    : AbilityType = AbilityType.PHYSICAL
