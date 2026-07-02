@@ -78,7 +78,7 @@ func _move_cursor(delta: float) -> void:
 	# ── EDGE SCROLLING (CAMERA PANNING) ──
 	if camera_ref != null and is_instance_valid(camera_ref):
 		var screen_pos = _get_screen_pos()
-		var viewport_size = get_viewport().get_visible_rect().size
+		var viewport_size = _get_player_viewport_size()
 		
 		var edge_margin := 40.0
 		var scroll_speed := 400.0
@@ -103,11 +103,22 @@ func _move_cursor(delta: float) -> void:
 			global_position += cam_dir.normalized() * scroll_speed * delta
 
 
+func _get_player_viewport_size() -> Vector2:
+	var main = get_tree().root.get_node_or_null("Main")
+	if main != null:
+		var ssm = main.get_node_or_null("SplitScreenManager")
+		if ssm != null:
+			var vp = ssm.get("_p1_viewport") if player_id == 1 else ssm.get("_p2_viewport")
+			if vp != null and is_instance_valid(vp):
+				return vp.size
+	return get_viewport().get_visible_rect().size
+
+
 func _get_screen_pos() -> Vector2:
 	if camera_ref == null or not is_instance_valid(camera_ref):
 		return get_global_transform_with_canvas().origin
 		
-	var viewport_size = get_viewport().get_visible_rect().size
+	var viewport_size = _get_player_viewport_size()
 	var screen_center = viewport_size / 2.0
 	return (global_position - camera_ref.get_screen_center_position()) * camera_ref.zoom + screen_center
 
