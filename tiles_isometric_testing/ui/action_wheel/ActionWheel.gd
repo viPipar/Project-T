@@ -9,10 +9,17 @@ const DEFAULT_SLOT_KEYS := ["W", "A", "S", "D"]
 const SLOT_DIRECTIONS := ["UP", "LEFT", "DOWN", "RIGHT"]
 const SLOT_DRAW_ORDER := [0, 3, 2, 1]
 const LABEL_OFFSETS = [
-	Vector2(0, -200),
-	Vector2(-200, 0),
-	Vector2(0, 200),
-	Vector2(200, 0),
+	Vector2(0, -194),
+	Vector2(-194, 0),
+	Vector2(0, 194),
+	Vector2(194, 0),
+]
+
+var slice_textures: Array[Texture2D] = [
+	preload("res://assets/radial/ATAS.png"),
+	preload("res://assets/radial/KIRI.png"),
+	preload("res://assets/radial/BAWAH.png"),
+	preload("res://assets/radial/KANAN.png")
 ]
 
 @export var actions: PackedStringArray = []
@@ -300,19 +307,14 @@ func _draw() -> void:
 
 
 func _draw_wheel(page_index: int, wheel_center: Vector2, alpha: float, is_active: bool, hovered_slot: int) -> void:
-	var rim_alpha: float = 0.76 * alpha
-	draw_circle(wheel_center, _outer_radius + 20.0, Color(0.03, 0.05, 0.08, rim_alpha))
-	draw_circle(wheel_center, _outer_radius, Color(0.08, 0.10, 0.14, 0.94 * alpha))
-
 	for slot_index in range(PAGE_SIZE):
 		var action := _get_action_data_for_page(page_index, slot_index)
-		var has_action := action["valid"] as bool
 		var is_affordable := action.get("affordable", true) as bool
 		_draw_slice(
 			wheel_center,
 			slot_index,
 			is_active and slot_index == hovered_slot,
-			has_action,
+			action,
 			is_affordable,
 			alpha
 		)
@@ -320,79 +322,56 @@ func _draw_wheel(page_index: int, wheel_center: Vector2, alpha: float, is_active
 	draw_circle(wheel_center, _inner_radius + 8.0, Color(0.95, 0.79, 0.37, 0.88 * alpha))
 	draw_circle(wheel_center, _inner_radius, Color(0.10, 0.12, 0.18, 0.98 * alpha))
 
-	# Draw text for each slot
-	var font := get_theme_default_font()
-	for slot_index in range(PAGE_SIZE):
-		var action := _get_action_data_for_page(page_index, slot_index)
-		var has_action := action["valid"] as bool
-		var is_hovered := is_active and slot_index == hovered_slot
-		
-		var is_affordable := action.get("affordable", true) as bool
-		
-		var anchor: Vector2 = wheel_center + LABEL_OFFSETS[slot_index]
-		
-		var key_text := "%s  %s" % [_get_slot_key_label(slot_index), SLOT_DIRECTIONS[slot_index]]
-		var key_color := Color(0.12, 0.14, 0.19, alpha) if is_hovered else Color(0.92, 0.95, 0.99, 0.94 * alpha)
-		if not is_affordable: key_color.a *= 0.5
-		draw_string(font, anchor + Vector2(-46, -14), key_text, HORIZONTAL_ALIGNMENT_CENTER, 92, 14, key_color)
-		
-		var has_icon := false
-		if has_action and action.get("ability") != null:
-			var ability = action["ability"]
-			if ability.get("icon") != null and ability.icon is Texture2D:
-				has_icon = true
-				var icon_tex = ability.icon
-				var icon_size = Vector2(80, 80)
-				var icon_rect = Rect2(anchor - icon_size / 2.0 + Vector2(0, -10), icon_size)
-				
-				var icon_color = Color(1, 1, 1, alpha)
-				if not is_affordable: icon_color = Color(0.4, 0.4, 0.4, alpha)
-				draw_texture_rect(icon_tex, icon_rect, false, icon_color)
-		
-		if has_icon:
-			var action_text := action["name"] as String
-			var label_color := Color(0.12, 0.14, 0.19, alpha) if is_hovered else Color(1, 1, 1, alpha)
-			if not is_affordable: label_color = Color(0.4, 0.4, 0.4, alpha)
-			# Draw text slightly below the icon
-			draw_multiline_string(font, anchor + Vector2(-66, 45), action_text, HORIZONTAL_ALIGNMENT_CENTER, 132, 17, -1, label_color)
 
-
-func _draw_slice(wheel_center: Vector2, slot_index: int, is_hovered: bool, has_action: bool, is_affordable: bool, alpha: float) -> void:
-	var draw_slot_index: int = SLOT_DRAW_ORDER[slot_index]
-	var start_angle := -PI * 0.75 + draw_slot_index * (PI * 0.5)
-	var end_angle := start_angle + (PI * 0.5)
-	var points := PackedVector2Array()
-	var step_count := 18
-	var hover_radius_offset: float = 0.0
-	var hover_inner_offset: float = 0.0
-
+func _draw_slice(wheel_center: Vector2, slot_index: int, is_hovered: bool, action: Dictionary, is_affordable: bool, alpha: float) -> void:
+	if slot_index < 0 or slot_index >= slice_textures.size():
+		return
+		
+	var tex = slice_textures[slot_index]
+	var hover_offset := Vector2.ZERO
+	
 	if is_hovered:
-		hover_radius_offset = 6.0 + sin(_hover_time * 7.0) * 4.0
-		hover_inner_offset = 2.0
-
-	for step in range(step_count + 1):
-		var t := float(step) / float(step_count)
-		var angle: float = lerp(start_angle, end_angle, t)
-		points.append(wheel_center + Vector2.RIGHT.rotated(angle) * (_outer_radius + hover_radius_offset))
-
-	for step in range(step_count, -1, -1):
-		var t := float(step) / float(step_count)
-		var angle: float = lerp(start_angle, end_angle, t)
-		points.append(wheel_center + Vector2.RIGHT.rotated(angle) * (_inner_radius - hover_inner_offset))
-
-	var fill := Color(0.17, 0.22, 0.31, 0.95) if has_action else Color(0.11, 0.13, 0.17, 0.86)
+		var push_amount = 6.0 + sin(_hover_time * 7.0) * 4.0
+		match slot_index:
+			0: hover_offset = Vector2(0, -push_amount)
+			1: hover_offset = Vector2(-push_amount, 0)
+			2: hover_offset = Vector2(0, push_amount)
+			3: hover_offset = Vector2(push_amount, 0)
+			
+	var target_size = Vector2(_outer_radius * 2.0, _outer_radius * 2.0)
+	var draw_pos = wheel_center + hover_offset - (target_size / 2.0)
+	var rect = Rect2(draw_pos, target_size)
+	
+	var has_action := action["valid"] as bool
+	var mod_color := Color(1, 1, 1, alpha)
+	if not has_action:
+		mod_color = Color(0.3, 0.3, 0.3, 0.7 * alpha)
+	elif not is_affordable:
+		mod_color = Color(0.5, 0.5, 0.5, 0.9 * alpha)
+		
+	draw_texture_rect(tex, rect, false, mod_color)
+	
+	if not has_action:
+		return
+		
+	var anchor: Vector2 = wheel_center + hover_offset + LABEL_OFFSETS[slot_index]
+	var base_scale := 1.0
 	if is_hovered:
-		fill = Color(0.97, 0.82, 0.38, 0.98)
-	if not is_affordable:
-		fill = fill.lerp(Color(0.1, 0.1, 0.1), 0.6)
-	fill.a *= alpha
-	draw_colored_polygon(points, fill)
-
-	var border := Color(0.54, 0.67, 0.88, 0.84) if has_action else Color(0.28, 0.32, 0.39, 0.68)
-	if is_hovered:
-		border = Color(1.0, 0.97, 0.88, 1.0)
-	border.a *= alpha
-	draw_polyline(points, border, 2.0, true)
+		base_scale = 1.15
+		
+	draw_set_transform(anchor, 0, Vector2(base_scale, base_scale))
+	
+	if action.get("ability") != null:
+		var ability = action["ability"]
+		if ability.get("icon") != null and ability.icon is Texture2D:
+			var icon_tex = ability.icon
+			var icon_size = Vector2(80, 80)
+			var icon_rect = Rect2(-icon_size / 2.0, icon_size)
+			var icon_color = Color(1, 1, 1, alpha)
+			if not is_affordable: icon_color = Color(0.4, 0.4, 0.4, alpha)
+			draw_texture_rect(icon_tex, icon_rect, false, icon_color)
+		
+	draw_set_transform(Vector2.ZERO, 0, Vector2.ONE)
 
 
 func _set_hovered_slot(slot_index: int) -> void:
