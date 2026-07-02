@@ -6,11 +6,26 @@ class_name PathHandler
 
 var current_node_id: int = -1
 var node_graph: NodeGraph
+var completed_node_ids: Array[int] = []
 
 func init(_graph: NodeGraph) -> void:
 	self.node_graph = _graph
 	self.current_node_id = -1
+	completed_node_ids.clear()
 	print("[PathHandler] Initialized with new graph.")
+
+func restore_progress(_graph: NodeGraph, restored_current_node_id: int, restored_completed_node_ids: Array) -> void:
+	self.node_graph = _graph
+	self.current_node_id = restored_current_node_id
+	completed_node_ids.clear()
+	for node_id in restored_completed_node_ids:
+		completed_node_ids.append(int(node_id))
+
+func get_progress_state() -> Dictionary:
+	return {
+		"current_node_id": current_node_id,
+		"completed_node_ids": completed_node_ids.duplicate(),
+	}
 
 func get_unlocked_nodes() -> Array[int]:
 	if node_graph == null:
@@ -36,6 +51,8 @@ func can_travel_to(target_id: int) -> bool:
 
 func travel_to(target_id: int) -> bool:
 	if can_travel_to(target_id):
+		if current_node_id != -1 and not current_node_id in completed_node_ids:
+			completed_node_ids.append(current_node_id)
 		current_node_id = target_id
 		var node = node_graph.get_node_by_id(target_id)
 		print("[PathHandler] Traveled to Node ID: %d, Type: %s" % [target_id, NodeGraph.NodeType.keys()[node.type]])
@@ -43,3 +60,9 @@ func travel_to(target_id: int) -> bool:
 	else:
 		push_warning("[PathHandler] Attempted to travel to locked node %d" % target_id)
 		return false
+
+func get_completed_nodes() -> Array[int]:
+	return completed_node_ids.duplicate()
+
+func is_completed(target_id: int) -> bool:
+	return target_id in completed_node_ids
