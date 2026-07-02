@@ -244,7 +244,10 @@ func _on_leave_clicked() -> void:
 		current = current.get_parent()
 		
 	if shell != null:
-		shell.show_screen("res://ui/roguelike/MapScreen.tscn")
+		if shell.has_method("transition_to_map"):
+			shell.transition_to_map()
+		else:
+			shell.show_screen("res://ui/roguelike/MapScreen.tscn")
 
 func _trigger_cursor_rescan() -> void:
 	var current = get_parent()

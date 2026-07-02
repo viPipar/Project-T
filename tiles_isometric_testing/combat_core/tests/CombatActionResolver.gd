@@ -463,8 +463,10 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 					print("[COMBAT] %s heal sebesar %d HP!" % [t.name, applied])
 				else:
 					var skip_damage = false
-					if ability != null and ("damage_primary_only" in ability) and ability.damage_primary_only:
-						if t != primary_target:
+					if ability != null:
+						if ability.ability_type == 2: # UTILITY
+							skip_damage = true
+						elif ("damage_primary_only" in ability) and ability.damage_primary_only and t != primary_target:
 							skip_damage = true
 							print("[COMBAT] %s takes no damage (damage_primary_only) but receives secondary effects." % t.name)
 					
@@ -556,7 +558,8 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 	else:
 		print("[COMBAT] Serangan meleset!")
 
-	if hit and ability != null and ("summon_blockade_front" in ability) and ability.summon_blockade_front and primary_target != null:
+	if ability != null and ("summon_blockade_front" in ability) and ability.summon_blockade_front and primary_target != null:
+		print("[COMBAT-DEBUG] Attempting to spawn blockade...")
 		var t_pos: Vector2i = primary_target.get("grid_pos")
 		var diff = t_pos - a_pos
 		var dir = Vector2i.ZERO
@@ -565,18 +568,71 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 		if dir == Vector2i.ZERO: dir = Vector2i(1, 0)
 		
 		var spawn_pos = t_pos - dir
+		print("[COMBAT-DEBUG] Calculated primary spawn_pos: %s (target is %s, dir is %s)" % [spawn_pos, t_pos, dir])
+		var valid_spawn = false
+		
+		# Helper function to print exactly WHY a tile is blocked
+		var check_reason = func(pos: Vector2i):
+			if not GridManager._is_in_bounds(pos):
+				print("[COMBAT-DEBUG] Tile %s is OUT OF BOUNDS!" % pos)
+			elif not GridManager._walkable.get(pos, false):
+				print("[COMBAT-DEBUG] Tile %s has _walkable == false (Wall/Terrain block)!" % pos)
+			elif GridManager._entities.has(pos):
+				var e_node = GridManager._entities[pos].node
+				print("[COMBAT-DEBUG] Tile %s is occupied by entity: %s!" % [pos, e_node.name if e_node else "null"])
+			else:
+				print("[COMBAT-DEBUG] Tile %s seems perfectly walkable to GridManager!" % pos)
+		
 		if spawn_pos != a_pos and is_instance_valid(GridManager) and GridManager.is_walkable(spawn_pos):
+			valid_spawn = true
+			print("[COMBAT-DEBUG] Primary spawn_pos %s is walkable!" % spawn_pos)
+		else:
+			print("[COMBAT-DEBUG] Primary spawn_pos %s is blocked or invalid! Checking reason:" % spawn_pos)
+			if spawn_pos == a_pos:
+				print("[COMBAT-DEBUG] Tile %s is occupied by the Boss itself!" % spawn_pos)
+			else:
+				check_reason.call(spawn_pos)
+				
+			print("[COMBAT-DEBUG] Checking fallbacks...")
+			for d in [Vector2i(1,0), Vector2i(-1,0), Vector2i(0,1), Vector2i(0,-1)]:
+				var fallback_pos = t_pos + d
+				if fallback_pos != a_pos and is_instance_valid(GridManager) and GridManager.is_walkable(fallback_pos):
+					spawn_pos = fallback_pos
+					valid_spawn = true
+					print("[COMBAT-DEBUG] Found valid fallback spawn_pos: %s" % spawn_pos)
+					break
+				else:
+					print("[COMBAT-DEBUG] Fallback %s failed. Reason:" % fallback_pos)
+					if fallback_pos == a_pos:
+						print("[COMBAT-DEBUG] Tile %s is occupied by the Boss itself!" % fallback_pos)
+					else:
+						check_reason.call(fallback_pos)
+		
+		if valid_spawn:
 			print("[COMBAT] Summoning Blockade at %s" % spawn_pos)
 			var blockade_scene = load("res://entities/props/Blockade.tscn")
 			if blockade_scene:
-				var world = attacker.get_parent()
-				if world and world.has_method("spawn_entity"):
-					world.spawn_entity(blockade_scene, spawn_pos)
+				var world_node = attacker.get_parent()
+				print("[COMBAT-DEBUG] Attacker parent is: %s" % (world_node.name if world_node else "null"))
+				if world_node and world_node.has_method("spawn_entity"):
+					print("[COMBAT-DEBUG] Calling spawn_entity on attacker parent.")
+					world_node.spawn_entity(blockade_scene, spawn_pos)
+				elif world_node and world_node.get_parent() and world_node.get_parent().has_method("spawn_entity"):
+					print("[COMBAT-DEBUG] Calling spawn_entity on attacker's grandparent (%s)." % world_node.get_parent().name)
+					world_node.get_parent().spawn_entity(blockade_scene, spawn_pos)
 				else:
+					print("[COMBAT-DEBUG] Fallback: manual instantiation because spawn_entity not found.")
 					var blockade = blockade_scene.instantiate()
 					blockade.set("grid_pos", spawn_pos)
 					blockade.position = IsoUtils.world_to_iso(spawn_pos)
-					if world: world.add_child(blockade)
+					if IsoUtils.has_method("get_depth"):
+						blockade.z_index = IsoUtils.get_depth(spawn_pos)
+					if world_node: world_node.add_child(blockade)
+			else:
+				print("[COMBAT-DEBUG] Error: Failed to load Blockade.tscn!")
+		else:
+			print("[COMBAT] Failed to summon Blockade: No walkable tiles around target!")
+			print("[COMBAT-DEBUG] Checked fallback positions but none were walkable. GridManager._walkable might be false, or entities block them.")
 
 	if is_player:
 		EventBus.attackcam_finished.emit(attacker)
