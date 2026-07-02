@@ -23,6 +23,8 @@ var p2_saved_slots: Array = []
 func _ready() -> void:
 	if EventBus != null:
 		EventBus.combat_ended.connect(_on_combat_ended)
+		if not EventBus.entity_died.is_connected(_on_entity_died):
+			EventBus.entity_died.connect(_on_entity_died)
 
 func start_run() -> void:
 	if is_run_active:
@@ -35,15 +37,10 @@ func start_run() -> void:
 	p1_saved_energy = -1
 	p2_saved_slots.clear()
 	
-	# 1. Reset Players (HP, AP, Stats, Buffs)
-	# EventBus.emit_signal("reset_players")
-	
-	# 2. Reset Inventory and Economy
-	# InventoryManager.reset()
-	# CoinEconomy.reset()
-	
-	# 3. Generate New Map (Layer 1)
-	# NodeGraph.generate(current_depth)
+	if InventoryManager != null and InventoryManager.has_method("reset"):
+		InventoryManager.reset()
+	if CoinEconomy != null and CoinEconomy.has_method("reset"):
+		CoinEconomy.reset()
 	
 	run_started.emit()
 
@@ -79,11 +76,20 @@ func advance_layer() -> void:
 		# NodeGraph.generate(current_depth)
 		layer_advanced.emit(current_depth)
 
-# Handle Permadeath
-func _on_player_died(_player_id: int) -> void:
-	# In a co-op game, does one death end the run, or both?
-	# Assuming one death means failure for now.
-	end_run(false)
+func _on_entity_died(entity: Node, _killer: Node) -> void:
+	if not is_run_active:
+		return
+	if entity.is_in_group("players"):
+		var any_alive := false
+		for p in get_tree().get_nodes_in_group("players"):
+			if not is_instance_valid(p):
+				continue
+			var hc := p.get_node_or_null("HealthComponent") as HealthComponent
+			if hc != null and not hc.is_dead() and not hc.is_downed():
+				any_alive = true
+				break
+		if not any_alive:
+			end_run(false)
 
 func _on_combat_ended(result: String) -> void:
 	print("[RunManager] Combat ended: %s. Saving player resources." % result)

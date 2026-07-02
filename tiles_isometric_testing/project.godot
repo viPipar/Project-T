@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Tiles_Isometric_Testing"
-run/main_scene="uid://bv8gg8sp656ia"
+run/main_scene="uid://dpskv8l6v7e8y"
 config/features=PackedStringArray("4.4", "GL Compatibility")
 
 [autoload]

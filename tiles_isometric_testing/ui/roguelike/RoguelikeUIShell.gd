@@ -4,6 +4,8 @@ extends CanvasLayer
 @onready var p2_wallet = $Container/Header/P2Wallet
 @onready var screen_container = $Container/ScreenContainer
 
+signal screen_changed(screen_path: String)
+
 var current_screen: Control = null
 var dual_cursor: DualCursorUI = null
 
@@ -74,6 +76,8 @@ func show_screen(screen_scene_path: String) -> void:
 	if scene:
 		current_screen = scene.instantiate()
 		screen_container.add_child(current_screen)
+		
+		screen_changed.emit(screen_scene_path)
 		
 		# Delay rescan by 1 frame so ready completes
 		get_tree().process_frame.connect(func(): if dual_cursor: dual_cursor.rescan(), CONNECT_ONE_SHOT)

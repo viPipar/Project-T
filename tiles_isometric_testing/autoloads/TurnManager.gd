@@ -52,6 +52,15 @@ func unregister_player(player: Node) -> void:
 	_ended_players.erase(pid)
 
 
+func reset_battle() -> void:
+	turn_number = 1
+	phase = Phase.PLAYERS
+	_ended_players.clear()
+	_enemy_queue.clear()
+	_current_enemy = null
+	_started = false
+	_battle_finished = false
+
 func start_battle() -> void:
 	if _started:
 		return
@@ -301,7 +310,5 @@ func _trigger_defeat() -> void:
 	print("[TurnManager] Semua player downed. Combat defeat.")
 	if EventNotifier != null:
 		EventNotifier.show_message("Party Defeated!", Color.RED)
-	if RunManager != null and RunManager.is_run_active:
-		RunManager.end_run(false)
 	if EventBus != null:
 		EventBus.combat_ended.emit("defeat")
