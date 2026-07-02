@@ -21,7 +21,7 @@ var key_config = {
 		"skill2": {"key": KEY_E, "tex": "e_paper.png", "pressed_tex": "e_pressed_paper.png", "label": "Skill 2 (E)"},
 		"inv": {"key": KEY_C, "tex": "c_paper.png", "pressed_tex": "c_pressed_paper.png", "label": "Inventory (C)"},
 		"stats": {"key": KEY_Z, "tex": "z_paper.png", "pressed_tex": "z_pressed_paper.png", "label": "Stats (Z)"},
-		"toggle_hud": {"key": KEY_H, "tex": "h_paper.png", "pressed_tex": "h_pressed_paper.png", "label": "Toggle HUD (H)"}
+		"toggle_hud": {"key": KEY_H, "tex": "h_paper.png", "pressed_tex": "h_pressed_paper.png", "label": "Toggle Controls"}
 	},
 	2: {
 		"up": {"key": KEY_I, "tex": "i_paper.png", "pressed_tex": "i_pressed_paper.png"},
@@ -36,7 +36,7 @@ var key_config = {
 		"skill2": {"key": KEY_O, "tex": "o_paper.png", "pressed_tex": "o_pressed_paper.png", "label": "Skill 2 (O)"},
 		"inv": {"key": KEY_PERIOD, "tex": "blankletter_paper.png", "pressed_tex": "blankletter_pressed_paper.png", "label": "Inventory (.)", "overlay": "."},
 		"stats": {"key": KEY_M, "tex": "m_paper.png", "pressed_tex": "m_pressed_paper.png", "label": "Stats (M)"},
-		"toggle_hud": {"key": KEY_H, "tex": "h_paper.png", "pressed_tex": "h_pressed_paper.png", "label": "Toggle HUD (H)"}
+		"toggle_hud": {"key": KEY_H, "tex": "h_paper.png", "pressed_tex": "h_pressed_paper.png", "label": "Toggle Controls"}
 	}
 }
 
