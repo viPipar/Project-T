@@ -388,11 +388,25 @@ func _draw_slice(wheel_center: Vector2, slot_index: int, is_hovered: bool, has_a
 	fill.a *= alpha
 	draw_colored_polygon(points, fill)
 
+	# Create a closed loop of points for a clean outline and glow
+	var closed_points = PackedVector2Array(points)
+	if points.size() > 0:
+		closed_points.append(points[0])
+
+	# Glow effect for hovered slice
+	if is_hovered:
+		var pulse = sin(_hover_time * 6.0) * 0.5 + 0.5
+		var base_glow_opacity = 0.08 + pulse * 0.06
+		var glow_color := Color(1.0, 0.85, 0.4, base_glow_opacity * alpha)
+		for w in range(1, 6):
+			var width = 2.0 + w * (3.0 + pulse * 2.0)
+			draw_polyline(closed_points, glow_color, width, true)
+
 	var border := Color(0.54, 0.67, 0.88, 0.84) if has_action else Color(0.28, 0.32, 0.39, 0.68)
 	if is_hovered:
 		border = Color(1.0, 0.97, 0.88, 1.0)
 	border.a *= alpha
-	draw_polyline(points, border, 2.0, true)
+	draw_polyline(closed_points, border, 2.0, true)
 
 
 func _set_hovered_slot(slot_index: int) -> void:
