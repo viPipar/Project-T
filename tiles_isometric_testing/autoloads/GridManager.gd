@@ -125,29 +125,17 @@ func is_wall(pos: Vector2i) -> bool:
 
 ## Daftarkan entity dengan tipenya (EntityType.PLAYER / NPC / ENEMY).
 func register_entity(pos: Vector2i, entity: Node, type: EntityType = EntityType.PLAYER) -> void:
-	var offsets = [Vector2i(0,0), Vector2i(1,0), Vector2i(0,1), Vector2i(1,1)] if (entity != null and entity.get("is_2x2") == true) else [Vector2i.ZERO]
-	for offset in offsets:
-		var p = pos + offset
-		if _entities.has(p) and _entities[p].node != entity:
-			push_warning("[GridManager] register_entity: tile %s sudah ada entity '%s', ditimpa!" % [p, _entities[p].node.name])
-		_entities[p] = { "node": entity, "type": type }
-		if _astar != null and _walkable.get(p, false):
-			_astar.set_point_solid(p, true)
+	if _entities.has(pos) and _entities[pos].node != entity:
+		push_warning("[GridManager] register_entity: tile %s sudah ada entity '%s', ditimpa!" % [pos, _entities[pos].node.name])
+	_entities[pos] = { "node": entity, "type": type }
+	if _astar != null and _walkable.get(pos, false):
+		_astar.set_point_solid(pos, true)
 
 
 func unregister_entity(pos: Vector2i) -> void:
-	var entity = get_entity_at(pos)
-	if entity != null and entity.get("is_2x2") == true:
-		var anchor: Vector2i = entity.get("grid_pos") if entity.get("grid_pos") != null else pos
-		for offset in [Vector2i(0,0), Vector2i(1,0), Vector2i(0,1), Vector2i(1,1)]:
-			var p = anchor + offset
-			_entities.erase(p)
-			if _astar != null and _walkable.get(p, false):
-				_astar.set_point_solid(p, false)
-	else:
-		_entities.erase(pos)
-		if _astar != null and _walkable.get(pos, false):
-			_astar.set_point_solid(pos, false)
+	_entities.erase(pos)
+	if _astar != null and _walkable.get(pos, false):
+		_astar.set_point_solid(pos, false)
 
 
 func move_entity(from: Vector2i, to: Vector2i, entity: Node) -> bool:
@@ -321,18 +309,15 @@ func get_path_cost(from: Vector2i, to: Vector2i) -> int:
 ## True jika tile bisa dimasuki mover (terrain walkable dan tidak ada entity).
 ## Jika mover sudah berada di tile itu sendiri, dianggap boleh.
 func can_enter_tile(pos: Vector2i, mover: Node = null) -> bool:
-	var offsets = [Vector2i(0,0), Vector2i(1,0), Vector2i(0,1), Vector2i(1,1)] if (mover != null and mover.get("is_2x2") == true) else [Vector2i.ZERO]
-	for offset in offsets:
-		var p = pos + offset
-		if not _is_in_bounds(p):
-			return false
-		if not _walkable.get(p, false):
-			return false
-		if _entities.has(p):
-			var slot = _entities[p]
-			if mover != null and slot.node == mover:
-				continue
-			return false
+	if not _is_in_bounds(pos):
+		return false
+	if not _walkable.get(pos, false):
+		return false
+	if _entities.has(pos):
+		var slot = _entities[pos]
+		if mover != null and slot.node == mover:
+			return true
+		return false
 	return true
 
 

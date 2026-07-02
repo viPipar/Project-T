@@ -194,7 +194,7 @@ func _spawn_enemy_from_json(
 	tint_color: Color
 ) -> Node:
 	var data: Dictionary = StatDataDB.get_enemy_data(entity_id)
-	var scene: PackedScene = StatDataDB.load_entity_scene(data, "res://entities/enemies/EnemyMeleePlaceholder.tscn")
+	var scene: PackedScene = StatDataDB.load_entity_scene(data, "res://entities/enemies/BaseEnemy.tscn")
 	var enemy: Node = scene.instantiate()
 	enemy.set("enemy_name", str(data.get("display_name", fallback_name)))
 	enemy.set("tint_color", tint_color)
