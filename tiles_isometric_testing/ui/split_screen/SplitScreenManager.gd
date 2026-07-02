@@ -451,6 +451,7 @@ func _attach_cameras(world_node: Node2D) -> void:
 	_p1_dark_overlay.z_index = 1000
 	_p1_dark_overlay.visible = false
 	_p1_dark_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_p1_dark_overlay.visibility_layer = 2 # P1 camera cull mask matches layer 2
 	_cam_p1.add_child(_p1_dark_overlay)
 
 	_p2_dark_overlay = ColorRect.new()
@@ -461,6 +462,7 @@ func _attach_cameras(world_node: Node2D) -> void:
 	_p2_dark_overlay.z_index = 1000
 	_p2_dark_overlay.visible = false
 	_p2_dark_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_p2_dark_overlay.visibility_layer = 4 # P2 camera cull mask matches layer 4
 	_cam_p2.add_child(_p2_dark_overlay)
 
 
@@ -843,6 +845,8 @@ func _create_highlight_sprite(entity: Node, player_id: int) -> AnimatedSprite2D:
 	hl.flip_v = orig_sprite.flip_v
 	hl.scale = orig_sprite.scale
 	hl.offset = orig_sprite.offset
+	hl.position = orig_sprite.position
+	hl.rotation = orig_sprite.rotation
 	
 	# Pasang outline shader material
 	var mat = ShaderMaterial.new()
@@ -898,4 +902,6 @@ func _sync_entity_highlights(player_id: int) -> void:
 			hl.flip_v = orig_sprite.flip_v
 			hl.scale = orig_sprite.scale
 			hl.offset = orig_sprite.offset
+			hl.position = orig_sprite.position
+			hl.rotation = orig_sprite.rotation
 			hl.visible = orig_sprite.visible
