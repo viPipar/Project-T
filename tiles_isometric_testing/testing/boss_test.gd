@@ -100,9 +100,7 @@ func _ready() -> void:
 		kb_cursor_p2.set("camera_ref", _split_screen.cam_p2)
 
 	# ── Spawn enemy placeholder untuk testing combat_core ─────────────────────
-	_spawn_enemy_from_json("goblin", "Goblin Mosquito", Vector2i(5, 5), Color(0.3, 0.9, 0.3, 1.0))
-	_spawn_enemy_from_json("orc", "Orc Grasshopper", Vector2i(8, 4), Color(0.9, 0.4, 0.1, 1.0))
-	_spawn_enemy_from_json("beetle", "Elite Beetle", Vector2i(9, 7), Color(0.1, 0.6, 0.9, 1.0))
+	_spawn_enemy_from_json("boss", "Boss Butterfly", Vector2i(9, 7), Color(1.0, 1.0, 1.0, 1.0))
 
 	# ── CombatTestBridge ──────────────────────────────────────────────────────
 	var bridge := Node.new()
@@ -318,9 +316,6 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_F5:
 				_show_squiggles = not _show_squiggles
 				_toggle_squigglevision(_show_squiggles)
-			KEY_F6:
-				CombatActionResolver.always_success = not CombatActionResolver.always_success
-				print("[DEBUG] always_success toggled: ", CombatActionResolver.always_success)
 			KEY_T:
 				print("--- 'T' KEY DETECTED ---")
 				_run_all_tests()

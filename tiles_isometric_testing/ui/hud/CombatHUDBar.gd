@@ -226,9 +226,12 @@ func _draw() -> void:
 func _draw_text_and_label(rect: Rect2, val_text: String, label_text: String, icon_w: float) -> void:
 	var font := ThemeDB.fallback_font
 	# Draw value inside box
-	var val_size := font.get_string_size(val_text, HORIZONTAL_ALIGNMENT_LEFT, -1, LABEL_FONT_SIZE)
+	var current_font_size = LABEL_FONT_SIZE
+	if val_text.find("/") != -1:
+		current_font_size = LABEL_FONT_SIZE - 4
+	var val_size := font.get_string_size(val_text, HORIZONTAL_ALIGNMENT_LEFT, -1, current_font_size)
 	var val_pos := Vector2(rect.position.x + icon_w + 4, rect.position.y + rect.size.y * 0.5 + val_size.y * 0.3)
-	draw_string(font, val_pos, val_text, HORIZONTAL_ALIGNMENT_LEFT, -1, LABEL_FONT_SIZE, Color.WHITE)
+	draw_string(font, val_pos, val_text, HORIZONTAL_ALIGNMENT_LEFT, -1, current_font_size, Color.WHITE)
 	
 	if not _action_wheel_visible:
 		var lbl_y := rect.position.y + rect.size.y + 12
@@ -250,7 +253,7 @@ func _draw_ap_box(rect: Rect2) -> void:
 		draw_rect(rect, Color(color, blink * 0.8), false, 2.0)
 		draw_rect(rect, Color(color, blink * 0.15), true)
 		
-	_draw_text_and_label(rect, str(_ap), "Action\nPoint", 30)
+	_draw_text_and_label(rect, str(_ap) + "/" + str(_max_ap), "Action\nPoint", 30)
 
 
 func _draw_bap_box(rect: Rect2) -> void:
@@ -274,7 +277,7 @@ func _draw_bap_box(rect: Rect2) -> void:
 		draw_rect(rect, Color(color, blink * 0.8), false, 2.0)
 		draw_rect(rect, Color(color, blink * 0.15), true)
 		
-	_draw_text_and_label(rect, str(_bap), "Bonus\nAction\nPoint", 30)
+	_draw_text_and_label(rect, str(_bap) + "/" + str(_max_bap), "Bonus\nAction\nPoint", 30)
 
 
 func _draw_mov_box(rect: Rect2) -> void:
@@ -331,7 +334,7 @@ func _draw_ec_box(rect: Rect2) -> void:
 		draw_rect(rect, Color(color, blink * 0.8), false, 2.0)
 		draw_rect(rect, Color(color, blink * 0.15), true)
 		
-	_draw_text_and_label(rect, str(_ec_current), "Energy\nCharge", 30)
+	_draw_text_and_label(rect, str(_ec_current) + "/" + str(_ec_max), "Energy\nCharge", 30)
 
 
 func _draw_ss_box(rect: Rect2) -> void:
@@ -340,8 +343,10 @@ func _draw_ss_box(rect: Rect2) -> void:
 	
 	# Count total slots for simplicity in the redesigned compact box
 	var total_slots := 0
+	var total_max_slots := 0
 	for i in range(4):
 		total_slots += _ss_current[i]
+		total_max_slots += _ss_max[i]
 		
 	var color := COLOR_SS_BLUE if total_slots > 0 else Color(0.3, 0.3, 0.3)
 	
@@ -354,4 +359,4 @@ func _draw_ss_box(rect: Rect2) -> void:
 		draw_rect(rect, Color(COLOR_SS_BLUE, blink * 0.8), false, 2.0)
 		draw_rect(rect, Color(COLOR_SS_BLUE, blink * 0.15), true)
 	
-	_draw_text_and_label(rect, str(total_slots), "Spell\nSlots", 30)
+	_draw_text_and_label(rect, str(total_slots) + "/" + str(total_max_slots), "Spell\nSlots", 30)

@@ -62,7 +62,21 @@ const SFX_PATHS = {
 	"death_female_1": "res://assets/sfx_packs/Super Dialogue Audio Pack v1/Step 2 - Audio Files/8 - Death/Female/Karen Cenon/death_1_karen.wav",
 	"death_female_2": "res://assets/sfx_packs/Super Dialogue Audio Pack v1/Step 2 - Audio Files/8 - Death/Female/Karen Cenon/death_2_karen.wav",
 	"death_male_1": "res://assets/sfx_packs/Super Dialogue Audio Pack v1/Step 2 - Audio Files/8 - Death/Male/Sean Lenhart/death_1_sean.wav",
-	"death_male_2": "res://assets/sfx_packs/Super Dialogue Audio Pack v1/Step 2 - Audio Files/8 - Death/Male/Sean Lenhart/death_2_sean.wav"
+	"death_male_2": "res://assets/sfx_packs/Super Dialogue Audio Pack v1/Step 2 - Audio Files/8 - Death/Male/Sean Lenhart/death_2_sean.wav",
+	# TomMusic Spells and Attack Variations
+	"spell_ice_freeze": "res://assets/sfx_packs/Free Fantasy SFX Pack By TomMusic/OGG Files/SFX/Spells/Ice Freeze 1.ogg",
+	"spell_ice_throw": "res://assets/sfx_packs/Free Fantasy SFX Pack By TomMusic/OGG Files/SFX/Spells/Ice Throw 1.ogg",
+	"spell_ice_barrage": "res://assets/sfx_packs/Free Fantasy SFX Pack By TomMusic/OGG Files/SFX/Spells/Ice Barrage 1.ogg",
+	"spell_fire_spray": "res://assets/sfx_packs/Free Fantasy SFX Pack By TomMusic/OGG Files/SFX/Spells/Firespray 1.ogg",
+	"spell_fire_buff": "res://assets/sfx_packs/Free Fantasy SFX Pack By TomMusic/OGG Files/SFX/Spells/Firebuff 1.ogg",
+	"spell_wave": "res://assets/sfx_packs/Free Fantasy SFX Pack By TomMusic/OGG Files/SFX/Spells/Wave Attack 1.ogg",
+	"spell_impact_2": "res://assets/sfx_packs/Free Fantasy SFX Pack By TomMusic/OGG Files/SFX/Spells/Spell Impact 2.ogg",
+	"spell_impact_3": "res://assets/sfx_packs/Free Fantasy SFX Pack By TomMusic/OGG Files/SFX/Spells/Spell Impact 3.ogg",
+	"sword_attack_2": "res://assets/sfx_packs/Free Fantasy SFX Pack By TomMusic/OGG Files/SFX/Attacks/Sword Attacks Hits and Blocks/Sword Attack 2.ogg",
+	"sword_attack_3": "res://assets/sfx_packs/Free Fantasy SFX Pack By TomMusic/OGG Files/SFX/Attacks/Sword Attacks Hits and Blocks/Sword Attack 3.ogg",
+	"sword_blocked_1": "res://assets/sfx_packs/Free Fantasy SFX Pack By TomMusic/OGG Files/SFX/Attacks/Sword Attacks Hits and Blocks/Sword Blocked 1.ogg",
+	"sword_blocked_2": "res://assets/sfx_packs/Free Fantasy SFX Pack By TomMusic/OGG Files/SFX/Attacks/Sword Attacks Hits and Blocks/Sword Blocked 2.ogg",
+	"sword_parry_1": "res://assets/sfx_packs/Free Fantasy SFX Pack By TomMusic/OGG Files/SFX/Attacks/Sword Attacks Hits and Blocks/Sword Parry 1.ogg"
 }
 
 const BGM_PATHS = {

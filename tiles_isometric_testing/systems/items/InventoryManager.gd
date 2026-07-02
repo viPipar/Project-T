@@ -8,16 +8,8 @@ var _inventories: Dictionary = {
 	2: []  # Player 2 items
 }
 
-const MAX_ITEMS = 6
-
 func add_item(player_id: int, item_id: String) -> bool:
 	if not _inventories.has(player_id):
-		return false
-		
-	if _inventories[player_id].size() >= MAX_ITEMS:
-		print("[InventoryManager] P%d inventory full! Max %d items." % [player_id, MAX_ITEMS])
-		if EventNotifier != null:
-			EventNotifier.show_message("P%d Inventory Full! Max %d items." % [player_id, MAX_ITEMS], Color.RED)
 		return false
 		
 	_inventories[player_id].append(item_id)
@@ -68,7 +60,7 @@ func set_player_items(player_id: int, items: Array, emit_changes: bool = false) 
 	var clean_items: Array = []
 	for item in items:
 		var item_id := str(item).strip_edges()
-		if item_id != "" and clean_items.size() < MAX_ITEMS:
+		if item_id != "":
 			clean_items.append(item_id)
 
 	_inventories[player_id] = clean_items

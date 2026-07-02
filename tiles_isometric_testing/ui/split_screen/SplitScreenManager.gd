@@ -35,6 +35,13 @@ var _p2_highlight_index: int = -1
 var _p1_relic_focus_active: bool = false
 var _p2_relic_focus_active: bool = false
 
+var _p1_focus_category: int = 0 # 0 = relics, 1 = board entities
+var _p2_focus_category: int = 0
+var _p1_entity_highlight_index: int = -1
+var _p2_entity_highlight_index: int = -1
+var _p1_focused_entity: Node = null
+var _p2_focused_entity: Node = null
+
 var _keyboard_huds_visible: bool = true
 
 var _p1_keyboard_hud: KeyboardHelperHUD
@@ -537,36 +544,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			_toggle_relic_focus(2)
 			get_viewport().set_input_as_handled()
 			return
-			
-		if _p1_relic_focus_active:
-			if event.keycode == KEY_A:
-				_navigate_relics(1, -1)
-				get_viewport().set_input_as_handled()
-				return
-			elif event.keycode == KEY_D:
-				_navigate_relics(1, 1)
-				get_viewport().set_input_as_handled()
-				return
-				
-		if _p2_relic_focus_active:
-			if event.keycode == KEY_J:
-				_navigate_relics(2, -1)
-				get_viewport().set_input_as_handled()
-				return
-			elif event.keycode == KEY_L:
-				_navigate_relics(2, 1)
-				get_viewport().set_input_as_handled()
-				return
 
 	if event.is_action_pressed("p1_inventory") or event.is_action_pressed("p2_inventory"):
 		EventBus.inventory_toggled.emit()
 		get_viewport().set_input_as_handled()
 
 func _toggle_relic_focus(player_id: int) -> void:
-	var container = _p1_relics_container if player_id == 1 else _p2_relics_container
-	if container == null or container.get_child_count() == 0:
-		return
-		
 	var active = not (_p1_relic_focus_active if player_id == 1 else _p2_relic_focus_active)
 	
 	if player_id == 1:
@@ -578,54 +561,21 @@ func _toggle_relic_focus(player_id: int) -> void:
 		if InputManager != null:
 			InputManager.relic_focus_p2 = active
 			
-	if active:
-		if player_id == 1:
-			_p1_highlight_index = 0
-		else:
-			_p2_highlight_index = 0
-	else:
-		if player_id == 1:
-			_p1_highlight_index = -1
-		else:
-			_p2_highlight_index = -1
-			
-	_update_highlight_visual(player_id)
+	if not active:
+		_hide_inspect_window(player_id)
+		if InputManager != null:
+			InputManager.set_meta("relic_focus_just_deactivated_p%d" % player_id, true)
+		# Trigger refreshing tooltips on active hovered enemies since relic_focus flags cleared
+		for enemy in get_tree().get_nodes_in_group("enemies"):
+			if is_instance_valid(enemy) and enemy.has_method("_update_tooltip_visibility"):
+				enemy.call("_update_tooltip_visibility")
 
-func _navigate_relics(player_id: int, direction: int) -> void:
-	var container = _p1_relics_container if player_id == 1 else _p2_relics_container
-	if container == null or container.get_child_count() == 0:
-		return
-		
-	var total = container.get_child_count()
-	var current_idx = _p1_highlight_index if player_id == 1 else _p2_highlight_index
-	
-	current_idx = (current_idx + direction + total) % total
-	
-	if player_id == 1:
-		_p1_highlight_index = current_idx
-	else:
-		_p2_highlight_index = current_idx
-		
-	_update_highlight_visual(player_id)
-
-func _update_highlight_visual(player_id: int) -> void:
-	var container = _p1_relics_container if player_id == 1 else _p2_relics_container
-	if container == null:
-		return
-		
-	var current_idx = _p1_highlight_index if player_id == 1 else _p2_highlight_index
-	var total = container.get_child_count()
-	
-	for i in range(total):
-		var btn = container.get_child(i)
-		if is_instance_valid(btn):
-			if i == current_idx:
-				if btn.has_method("_on_hover_entered"):
-					btn.call("_on_hover_entered")
-				_snap_cursor_to_button(player_id, btn)
-			else:
-				if btn.has_method("_on_hover_exited"):
-					btn.call("_on_hover_exited")
+func _hide_inspect_window(player_id: int) -> void:
+	var inspect_overlay = get_parent().get_node_or_null("InspectCanvas/InspectOverlay")
+	if inspect_overlay != null:
+		var window = inspect_overlay.get("_inspect_p1") if player_id == 1 else inspect_overlay.get("_inspect_p2")
+		if is_instance_valid(window) and window.has_method("hide_window"):
+			window.hide_window()
 
 
 func _kill_end_tween(player_id: int) -> void:

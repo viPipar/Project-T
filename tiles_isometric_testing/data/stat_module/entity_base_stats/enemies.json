@@ -80,10 +80,10 @@
 	  "scene": "res://entities/enemies/BaseEnemy.tscn",
 	  "sprite_folder": "res://assets/characters/medium_grasshopper",
 	  "is_2x2": false,
-	  "sprite_scale": 0.5,
+	  "sprite_scale": 0.4,
 	  "sprite_offset": [
 		0,
-		-120
+		-133
 	  ],
 	  "sprite_animations": {
 		"idle": {
@@ -153,10 +153,10 @@
 	  "scene": "res://entities/enemies/BaseEnemy.tscn",
 	  "sprite_folder": "res://assets/characters/big_beetle",
 	  "is_2x2": false,
-	  "sprite_scale": 0.5,
+	  "sprite_scale": 0.35,
 	  "sprite_offset": [
 		0,
-		-240
+		-196
 	  ],
 	  "sprite_animations": {
 		"idle": {
@@ -217,6 +217,96 @@
 		"grid_pos": [
 		  9,
 		  7
+		]
+	  }
+	},
+	"boss": {
+	  "ai_brain": "res://combat_core/ai/brains/DungslayerBrain.tres",
+	  "display_name": "Boss Butterfly",
+	  "scene": "res://entities/enemies/BaseEnemy.tscn",
+	  "sprite_folder": "res://assets/characters/boss_butterfly",
+	  "is_2x2": false,
+	  "sprite_scale": 0.5,
+	  "sprite_offset": [
+		80,
+		-200
+	  ],
+	  "has_hover_shadow": true,
+	  "sprite_animations": {
+		"idle": {
+		  "file": "boss_idle_grid.png",
+		  "frame_w": 1300,
+		  "frame_h": 1025,
+		  "cols": 4,
+		  "rows": 3,
+		  "frames": 10
+		},
+		"attack": {
+		  "file": "boss_skill_1_grid.png",
+		  "frame_w": 1300,
+		  "frame_h": 1025,
+		  "cols": 5,
+		  "rows": 4,
+		  "frames": 18
+		},
+		"skill_1": {
+		  "file": "boss_skill_1_grid.png",
+		  "frame_w": 1300,
+		  "frame_h": 1025,
+		  "cols": 5,
+		  "rows": 4,
+		  "frames": 18
+		},
+		"skill_2": {
+		  "file": "boss_skill_2_grid.png",
+		  "frame_w": 1300,
+		  "frame_h": 1025,
+		  "cols": 5,
+		  "rows": 4,
+		  "frames": 17
+		},
+		"damage": {
+		  "file": "boss_damage_grid.png",
+		  "frame_w": 1300,
+		  "frame_h": 1025,
+		  "cols": 4,
+		  "rows": 3,
+		  "frames": 10
+		},
+		"mati": {
+		  "file": "boss_mati_grid.png",
+		  "frame_w": 1300,
+		  "frame_h": 1025,
+		  "cols": 5,
+		  "rows": 4,
+		  "frames": 17
+		}
+	  },
+	  "base_stats": {
+		"vit": 50,
+		"str": 15,
+		"int": 10,
+		"con": 15,
+		"acc": 8,
+		"dex": 5,
+		"mov": 4,
+		"att": 0,
+		"lck": 5
+	  },
+	  "health": {
+		"use_stats_max_hp": false,
+		"max_hp": 150
+	  },
+	  "combat": {
+		"attack_dice": "3D6",
+		"attack_range": 2,
+		"is_magical": true
+	  },
+	  "spawn": {
+		"map_id": 1,
+		"grid_pos": [
+		  10,
+		  10
 		]
 	  }
 	}

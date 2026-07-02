@@ -1,0 +1,19 @@
+[remap]
+
+importer="oggvorbisstr"
+type="AudioStreamOggVorbis"
+uid="uid://1jh70hti0kd2"
+path="res://.godot/imported/Firebuff 1.ogg-ca5a5d0a7f004f367c72f050020014f9.oggvorbisstr"
+
+[deps]
+
+source_file="res://assets/sfx_packs/Free Fantasy SFX Pack By TomMusic/OGG Files/SFX/Spells/Firebuff 1.ogg"
+dest_files=["res://.godot/imported/Firebuff 1.ogg-ca5a5d0a7f004f367c72f050020014f9.oggvorbisstr"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4
