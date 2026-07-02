@@ -1,6 +1,6 @@
 [gd_scene load_steps=5 format=3 uid="uid://c1p8mxexg5j6y"]
 
-[ext_resource type="Script" path="res://ui/menu/SplashScreen.gd" id="1_splash"]
+[ext_resource type="Script" uid="uid://1yirmumrtjxf" path="res://ui/menu/SplashScreen.gd" id="1_splash"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_logo"]
 bg_color = Color(1, 1, 1, 0)
@@ -13,7 +13,6 @@ corner_radius_top_left = 120
 corner_radius_top_right = 120
 corner_radius_bottom_right = 120
 corner_radius_bottom_left = 120
-anti_aliasing = true
 anti_aliasing_size = 2.0
 
 [sub_resource type="SystemFont" id="SystemFont_bold"]

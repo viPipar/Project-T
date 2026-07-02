@@ -38,7 +38,10 @@ func _ready() -> void:
 				break
 			current = current.get_parent()
 		if shell:
-			shell.show_screen("res://ui/roguelike/MapScreen.tscn")
+			if shell.has_method("transition_to_map"):
+				shell.transition_to_map()
+			else:
+				shell.show_screen("res://ui/roguelike/MapScreen.tscn")
 	)
 	add_child(leave_btn)
 	

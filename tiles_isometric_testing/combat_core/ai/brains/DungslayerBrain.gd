@@ -49,7 +49,29 @@ func decide_and_act(entity: Node, ai_component: AIComponent) -> void:
 	if move_comp != null and move_comp.has_movement():
 		var target_pos: Vector2i = target.get("grid_pos")
 		if not move_comp.interact_move_to(target_pos):
-			print("[AI:%s] Unable to find a path or move. Will try to cast blockade from here." % entity.name)
+			print("[AI:%s] Unable to fully reach target. Will move as far as possible..." % entity.name)
+			
+			if GridManager._astar != null:
+				var path = GridManager._astar.get_id_path(my_pos, target_pos)
+				if path.size() > 1:
+					var max_steps = move_comp.movement_left
+					var best_move = my_pos
+					var steps = 0
+					
+					for i in range(1, path.size()):
+						if steps >= max_steps:
+							break
+						var step_pos = path[i]
+						if GridManager.can_enter_tile(step_pos, entity):
+							best_move = step_pos
+							steps += 1
+						else:
+							break
+					
+					if best_move != my_pos:
+						move_comp.move_to(best_move)
+						await move_comp.move_finished
+						print("[AI:%s] Partial movement finished." % entity.name)
 		else:
 			print("[AI:%s] Moving towards target..." % entity.name)
 			await move_comp.move_finished
@@ -61,12 +83,23 @@ func decide_and_act(entity: Node, ai_component: AIComponent) -> void:
 	
 	if dist_to_target <= 1:
 		print("[AI:%s] Now adjacent! Unleashing Normal Attack!" % entity.name)
-		_perform_attack_tag_and_end(entity, ai_component, target, "main_attack")
+		EventBus.attackcam_started.emit(entity, target, "main_attack", target.get("grid_pos"))
+		await EventBus.combat_action_finished
+		
+		if boss_blockade_ability != null and is_instance_valid(target):
+			if not (target.has_method("is_dead") and target.is_dead()):
+				var alive_now = _get_alive_players(entity)
+				if alive_now.size() >= 2:
+					print("[AI:%s] Casting Blockade to block Line of Sight after attacking!" % entity.name)
+					_perform_attack_and_end(entity, ai_component, target, boss_blockade_ability)
+					return
+		
+		ai_component.end_turn()
 		return
 		
 	# Still out of melee range, cast Blockade!
-	if boss_blockade_ability != null:
-		print("[AI:%s] Target still out of range. Casting Blockade to block Line of Sight!" % entity.name)
+	if boss_blockade_ability != null and _get_alive_players(entity).size() >= 2:
+		print("[AI:%s] Target still out of range and both players alive. Casting Blockade!" % entity.name)
 		_perform_attack_and_end(entity, ai_component, target, boss_blockade_ability)
 		return
 		
