@@ -426,7 +426,626 @@ func _build_ui() -> void:
 	)
 	ev_vbox.add_child(btn_luck_lose)
 
-	# --- TAB 5: Config ---
+	# --- TAB 6: VFX Test ---
+	var tab_vfx = MarginContainer.new()
+	tab_vfx.name = "VFX Test"
+	tab_vfx.add_theme_constant_override("margin_left", 10)
+	tab_vfx.add_theme_constant_override("margin_top", 10)
+	tab_vfx.add_theme_constant_override("margin_right", 10)
+	tab_vfx.add_theme_constant_override("margin_bottom", 10)
+	tabs.add_child(tab_vfx)
+	
+	var vfx_scroll = ScrollContainer.new()
+	tab_vfx.add_child(vfx_scroll)
+	
+	var vfx_vbox = VBoxContainer.new()
+	vfx_vbox.add_theme_constant_override("separation", 8)
+	vfx_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	vfx_scroll.add_child(vfx_vbox)
+	
+	# ── Target Pickers ──
+	var picker_hbox = HBoxContainer.new()
+	picker_hbox.add_theme_constant_override("separation", 10)
+	vfx_vbox.add_child(picker_hbox)
+	
+	var pkr_lbl1 = Label.new()
+	pkr_lbl1.text = "Caster:"
+	picker_hbox.add_child(pkr_lbl1)
+	var caster_picker = OptionButton.new()
+	caster_picker.add_item("(auto)", 0)
+	caster_picker.add_item("Player 1", 1)
+	caster_picker.add_item("Player 2", 2)
+	caster_picker.add_item("First Enemy", 3)
+	caster_picker.selected = 0
+	picker_hbox.add_child(caster_picker)
+	
+	var pkr_lbl2 = Label.new()
+	pkr_lbl2.text = " Target:"
+	picker_hbox.add_child(pkr_lbl2)
+	var vfx_target = OptionButton.new()
+	vfx_target.add_item("(auto)", 0)
+	vfx_target.add_item("Player 1", 1)
+	vfx_target.add_item("Player 2", 2)
+	vfx_target.add_item("First Enemy", 3)
+	vfx_target.selected = 0
+	picker_hbox.add_child(vfx_target)
+	
+	# Helper lambdas
+	var _vfx_ctrl := func() -> Node:
+		var bridge = get_tree().current_scene.get_node_or_null("CombatTestBridge")
+		return bridge.get("vfx_controller") if bridge else null
+	
+	var _resolve_node := func(pick_val: int) -> Node:
+		match pick_val:
+			1, 2:
+				for p in get_tree().get_nodes_in_group("players"):
+					if p.get("player_id") == pick_val:
+						return p
+				return null
+			3:
+				var es = get_tree().get_nodes_in_group("enemies")
+				return es[0] if es.size() > 0 else null
+			_:
+				return null
+	
+	var _shake_all := func(power: float) -> void:
+		for c in get_tree().get_nodes_in_group("cameras"):
+			if c.has_method("shake"):
+				c.shake(clampf(power * 0.06, 0.2, 1.0), 0.5 if power > 12.0 else 0.35)
+	
+	var mk_cat = func(title: String) -> void:
+		var lbl = Label.new()
+		lbl.text = title
+		lbl.add_theme_font_size_override("font_size", 14)
+		lbl.add_theme_color_override("font_color", Color(0.4, 0.8, 1.0))
+		vfx_vbox.add_child(lbl)
+	
+	var mk_btn = func(text: String, color: Color, fn: Callable) -> void:
+		var btn = Button.new()
+		btn.text = text
+		btn.add_theme_color_override("font_color", color)
+		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn.pressed.connect(fn)
+		vfx_vbox.add_child(btn)
+	
+	mk_cat.call("── SCREEN SHAKE ──")
+	mk_btn.call("💥 Light Shake", Color.CORNSILK, func(): _shake_all.call(4.0))
+	mk_btn.call("💥 Medium Shake", Color.YELLOW, func(): _shake_all.call(10.0))
+	mk_btn.call("💥 Heavy Shake", Color.ORANGE, func(): _shake_all.call(18.0))
+	mk_btn.call("💥 BOSS Shake (25)", Color.RED, func(): _shake_all.call(25.0))
+	mk_btn.call("💥 Impact Flash Only", Color.WHITE, func():
+		if ScreenEffects != null:
+			ScreenEffects.impact_flash(Color(1, 0.9, 0.7, 1), 0.7, 0.3)
+	)
+	
+	mk_cat.call("── VFX CONFIG ──")
+
+	set_meta("vfx_cfg_scale", 1.0)
+	set_meta("vfx_cfg_ox", 0.0)
+	set_meta("vfx_cfg_oy", 0.0)
+
+	var _apply_debug_vfx_config := func(ctrl: Node):
+		if ctrl and ctrl.has_method("_play_skill_cast_vfx"):
+			ctrl.debug_scale_multiplier = get_meta("vfx_cfg_scale")
+			ctrl.debug_offset = Vector2(get_meta("vfx_cfg_ox"), get_meta("vfx_cfg_oy"))
+
+	var cfg_row1 = HBoxContainer.new()
+	cfg_row1.add_theme_constant_override("separation", 6)
+	vfx_vbox.add_child(cfg_row1)
+
+	var cfg_scale_val = Label.new()
+	cfg_scale_val.text = "1.0"
+	cfg_scale_val.custom_minimum_size = Vector2(26, 0)
+
+	var cfg_ox_val = Label.new()
+	cfg_ox_val.text = "0"
+	cfg_ox_val.custom_minimum_size = Vector2(26, 0)
+
+	var cfg_oy_val = Label.new()
+	cfg_oy_val.text = "0"
+	cfg_oy_val.custom_minimum_size = Vector2(26, 0)
+
+	var cfg_scale_lbl = Label.new()
+	cfg_scale_lbl.text = "Scl"
+	cfg_scale_lbl.custom_minimum_size = Vector2(20, 0)
+	cfg_row1.add_child(cfg_scale_lbl)
+
+	var cfg_scale = HSlider.new()
+	cfg_scale.custom_minimum_size = Vector2(80, 0)
+	cfg_scale.min_value = 0.1
+	cfg_scale.max_value = 5.0
+	cfg_scale.step = 0.1
+	cfg_scale.value = 1.0
+	cfg_scale.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cfg_row1.add_child(cfg_scale)
+	cfg_scale.value_changed.connect(func(v):
+		set_meta("vfx_cfg_scale", v)
+		cfg_scale_val.text = "%.1f" % v
+		_apply_debug_vfx_config.call(_vfx_ctrl.call())
+	)
+
+	cfg_row1.add_child(cfg_scale_val)
+
+	var cfg_ox_lbl = Label.new()
+	cfg_ox_lbl.text = "OX"
+	cfg_ox_lbl.custom_minimum_size = Vector2(16, 0)
+	cfg_row1.add_child(cfg_ox_lbl)
+
+	var cfg_ox = HSlider.new()
+	cfg_ox.custom_minimum_size = Vector2(60, 0)
+	cfg_ox.min_value = -200
+	cfg_ox.max_value = 200
+	cfg_ox.step = 1
+	cfg_ox.value = 0
+	cfg_row1.add_child(cfg_ox)
+	cfg_ox.value_changed.connect(func(v):
+		set_meta("vfx_cfg_ox", v)
+		cfg_ox_val.text = "%d" % v
+		_apply_debug_vfx_config.call(_vfx_ctrl.call())
+	)
+
+	cfg_row1.add_child(cfg_ox_val)
+
+	var cfg_oy_lbl = Label.new()
+	cfg_oy_lbl.text = "OY"
+	cfg_oy_lbl.custom_minimum_size = Vector2(16, 0)
+	cfg_row1.add_child(cfg_oy_lbl)
+
+	var cfg_oy = HSlider.new()
+	cfg_oy.custom_minimum_size = Vector2(60, 0)
+	cfg_oy.min_value = -200
+	cfg_oy.max_value = 200
+	cfg_oy.step = 1
+	cfg_oy.value = 0
+	cfg_row1.add_child(cfg_oy)
+	cfg_oy.value_changed.connect(func(v):
+		set_meta("vfx_cfg_oy", v)
+		cfg_oy_val.text = "%d" % v
+		_apply_debug_vfx_config.call(_vfx_ctrl.call())
+	)
+
+	cfg_row1.add_child(cfg_oy_val)
+
+	mk_cat.call("── SKILL CAST VFX ──")
+	var vfx_tests = [
+		["⚔️ PHYSICAL (big_hit)", "physical", 0, ""],
+		["🔥 MAGIC FIRE (fire_ring)", "dummy", 1, "fire"],
+		["💧 MAGIC WATER (wavy_blue)", "dummy", 1, "water"],
+		["🌪️ MAGIC WIND (wavy_purple)", "dummy", 1, "wind"],
+		["⚡ MAGIC ELECTRIC (electric_ring)", "dummy", 1, "electric"],
+		["✨ MAGIC OTHER (star_explosion)", "dummy", 1, "arcane"],
+		["🔧 UTILITY (charge_7x6)", "dummy", 2, ""],
+		["🌀 UTILITY (vortex_6x5)", "epimorphic", 0, ""],
+		["🌟 UTILITY (lightstreaks_6x5)", "divine_departure", 0, ""],
+		["👑 BOSS (explosion_6x5)", "boss_cleave", 0, ""],
+	]
+	for vt in vfx_tests:
+		var btn = Button.new()
+		btn.text = vt[0]
+		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var tag = vt[1]
+		var atype = vt[2]
+		var el = vt[3]
+		btn.pressed.connect(func():
+			var ctrl = _vfx_ctrl.call()
+			var target = _resolve_node.call(caster_picker.selected)
+			if target == null:
+				var ps = get_tree().get_nodes_in_group("players")
+				target = ps[0] if ps.size() > 0 else null
+			if ctrl and ctrl.has_method("_play_skill_cast_vfx") and target:
+				_apply_debug_vfx_config.call(ctrl)
+				var offset = Vector2(get_meta("vfx_cfg_ox"), get_meta("vfx_cfg_oy"))
+				if offset.length_squared() > 0:
+					var dummy = Node2D.new()
+					dummy.global_position = target.global_position + offset
+					get_tree().current_scene.add_child(dummy)
+					ctrl._play_skill_cast_vfx(dummy, tag, atype, el)
+					await get_tree().create_timer(1.0).timeout
+					if is_instance_valid(dummy):
+						dummy.queue_free()
+				else:
+					ctrl._play_skill_cast_vfx(target, tag, atype, el)
+			else:
+				var msg = "no target found" if target == null else "CombatVFXController not found"
+				EventNotifier.show_message("VFX: " + msg, Color.RED)
+		)
+		vfx_vbox.add_child(btn)
+	
+	mk_cat.call("── HIT VFX ──")
+	var hit_elements = ["physical", "fire", "ice", "lightning", "arcane", "enemy"]
+	for hel in hit_elements:
+		mk_btn.call("💢 HIT: %s" % hel, Color.LIGHT_CORAL, func(el = hel):
+			var ctrl = _vfx_ctrl.call()
+			var target = _resolve_node.call(vfx_target.selected)
+			if target == null:
+				var ps = get_tree().get_nodes_in_group("players")
+				target = ps[0] if ps.size() > 0 else null
+			if ctrl and ctrl.has_method("_spawn_hit_vfx") and target:
+				ctrl._spawn_hit_vfx(target, el)
+			else:
+				var msg = "no target found" if target == null else "CombatVFXController not found"
+				EventNotifier.show_message("HIT VFX: " + msg, Color.RED)
+		)
+	
+	mk_cat.call("── PROJECTILE ──")
+	mk_btn.call("🎯 Fire Projectile", Color.ORANGE_RED, func():
+		var ctrl = _vfx_ctrl.call()
+		var src = _resolve_node.call(caster_picker.selected)
+		var tgt = _resolve_node.call(vfx_target.selected)
+		if src == null: src = _resolve_node.call(1)
+		if tgt == null: tgt = _resolve_node.call(3)
+		if ctrl and ctrl.has_method("_spawn_magic_projectile") and src and tgt:
+			ctrl._spawn_magic_projectile(src, tgt, "fire")
+		else:
+			var msg = "need caster + target" if not (src and tgt) else "CombatVFXController not found"
+			EventNotifier.show_message("Projectile VFX: " + msg, Color.RED)
+	)
+	mk_btn.call("🎯 Ice Projectile", Color.CYAN, func():
+		var ctrl = _vfx_ctrl.call()
+		var src = _resolve_node.call(caster_picker.selected)
+		var tgt = _resolve_node.call(vfx_target.selected)
+		if src == null: src = _resolve_node.call(1)
+		if tgt == null: tgt = _resolve_node.call(3)
+		if ctrl and ctrl.has_method("_spawn_magic_projectile") and src and tgt:
+			ctrl._spawn_magic_projectile(src, tgt, "ice")
+		else:
+			var msg = "need caster + target" if not (src and tgt) else "CombatVFXController not found"
+			EventNotifier.show_message("Projectile VFX: " + msg, Color.RED)
+	)
+	mk_btn.call("🎯 Enemy Projectile", Color.PURPLE, func():
+		var ctrl = _vfx_ctrl.call()
+		var src = _resolve_node.call(vfx_target.selected)
+		var tgt = _resolve_node.call(caster_picker.selected)
+		if src == null: src = _resolve_node.call(3)
+		if tgt == null: tgt = _resolve_node.call(1)
+		if ctrl and ctrl.has_method("_spawn_magic_projectile") and src and tgt:
+			ctrl._spawn_magic_projectile(src, tgt, "enemy")
+		else:
+			var msg = "need caster + target" if not (src and tgt) else "CombatVFXController not found"
+			EventNotifier.show_message("Projectile VFX: " + msg, Color.RED)
+	)
+	
+	mk_cat.call("── ENEMY JITTER ──")
+	mk_btn.call("🔀 Jitter Target Entity", Color.KHAKI, func():
+		var e = _resolve_node.call(vfx_target.selected)
+		if e == null:
+			var es = get_tree().get_nodes_in_group("enemies")
+			e = es[0] if es.size() > 0 else null
+		if e and is_instance_valid(e):
+			var tw = e.create_tween()
+			var ox = e.position.x
+			var oy = e.position.y
+			tw.tween_property(e, "position:x", ox - 12, 0.03)
+			tw.parallel().tween_property(e, "position:y", oy - 4, 0.03)
+			tw.tween_property(e, "position:x", ox + 12, 0.03)
+			tw.parallel().tween_property(e, "position:y", oy + 4, 0.03)
+			tw.tween_property(e, "position:x", ox - 6, 0.03)
+			tw.tween_property(e, "position:y", oy, 0.03)
+			tw.tween_property(e, "position:x", ox, 0.03)
+		else:
+			EventNotifier.show_message("Jitter: no target entity found", Color.RED)
+	)
+	
+	mk_cat.call("── IMPACT SOUNDS ──")
+	var sfx_keys = [
+		"impact_heavy_1", "impact_heavy_2", "impact_heavy_3",
+		"sword_slice", "explosion_impact", "impact_thud",
+		"sword_hit", "sword_miss", "spell_impact",
+		"clash_impact", "damage_total_slam",
+		"result_hit", "result_crit", "result_miss",
+	]
+	for sk in sfx_keys:
+		mk_btn.call("🔊 %s" % sk, Color.ORANGE, func(key = sk):
+			var am = get_node_or_null("/root/AudioManager")
+			if am and am.has_method("play_sfx"):
+				am.play_sfx(key)
+		)
+
+	mk_cat.call("── VFX SANDBOX ──")
+	var sandbox_row = HBoxContainer.new()
+	sandbox_row.add_theme_constant_override("separation", 8)
+	vfx_vbox.add_child(sandbox_row)
+
+	var element_dropdown = OptionButton.new()
+	element_dropdown.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	element_dropdown.custom_minimum_size = Vector2(100, 0)
+	var elements = ["fire", "water", "ice", "wind", "electric", "earth", "arcane", "shadow", "holy", "poison", "enemy"]
+	for el in elements:
+		element_dropdown.add_item(el.capitalize())
+	sandbox_row.add_child(element_dropdown)
+
+	var mc_scale_slider = HSlider.new()
+	mc_scale_slider.custom_minimum_size = Vector2(80, 0)
+	mc_scale_slider.min_value = 0.3
+	mc_scale_slider.max_value = 3.0
+	mc_scale_slider.step = 0.1
+	mc_scale_slider.value = 1.0
+	mc_scale_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sandbox_row.add_child(mc_scale_slider)
+
+	var btn_magic_circle = Button.new()
+	btn_magic_circle.text = "✨ Spawn Magic Circle"
+	btn_magic_circle.custom_minimum_size = Vector2(0, 36)
+	btn_magic_circle.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sandbox_row.add_child(btn_magic_circle)
+	btn_magic_circle.pressed.connect(func():
+		var el_name = elements[element_dropdown.selected]
+		var mc = Node2D.new()
+		mc.set_script(preload("res://combat_core/tests/MagicCircleVFX.gd"))
+		var pos = Vector2(400, 300)
+		var cam = get_viewport().get_camera_2d()
+		if cam: pos = cam.get_screen_center()
+		pos += Vector2(get_meta("vfx_cfg_ox"), get_meta("vfx_cfg_oy"))
+		mc.setup(el_name, pos, mc_scale_slider.value * get_meta("vfx_cfg_scale"))
+		get_tree().current_scene.add_child(mc)
+	)
+
+	var burst_row = HBoxContainer.new()
+	burst_row.add_theme_constant_override("separation", 8)
+	vfx_vbox.add_child(burst_row)
+
+	var burst_color_picker = ColorPickerButton.new()
+	burst_color_picker.color = Color(1, 0.3, 0.1)
+	burst_color_picker.custom_minimum_size = Vector2(40, 30)
+	burst_row.add_child(burst_color_picker)
+
+	var btn_burst = Button.new()
+	btn_burst.text = "💥 Particle Burst"
+	btn_burst.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	burst_row.add_child(btn_burst)
+	btn_burst.pressed.connect(func():
+		var pos = Vector2(400, 300)
+		var cam = get_viewport().get_camera_2d()
+		if cam: pos = cam.get_screen_center()
+		pos += Vector2(get_meta("vfx_cfg_ox"), get_meta("vfx_cfg_oy"))
+		var pcount = maxi(1, int(16 * get_meta("vfx_cfg_scale")))
+		for i in range(pcount):
+			var dup = ColorRect.new()
+			dup.color = burst_color_picker.color
+			dup.custom_minimum_size = Vector2(6, 6)
+			dup.size = Vector2(6, 6)
+			var mat = CanvasItemMaterial.new()
+			mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+			dup.material = mat
+			dup.global_position = pos
+			get_tree().current_scene.add_child(dup)
+			var angle = randf_range(0, TAU)
+			var dist = randf_range(40, 100)
+			var tw = create_tween()
+			tw.tween_property(dup, "position", Vector2(cos(angle), sin(angle)) * dist, 0.5).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+			tw.parallel().tween_property(dup, "color:a", 0.0, 0.5)
+			tw.tween_callback(func(): dup.queue_free())
+	)
+
+	var glow_row = HBoxContainer.new()
+	glow_row.add_theme_constant_override("separation", 8)
+	vfx_vbox.add_child(glow_row)
+
+	var glow_element_dd = OptionButton.new()
+	glow_element_dd.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	for el in elements:
+		glow_element_dd.add_item(el.capitalize())
+	glow_row.add_child(glow_element_dd)
+
+	var btn_glow = Button.new()
+	btn_glow.text = "🌟 Glow Ring"
+	btn_glow.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	glow_row.add_child(btn_glow)
+	btn_glow.pressed.connect(func():
+		var el_name = elements[glow_element_dd.selected]
+		var color = MagicCircleVFX.ELEMENT_COLORS.get(el_name, Color.WHITE)
+		var pos = Vector2(400, 300)
+		var cam = get_viewport().get_camera_2d()
+		if cam: pos = cam.get_screen_center()
+		pos += Vector2(get_meta("vfx_cfg_ox"), get_meta("vfx_cfg_oy"))
+		var tex = preload("res://assets/brackeys_vfx_bundle/particles/alpha/circle_01_a.png")
+		if not tex: return
+		var glow = Sprite2D.new()
+		glow.texture = tex
+		glow.self_modulate = Color(color.r, color.g, color.b, 0.35)
+		var gs = 2.0 * get_meta("vfx_cfg_scale")
+		glow.scale = Vector2(0.01, 0.01)
+		glow.global_position = pos
+		glow.z_index = 1500
+		var mat = CanvasItemMaterial.new()
+		mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+		glow.material = mat
+		get_tree().current_scene.add_child(glow)
+		var tw = create_tween().set_parallel(true)
+		tw.tween_property(glow, "scale", Vector2(gs, gs), 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw.tween_property(glow, "self_modulate:a", 0.0, 0.4).set_delay(0.3)
+		tw.tween_callback(func(): glow.queue_free()).set_delay(0.75)
+	)
+
+	mk_cat.call("── RELIC / MANAGER STATUS ──")
+	var _get_mgr := func(pid: int) -> Dictionary:
+		var bridge = get_tree().get_root().find_child("CombatTestBridge", true, false)
+		if not bridge: return {}
+		var ap_key = "_p%d_ap" % pid
+		var mov_key = "_p%d_mov" % pid
+		return {"ap": bridge.get(ap_key), "mov": bridge.get(mov_key)}
+
+	var _mgr_label := RichTextLabel.new()
+	_mgr_label.bbcode_enabled = true
+	_mgr_label.custom_minimum_size = Vector2(0, 160)
+	_mgr_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	vfx_vbox.add_child(_mgr_label)
+
+	var _refresh_mgr := func():
+		var bb = ""
+		for pid in [1, 2]:
+			var m = _get_mgr.call(pid)
+			var ap = m.get("ap")
+			var mov = m.get("mov")
+			bb += "[b][color=#aaffaa]P%d[/color][/b]  " % pid
+			if ap:
+				bb += "AP: [color=#88ff88]%d/%d[/color]  BAP: [color=#88aaff]%d/%d[/color]  " % [ap.current_ap, ap.max_ap, ap.current_bap, ap.max_bap]
+			else:
+				bb += "AP: [color=#ff6666]N/A[/color]  "
+			if mov:
+				bb += "Move: [color=#ffff88]%d/%d[/color]" % [mov.current_tiles, mov.max_tiles]
+			else:
+				bb += "Move: [color=#ff6666]N/A[/color]"
+			bb += "\n"
+
+		var ps = get_tree().get_nodes_in_group("players")
+		for p in ps:
+			var pid = p.get("player_id")
+			if pid == null: continue
+			var stats = p.get_node_or_null("StatsComponent") as StatsComponent
+			if not stats: continue
+			var hc = p.get_node_or_null("HealthComponent") as HealthComponent
+			bb += "\n[b]P%d Stats + Mods:[/b]\n" % pid
+			bb += "DEX=%d INT=%d MOV=%d\n" % [stats.get_stat("dex"), stats.get_stat("int"), stats.get_stat("mov")]
+			bb += "AP_mod=%d BAP_mod=%d MOV_mod=%d\n" % [stats.get_mod_total("action_points"), stats.get_mod_total("bonus_action_points"), stats.get_mod_total("movement_tiles")]
+			bb += "Calculated: AP=%d BAP=%d Tiles=%d\n" % [1 + floori(stats.get_stat("dex") / 10.0) + stats.get_mod_total("action_points"), 1 + floori(stats.get_stat("int") / 10.0) + stats.get_mod_total("bonus_action_points"), 6 + floori(stats.get_stat("mov") / 5.0) + stats.get_mod_total("movement_tiles")]
+			if hc:
+				bb += "HP: %d/%d  " % [hc.current_hp, hc.max_hp]
+			var inv = InventoryManager.get_player_items(pid) if InventoryManager else []
+			if inv.size() > 0:
+				bb += "\nItems: [color=#aaaaaa]%s[/color]" % ", ".join(inv)
+			bb += "\n"
+		_mgr_label.text = bb
+
+	var refresh_row = HBoxContainer.new()
+	refresh_row.add_theme_constant_override("separation", 10)
+	vfx_vbox.add_child(refresh_row)
+
+	var btn_refresh = Button.new()
+	btn_refresh.text = "🔄 Refresh Manager Status"
+	btn_refresh.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn_refresh.pressed.connect(func(): _refresh_mgr.call())
+	refresh_row.add_child(btn_refresh)
+
+	var btn_equip = Button.new()
+	btn_equip.text = "📦 Equip ALL special relics"
+	btn_equip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn_equip.pressed.connect(func():
+		var test_items = [
+			"book_chronos_topos", "book_seven_deadly_sins", "book_united_swarm_alliance",
+			"berserker_axe", "big_hand", "holy_ring", "clock_chronos",
+			"blade_wrath", "mask_gluttony", "gauntlet_sloth", "switchblade",
+			"crown_pride", "boots_lust", "ring_greed", "robe_envy", "grid_topos",
+			"skywalker", "sandal", "greathorn_staff", "holymoly_necklace",
+			"rainbow_hand", "greatskull_sword", "red_cloud_cape", "red_cape",
+			"egg_pouch", "ant_fang", "sleeping_bag", "honey_wax", "glasswing",
+			"sleeping_pouch", "white_robe", "cursed_amulet",
+		]
+		for pid in [1, 2]:
+			for item_id in test_items:
+				if InventoryManager:
+					InventoryManager.add_item(pid, item_id)
+		EventNotifier.show_message("All special relics granted to both players!", Color.GREEN)
+		_refresh_mgr.call()
+	)
+	refresh_row.add_child(btn_equip)
+	
+	# Auto-refresh every 1s when tab visible
+	var _auto_refresh := false
+	var btn_auto = CheckButton.new()
+	btn_auto.text = "Auto-refresh"
+	btn_auto.toggled.connect(func(tog: bool): _auto_refresh = tog)
+	refresh_row.add_child(btn_auto)
+
+	# Add to process for auto-refresh
+	var _orig_process = _process
+	# We'll just use a timer-based approach in the existing _process
+	# Store the auto-refresh label updater
+	set_meta("vfx_mgr_refresh", _refresh_mgr)
+	set_meta("vfx_mgr_auto", func() -> bool: return _auto_refresh)
+
+	# Initial refresh
+	_refresh_mgr.call()
+
+	mk_cat.call("── RELIC TOGGLES ──")
+
+	var toggle_items = [
+		"ant_fang", "glasswing", "greathorn_staff", "holy_ring", "clock_chronos",
+		"greatskull_sword", "honey_wax", "sandal", "robe_envy", "grid_topos",
+		"rainbow_hand", "red_cloud_cape", "switchblade", "blade_wrath", "berserker_axe",
+		"mask_gluttony", "skywalker", "holymoly_necklace", "red_cape", "egg_pouch",
+		"white_robe", "crown_pride", "gauntlet_sloth", "sleeping_bag", "sleeping_pouch",
+		"ring_greed", "boots_lust", "big_hand", "cursed_amulet",
+	]
+	var toggle_btns: Dictionary = {}
+
+	var mk_toggle_row := func(start_idx: int, count: int) -> HBoxContainer:
+		var row = HBoxContainer.new()
+		row.add_theme_constant_override("separation", 4)
+		vfx_vbox.add_child(row)
+		for i in range(count):
+			var idx = start_idx + i
+			if idx >= toggle_items.size():
+				break
+			var item_id = toggle_items[idx]
+			var item_data = StatDataDB.get_item_data(item_id) if StatDataDB else {}
+			var label = item_data.get("display_name", item_id)
+			var cb = CheckButton.new()
+			cb.text = label
+			cb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			cb.toggled.connect(func(tog: bool, id = item_id):
+				if not InventoryManager:
+					return
+				for pid in [1, 2]:
+					if tog:
+						InventoryManager.add_item(pid, id)
+					else:
+						var items = InventoryManager.get_player_items(pid)
+						if id in items:
+							InventoryManager.remove_item(pid, id)
+				_refresh_mgr.call()
+			)
+			row.add_child(cb)
+			toggle_btns[item_id] = cb
+		return row
+
+	for i in range(0, toggle_items.size(), 5):
+		mk_toggle_row.call(i, 5)
+
+	var _sync_toggle_buttons := func():
+		if not InventoryManager:
+			return
+		for item_id in toggle_items:
+			var cb = toggle_btns.get(item_id)
+			if cb:
+				cb.set_pressed_no_signal(InventoryManager.has_item(1, item_id))
+
+	var toggle_row2 = HBoxContainer.new()
+	toggle_row2.add_theme_constant_override("separation", 8)
+	vfx_vbox.add_child(toggle_row2)
+
+	var btn_disable_all = Button.new()
+	btn_disable_all.text = "❌ Disable ALL"
+	btn_disable_all.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	toggle_row2.add_child(btn_disable_all)
+	btn_disable_all.pressed.connect(func():
+		if not InventoryManager:
+			return
+		for pid in [1, 2]:
+			for item_id in toggle_items:
+				if InventoryManager.has_item(pid, item_id):
+					InventoryManager.remove_item(pid, item_id)
+		_sync_toggle_buttons.call()
+		_refresh_mgr.call()
+	)
+
+	var btn_enable_all = Button.new()
+	btn_enable_all.text = "✅ Enable ALL"
+	btn_enable_all.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	toggle_row2.add_child(btn_enable_all)
+	btn_enable_all.pressed.connect(func():
+		if not InventoryManager:
+			return
+		for pid in [1, 2]:
+			for item_id in toggle_items:
+				InventoryManager.add_item(pid, item_id)
+		_sync_toggle_buttons.call()
+		_refresh_mgr.call()
+	)
+
+	_sync_toggle_buttons.call()
+
+	# --- TAB 7: Config ---
 	var tab_config = MarginContainer.new()
 	tab_config.name = "Config"
 	tab_config.add_theme_constant_override("margin_left", 15)
@@ -536,6 +1155,10 @@ func _process(delta: float) -> void:
 	if _refresh_timer >= 0.5:
 		_refresh_timer = 0.0
 		_refresh_stats()
+		var auto_fn = get_meta("vfx_mgr_auto", func() -> bool: return false)
+		if auto_fn.call():
+			var fn = get_meta("vfx_mgr_refresh", func(): pass)
+			fn.call()
 
 func _connect_bus() -> void:
 	if EventBus != null:

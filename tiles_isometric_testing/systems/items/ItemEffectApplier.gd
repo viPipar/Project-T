@@ -65,13 +65,72 @@ func recalculate_player_stats(player_node: Node, player_id: int) -> void:
 		
 		StatDataDB.apply_stat_mod(player_node, source_id, stat_mods)
 		
+	# Sync AP / BAP / Movement managers with current stats + item mods
+	var mgr = _managers.get(player_id, {})
+	var ap_mgr = mgr.get("ap")
+	if ap_mgr and stats:
+		var new_max_ap = 1 + floori(stats.get_stat("dex") / 10.0) + stats.get_mod_total("action_points")
+		if new_max_ap != ap_mgr.max_ap:
+			if new_max_ap > ap_mgr.max_ap:
+				ap_mgr.current_ap += (new_max_ap - ap_mgr.max_ap)
+			ap_mgr.max_ap = new_max_ap
+			ap_mgr.current_ap = clampi(ap_mgr.current_ap, 0, new_max_ap)
+			ap_mgr.ap_changed.emit(ap_mgr.current_ap, new_max_ap)
+		var new_max_bap = 1 + floori(stats.get_stat("int") / 10.0) + stats.get_mod_total("bonus_action_points")
+		if new_max_bap != ap_mgr.max_bap:
+			if new_max_bap > ap_mgr.max_bap:
+				ap_mgr.current_bap += (new_max_bap - ap_mgr.max_bap)
+			ap_mgr.max_bap = new_max_bap
+			ap_mgr.current_bap = clampi(ap_mgr.current_bap, 0, new_max_bap)
+			ap_mgr.bap_changed.emit(ap_mgr.current_bap, new_max_bap)
+	var mov_mgr = mgr.get("mov")
+	if mov_mgr and stats:
+		var new_max_tiles = 6 + floori(stats.get_stat("mov") / 5.0) + stats.get_mod_total("movement_tiles")
+		if new_max_tiles != mov_mgr.max_tiles:
+			if new_max_tiles > mov_mgr.max_tiles:
+				mov_mgr.current_tiles += (new_max_tiles - mov_mgr.max_tiles)
+			mov_mgr.max_tiles = new_max_tiles
+			mov_mgr.current_tiles = clampi(mov_mgr.current_tiles, 0, new_max_tiles)
+			mov_mgr.movement_changed.emit(mov_mgr.current_tiles, new_max_tiles)
+			
+	var res_mgr = mgr.get("res")
+	if res_mgr and stats:
+		if res_mgr is SpellSlotManager:
+			var att_val = stats.get_stat("att")
+			var new_l1 = 2 + floori(att_val / 5.0) + stats.get_mod_total("spell_slots_l1")
+			var new_l2 = 2 + floori(att_val / 10.0) + stats.get_mod_total("spell_slots_l2")
+			var new_l3 = 1 + floori(att_val / 15.0) + stats.get_mod_total("spell_slots_l3")
+			var new_l4 = stats.get_mod_total("spell_slots_l4")
+			
+			var levels = [1, 2, 3, 4]
+			var new_maxes = [new_l1, new_l2, new_l3, new_l4]
+			for idx in range(4):
+				var lvl = levels[idx]
+				var n_max = new_maxes[idx]
+				if n_max != res_mgr.max_slots[idx]:
+					var diff = n_max - res_mgr.max_slots[idx]
+					res_mgr.max_slots[idx] = n_max
+					res_mgr.current_slots[idx] = clampi(res_mgr.current_slots[idx] + diff, 0, n_max)
+					res_mgr.slots_changed.emit(lvl, res_mgr.current_slots[idx], n_max)
+		elif res_mgr is EnergyChargeManager:
+			var slot_conv = stats.get_mod_total("spell_slots_l1") * 1 \
+				+ stats.get_mod_total("spell_slots_l2") * 2 \
+				+ stats.get_mod_total("spell_slots_l3") * 3 \
+				+ stats.get_mod_total("spell_slots_l4") * 4
+			var direct_charge = stats.get_mod_total("energy_charge")
+			var new_max_charges = 5 + slot_conv + direct_charge
+			if new_max_charges != res_mgr.max_charges:
+				var diff = new_max_charges - res_mgr.max_charges
+				res_mgr.max_charges = new_max_charges
+				res_mgr.current_charges = clampi(res_mgr.current_charges + diff, 0, new_max_charges)
+				res_mgr.charge_changed.emit(res_mgr.current_charges, new_max_charges)
+
 	# Bind health component for HP threshold items
 	var hc = player_node.get_node_or_null("HealthComponent")
 	if is_instance_valid(hc):
 		if not hc.hp_changed.is_connected(_on_hp_changed.bind(player_node, player_id)):
 			hc.hp_changed.connect(_on_hp_changed.bind(player_node, player_id))
 		# Holy Ring: bonus heal
-		var heal_key = "holy_ring_%d" % player_id
 		if not hc.healed.is_connected(_on_healed.bind(player_node, player_id)):
 			hc.healed.connect(_on_healed.bind(player_node, player_id))
 		# Clock o' Chronos: revive on down
@@ -128,11 +187,15 @@ func _on_hp_changed(current: int, max_hp: int, player_node: Node, player_id: int
 func _on_healed(_amount: int, player_node: Node, player_id: int) -> void:
 	if not InventoryManager.has_item(player_id, "holy_ring"):
 		return
+	if player_node.get_meta("holy_ring_busy", false):
+		return
+	player_node.set_meta("holy_ring_busy", true)
 	var bonus = randi_range(1, 6)
 	var hc = player_node.get_node_or_null("HealthComponent")
 	if hc:
 		hc.heal(bonus)
 		EventNotifier.show_message("Holy Ring: +%d Bonus Heal!" % bonus, Color.MEDIUM_SPRING_GREEN)
+	player_node.set_meta("holy_ring_busy", false)
 
 func _on_downed(attacker: Node, player_node: Node, player_id: int) -> void:
 	if not InventoryManager.has_item(player_id, "clock_chronos"):
@@ -151,6 +214,9 @@ func _on_combat_hud_ready(player_id: int, ap_mgr: Node, mov_mgr: Node, resource_
 		"mov": mov_mgr,
 		"res": resource_mgr
 	}
+	var player = _get_player_by_id(player_id)
+	if player != null:
+		recalculate_player_stats(player, player_id)
 	if ap_mgr != null and not ap_mgr.ap_changed.is_connected(_on_ap_changed.bind(player_id)):
 		ap_mgr.ap_changed.connect(_on_ap_changed.bind(player_id))
 	if resource_mgr != null:
@@ -301,15 +367,16 @@ func _on_entity_died(entity: Node, killer: Node) -> void:
 		return
 	var player_id = int(kpid)
 	
-	# 1. Blade o' Wrath: Kill Enemy → Gain +1 Flat Damage stack (no max)
+	# 1. Blade o' Wrath: Kill Enemy → Gain +1 Flat Damage stack (max 7)
 	if InventoryManager.has_item(player_id, "blade_wrath"):
 		var current = killer.get_meta("blade_wrath_stacks", 0)
-		var next = current + 1
-		killer.set_meta("blade_wrath_stacks", next)
-		var stats = killer.get_node_or_null("StatsComponent") as StatsComponent
-		if stats != null:
-			stats.set_mod_source("blade_wrath_stacks", {"physical_damage": next, "magical_damage": next})
-		EventNotifier.show_message("Blade o' Wrath: Stack %d (+%d DMG)" % [next, next], Color.RED)
+		if current < 7:
+			var next = current + 1
+			killer.set_meta("blade_wrath_stacks", next)
+			var stats = killer.get_node_or_null("StatsComponent") as StatsComponent
+			if stats != null:
+				stats.set_mod_source("blade_wrath_stacks", {"physical_damage": next, "magical_damage": next})
+			EventNotifier.show_message("Blade o' Wrath: Stack %d (+%d DMG)" % [next, next], Color.RED)
 		
 	# 2. Berserker Axe: Kill Enemy → +1d4 STR (stacks)
 	if InventoryManager.has_item(player_id, "berserker_axe"):
@@ -387,12 +454,13 @@ func _on_turn_started(entity: Node, player_id: int) -> void:
 				EventNotifier.show_message("Crown o' Pride heals +%d HP!" % amt, Color.GOLD)
 		entity.set_meta("was_hit_since_last_turn", false)
 		
-	# Gauntlet o' Sloth: gain lazy stack if didn't move (no max)
+	# Gauntlet o' Sloth: gain lazy stack if didn't move (max 5)
 	if InventoryManager.has_item(player_id, "gauntlet_sloth"):
 		if not entity.get_meta("moved_this_turn", false):
 			var current = entity.get_meta("lazy_stacks", 0)
-			entity.set_meta("lazy_stacks", current + 1)
-			EventNotifier.show_message("Gauntlet o' Sloth: Lazy Stack (%d)" % (current + 1), Color.GOLDENROD)
+			if current < 5:
+				entity.set_meta("lazy_stacks", current + 1)
+				EventNotifier.show_message("Gauntlet o' Sloth: Lazy Stack (%d)" % (current + 1), Color.GOLDENROD)
 		entity.set_meta("moved_this_turn", false)
 		
 	# Sleeping Bag & Sleeping Pouch recovery

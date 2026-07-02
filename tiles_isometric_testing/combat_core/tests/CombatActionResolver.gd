@@ -293,7 +293,10 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 					var t_pos: Vector2i = target.get("grid_pos") if target != null else Vector2i(-1, -1)
 					# Knockback FIRST to clear the tile if we are dashing into them
 					if dash_dest == t_pos and ability.knockback_tiles > 0 and not _knockback_done[0]:
-						ForcedMovementResolver.knockback_from_attack(attacker, target, ability.knockback_tiles)
+						var kb_power = ability.knockback_tiles
+						if InventoryManager != null and InventoryManager.has_item_node(attacker, "big_hand"):
+							kb_power += 1
+						ForcedMovementResolver.knockback_from_attack(attacker, target, kb_power)
 						_knockback_done[0] = true
 					# Single fast blitz dash to destination
 					if is_instance_valid(GridManager) and GridManager.move_entity(old_pos, dash_dest, attacker):

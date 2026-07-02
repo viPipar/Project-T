@@ -143,7 +143,8 @@ func show_for_entity(entity: Node, layer_mask: int, viewport_center: Vector2) ->
 		
 	# Fetch Primary Stats
 	for child in _stats_container.get_children():
-		child.queue_free()
+		if is_instance_valid(child):
+			child.queue_free()
 	
 	if stats:
 		var stat_keys = ["vit", "str", "int", "con", "acc", "dex", "mov", "att", "lck"]
