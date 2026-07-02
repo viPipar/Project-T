@@ -463,8 +463,10 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 					print("[COMBAT] %s heal sebesar %d HP!" % [t.name, applied])
 				else:
 					var skip_damage = false
-					if ability != null and ("damage_primary_only" in ability) and ability.damage_primary_only:
-						if t != primary_target:
+					if ability != null:
+						if ability.ability_type == 2: # UTILITY
+							skip_damage = true
+						elif ("damage_primary_only" in ability) and ability.damage_primary_only and t != primary_target:
 							skip_damage = true
 							print("[COMBAT] %s takes no damage (damage_primary_only) but receives secondary effects." % t.name)
 					
@@ -565,7 +567,20 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 		if dir == Vector2i.ZERO: dir = Vector2i(1, 0)
 		
 		var spawn_pos = t_pos - dir
+		var valid_spawn = false
+		
 		if spawn_pos != a_pos and is_instance_valid(GridManager) and GridManager.is_walkable(spawn_pos):
+			valid_spawn = true
+		else:
+			# Fallback: find any adjacent walkable tile around the target
+			for d in [Vector2i(1,0), Vector2i(-1,0), Vector2i(0,1), Vector2i(0,-1)]:
+				var fallback_pos = t_pos + d
+				if fallback_pos != a_pos and is_instance_valid(GridManager) and GridManager.is_walkable(fallback_pos):
+					spawn_pos = fallback_pos
+					valid_spawn = true
+					break
+		
+		if valid_spawn:
 			print("[COMBAT] Summoning Blockade at %s" % spawn_pos)
 			var blockade_scene = load("res://entities/props/Blockade.tscn")
 			if blockade_scene:
@@ -577,6 +592,8 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 					blockade.set("grid_pos", spawn_pos)
 					blockade.position = IsoUtils.world_to_iso(spawn_pos)
 					if world: world.add_child(blockade)
+		else:
+			print("[COMBAT] Failed to summon Blockade: No walkable tiles around target!")
 
 	if is_player:
 		EventBus.attackcam_finished.emit(attacker)
