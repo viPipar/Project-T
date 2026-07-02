@@ -11,6 +11,8 @@ const SCROLL_START_SPEED = 150.0
 const SCROLL_MAX_SPEED = 620.0
 const SCROLL_ACCEL_SECONDS = 1.8
 const BACKGROUND_PATH = "res://assets/roguelike/node_map/backgrounds/swamp_path_22x33_map_public.jpg"
+const BACKGROUND_SATURATION = 0.22
+const BACKGROUND_DARKEN = 0.70
 const MAP_SCREEN_PATH = "res://ui/roguelike/MapScreen.tscn"
 const TRANSITION_SCENE_PATH = "res://ui/roguelike/RoguelikeTransition.tscn"
 const LOADING_SCREEN_PATH = "res://ui/roguelike/RoguelikeLoadingScreen.tscn"
@@ -42,6 +44,7 @@ var fog_overlay_p2: MapFogOverlay
 var selected_node_id: int = -1
 var confirm_overlay: Control
 var confirm_label: Label
+var seed_label: Label
 var is_confirming := false
 var scroll_hold_seconds := 0.0
 var scroll_hold_direction := 0.0
@@ -70,6 +73,7 @@ func _ready() -> void:
 	node_positions = _calculate_node_positions()
 	path_renderer_p1 = _build_map_view(map_content_p1, node_buttons_p1, true)
 	path_renderer_p2 = _build_map_view(map_content_p2, node_buttons_p2, false)
+	_setup_seed_label()
 	_setup_confirm_modal()
 	_scroll_to_start()
 	_select_first_unlocked()
@@ -226,8 +230,30 @@ func _add_background(parent_content: Control) -> void:
 	background.expand_mode = 1
 	background.stretch_mode = 6
 	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	background.modulate = Color(0.46, 0.46, 0.46, 1.0)
+	background.material = _get_background_material()
+	background.modulate = Color(0.64, 0.64, 0.64, 1.0)
 	parent_content.add_child(background)
+
+func _get_background_material() -> ShaderMaterial:
+	var shader = Shader.new()
+	shader.code = """
+shader_type canvas_item;
+
+uniform float saturation = 0.22;
+uniform float darken = 0.70;
+
+void fragment() {
+	vec4 color = texture(TEXTURE, UV);
+	float gray = dot(color.rgb, vec3(0.299, 0.587, 0.114));
+	color.rgb = mix(vec3(gray), color.rgb, saturation) * darken;
+	COLOR = color;
+}
+"""
+	var material = ShaderMaterial.new()
+	material.shader = shader
+	material.set_shader_parameter("saturation", BACKGROUND_SATURATION)
+	material.set_shader_parameter("darken", BACKGROUND_DARKEN)
+	return material
 
 func _create_node_button(map_node) -> Button:
 	var button = Button.new()
@@ -307,6 +333,47 @@ func _setup_confirm_modal() -> void:
 	hint.add_theme_font_size_override("font_size", 18)
 	hint.add_theme_color_override("font_color", Color(1.0, 0.82, 0.24))
 	vbox.add_child(hint)
+
+func _setup_seed_label() -> void:
+	var panel = PanelContainer.new()
+	panel.name = "SeedPanel"
+	panel.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	panel.offset_left = -310.0
+	panel.offset_top = -48.0
+	panel.offset_right = -18.0
+	panel.offset_bottom = -16.0
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_theme_stylebox_override("panel", _get_seed_panel_stylebox())
+	add_child(panel)
+
+	seed_label = Label.new()
+	seed_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	seed_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	seed_label.add_theme_font_size_override("font_size", 16)
+	seed_label.add_theme_color_override("font_color", Color(1.0, 0.86, 0.32, 1.0))
+	seed_label.text = "Seed: %d" % _get_current_seed_value()
+	panel.add_child(seed_label)
+
+func _get_seed_panel_stylebox() -> StyleBoxFlat:
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0, 0, 0, 0.58)
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.border_color = Color(1.0, 0.78, 0.18, 0.82)
+	style.corner_radius_top_left = 6
+	style.corner_radius_top_right = 6
+	style.corner_radius_bottom_right = 6
+	style.corner_radius_bottom_left = 6
+	return style
+
+func _get_current_seed_value() -> int:
+	if RunManager != null:
+		return RunManager.get_node_map_seed()
+	if graph != null:
+		return graph.seed_value
+	return -1
 
 func _get_icon_texture(node_type: NodeGraph.NodeType) -> Texture2D:
 	var path = ICON_PATHS.get(node_type, "")
