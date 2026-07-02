@@ -228,8 +228,7 @@ func _apply_damage_to_target(target: Node, amount: int, attacker: Node, damage_t
 		return health.take_damage(amount, attacker, damage_type)
 
 	if is_instance_valid(target) and target.has_method("take_damage"):
-		target.call("take_damage", amount)
-		return maxi(0, amount)
+		return int(target.take_damage(amount, attacker, damage_type))
 
 	print("[COMBAT] Target tidak punya HealthComponent/take_damage() - damage tidak di-apply")
 	return 0

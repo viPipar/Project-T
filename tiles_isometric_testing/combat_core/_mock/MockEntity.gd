@@ -23,13 +23,14 @@ func _ready() -> void:
 		add_to_group("enemies")
 
 
-func take_damage(amount: int) -> void:
+func take_damage(amount: int, _attacker: Node = null, _damage_type: String = "physical") -> int:
 	current_hp -= amount
 	if current_hp <= 0:
 		current_hp = 0
 		is_alive   = false
 		died.emit(self)
 		print("[MockEntity] %s died." % entity_name)
+	return amount
 
 
 func heal(amount: int) -> void:

@@ -1,0 +1,195 @@
+[gd_scene load_steps=29 format=3]
+
+[ext_resource type="Script" path="res://scenes/cutscene/IntroCutscene.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/scene_1/langit.png" id="2_s1_langit"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/scene_1/matahari.png" id="3_s1_matahari"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/scene_1/tebing_belakang.png" id="4_s1_tebing_belakang"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/scene_1/awan.png" id="5_s1_awan"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/scene_1/gunung_depan.png" id="6_s1_gunung_depan"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/scene_2/background.png" id="7_s2_background"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/scene_2/cahaya.png" id="8_s2_cahaya"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/scene_2/awan.png" id="9_s2_awan"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/scene_2/fighter.png" id="10_s2_fighter"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/scene_2/wizard.png" id="11_s2_wizard"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/scene_3/background.png" id="12_s3_background"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/scene_3/prajurit.png" id="13_s3_prajurit"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/scene_3/fighter.png" id="14_s3_fighter"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/scene_4/background.png" id="15_s4_background"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/scene_4/cahaya.png" id="16_s4_cahaya"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/scene_4/kabut.png" id="17_s4_kabut"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/scene_4/fighter.png" id="18_s4_fighter"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/scene_4/wizard.png" id="19_s4_wizard"]
+[ext_resource type="Texture2D" path="res://assets/backgrounds/scene_5/ledakan.png" id="20_s5_ledakan"]
+
+[sub_resource type="Animation" id="Animation_play"]
+resource_name = "play_cutscene"
+length = 25.0
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("MainCamera:position")
+tracks/0/interp = 2
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 3, 5, 8, 10, 13, 15, 18, 20, 23),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector2(0, 0), Vector2(400, 0), Vector2(2500, 0), Vector2(2900, 0), Vector2(5000, 0), Vector2(5400, 0), Vector2(7500, 0), Vector2(7900, 0), Vector2(10000, 0), Vector2(10400, 0)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("MainCamera:zoom")
+tracks/1/interp = 2
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 3, 5, 8, 10, 13, 15, 18, 20, 23),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector2(1, 1), Vector2(1.2, 1.2), Vector2(1, 1), Vector2(1.2, 1.2), Vector2(1, 1), Vector2(1.2, 1.2), Vector2(1, 1), Vector2(1.2, 1.2), Vector2(1, 1), Vector2(1.2, 1.2)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("UI/SkipPrompt:modulate")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0), Color(1, 1, 1, 1), Color(1, 1, 1, 0), Color(1, 1, 1, 1), Color(1, 1, 1, 0), Color(1, 1, 1, 1), Color(1, 1, 1, 0), Color(1, 1, 1, 1), Color(1, 1, 1, 0), Color(1, 1, 1, 1), Color(1, 1, 1, 0), Color(1, 1, 1, 1), Color(1, 1, 1, 0), Color(1, 1, 1, 1), Color(1, 1, 1, 0), Color(1, 1, 1, 1), Color(1, 1, 1, 0), Color(1, 1, 1, 1), Color(1, 1, 1, 0), Color(1, 1, 1, 1), Color(1, 1, 1, 0), Color(1, 1, 1, 1), Color(1, 1, 1, 0), Color(1, 1, 1, 1), Color(1, 1, 1, 0), Color(1, 1, 1, 1)]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("TransitionRect:modulate")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 23, 25),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0), Color(1, 1, 1, 0), Color(1, 1, 1, 1)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_anim"]
+_data = {
+"play_cutscene": SubResource("Animation_play")
+}
+
+[node name="IntroCutscene" type="Node2D"]
+script = ExtResource("1_script")
+
+[node name="Panels" type="Node2D" parent="."]
+
+[node name="Scene1" type="Node2D" parent="Panels"]
+position = Vector2(0, 0)
+
+[node name="Langit" type="Sprite2D" parent="Panels/Scene1"]
+texture = ExtResource("2_s1_langit")
+
+[node name="Matahari" type="Sprite2D" parent="Panels/Scene1"]
+texture = ExtResource("3_s1_matahari")
+
+[node name="TebingBelakang" type="Sprite2D" parent="Panels/Scene1"]
+texture = ExtResource("4_s1_tebing_belakang")
+
+[node name="Awan" type="Sprite2D" parent="Panels/Scene1"]
+texture = ExtResource("5_s1_awan")
+
+[node name="GunungDepan" type="Sprite2D" parent="Panels/Scene1"]
+texture = ExtResource("6_s1_gunung_depan")
+
+[node name="Scene2" type="Node2D" parent="Panels"]
+position = Vector2(2500, 0)
+
+[node name="Background" type="Sprite2D" parent="Panels/Scene2"]
+texture = ExtResource("7_s2_background")
+
+[node name="Cahaya" type="Sprite2D" parent="Panels/Scene2"]
+texture = ExtResource("8_s2_cahaya")
+
+[node name="Awan" type="Sprite2D" parent="Panels/Scene2"]
+texture = ExtResource("9_s2_awan")
+
+[node name="Fighter" type="Sprite2D" parent="Panels/Scene2"]
+texture = ExtResource("10_s2_fighter")
+
+[node name="Wizard" type="Sprite2D" parent="Panels/Scene2"]
+texture = ExtResource("11_s2_wizard")
+
+[node name="Scene3" type="Node2D" parent="Panels"]
+position = Vector2(5000, 0)
+
+[node name="Background" type="Sprite2D" parent="Panels/Scene3"]
+texture = ExtResource("12_s3_background")
+
+[node name="Prajurit" type="Sprite2D" parent="Panels/Scene3"]
+texture = ExtResource("13_s3_prajurit")
+
+[node name="Fighter" type="Sprite2D" parent="Panels/Scene3"]
+texture = ExtResource("14_s3_fighter")
+
+[node name="Scene4" type="Node2D" parent="Panels"]
+position = Vector2(7500, 0)
+
+[node name="Background" type="Sprite2D" parent="Panels/Scene4"]
+texture = ExtResource("15_s4_background")
+
+[node name="Cahaya" type="Sprite2D" parent="Panels/Scene4"]
+texture = ExtResource("16_s4_cahaya")
+
+[node name="Kabut" type="Sprite2D" parent="Panels/Scene4"]
+texture = ExtResource("17_s4_kabut")
+
+[node name="Fighter" type="Sprite2D" parent="Panels/Scene4"]
+texture = ExtResource("18_s4_fighter")
+
+[node name="Wizard" type="Sprite2D" parent="Panels/Scene4"]
+texture = ExtResource("19_s4_wizard")
+
+[node name="Scene5" type="Node2D" parent="Panels"]
+position = Vector2(10000, 0)
+
+[node name="Ledakan" type="Sprite2D" parent="Panels/Scene5"]
+texture = ExtResource("20_s5_ledakan")
+
+[node name="MainCamera" type="Camera2D" parent="."]
+position = Vector2(0, 0)
+zoom = Vector2(1, 1)
+process_callback = 0
+
+[node name="CutsceneAnimator" type="AnimationPlayer" parent="."]
+libraries = {
+"": SubResource("AnimationLibrary_anim")
+}
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="SkipPrompt" type="Label" parent="UI"]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -283.0
+offset_top = -67.0
+offset_right = -36.0
+offset_bottom = -29.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_font_sizes/font_size = 24
+text = "Press [Space] to Skip"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="TransitionRect" type="ColorRect" parent="."]
+modulate = Color(1, 1, 1, 0)
+z_index = 100
+offset_left = -2000.0
+offset_top = -2000.0
+offset_right = 14000.0
+offset_bottom = 2000.0
+mouse_filter = 2
+color = Color(0, 0, 0, 1)

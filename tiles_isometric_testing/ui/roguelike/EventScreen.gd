@@ -11,16 +11,16 @@ func _ready() -> void:
 	# Neobrutalism
 	var bg = Panel.new()
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg.add_theme_stylebox_override("panel", NeobrutalStyle.get_panel(NeobrutalStyle.COLOR_WHITE))
+	bg.add_theme_stylebox_override("panel", FantasyStyle.get_panel(FantasyStyle.COLOR_PARCHMENT))
 	add_child(bg)
 	move_child(bg, 0)
 	
-	panel.add_theme_stylebox_override("panel", NeobrutalStyle.get_panel(NeobrutalStyle.COLOR_WHITE))
+	panel.add_theme_stylebox_override("panel", FantasyStyle.get_panel(FantasyStyle.COLOR_PARCHMENT))
 	
-	NeobrutalStyle.apply_to_button(p1_btn_1, NeobrutalStyle.COLOR_RED)
-	NeobrutalStyle.apply_to_button(p1_btn_2, NeobrutalStyle.COLOR_YELLOW)
-	NeobrutalStyle.apply_to_button(p2_btn_1, NeobrutalStyle.COLOR_CYAN)
-	NeobrutalStyle.apply_to_button(p2_btn_2, NeobrutalStyle.COLOR_GREEN)
+	FantasyStyle.apply_to_button(p1_btn_1, FantasyStyle.COLOR_BLOOD)
+	FantasyStyle.apply_to_button(p1_btn_2, FantasyStyle.COLOR_GOLD)
+	FantasyStyle.apply_to_button(p2_btn_1, FantasyStyle.COLOR_SAPPHIRE)
+	FantasyStyle.apply_to_button(p2_btn_2, FantasyStyle.COLOR_EMERALD)
 	
 	_load_mock_event()
 

@@ -240,51 +240,67 @@ func _play_skill_cast_vfx(caster: Node, ability_tag: String, ability_type: int, 
 		return
 
 	var tag_lower := ability_tag.to_lower()
+	var tex_path := ""
+	var h := 7
+	var v := 1
+	var scale_f := 0.2
+	var fps := 24.0
 	var shake_power := 6.0
 	var sm := debug_scale_multiplier
 	var caster_pos: Vector2 = caster.global_position + Vector2(0, -48) + debug_offset
 
-	if ability_type == 1:
-		var mc = Node2D.new()
-		mc.set_script(preload("res://combat_core/tests/MagicCircleVFX.gd"))
-		mc.setup(element_tag, caster_pos, 0.8 * sm)
-		add_child(mc)
-	elif ability_type == 2:
-		shake_power = 3.0
-		var vfx = Sprite2D.new()
-		vfx.set_script(preload("res://combat_core/tests/SkillCastVFX.gd"))
-		vfx.setup("res://assets/brackeys_vfx_bundle/predrawn/charge_7x6.png", 7, 6, 24.0, 0.9 * sm)
-		vfx.global_position = caster_pos
-		add_child(vfx)
-	else:
-		match tag_lower:
-			"epimorphic", "autotomy":
-				var vfx = Sprite2D.new()
-				vfx.set_script(preload("res://combat_core/tests/SkillCastVFX.gd"))
-				vfx.setup("res://assets/brackeys_vfx_bundle/predrawn/vortex_6x5.png", 6, 5, 24.0, 1.0 * sm)
-				vfx.global_position = caster_pos
-				add_child(vfx)
-				shake_power = 4.0
-			"divine_departure", "grand_escape":
-				var vfx = Sprite2D.new()
-				vfx.set_script(preload("res://combat_core/tests/SkillCastVFX.gd"))
-				vfx.setup("res://assets/brackeys_vfx_bundle/predrawn/lightstreaks_6x5.png", 6, 5, 24.0, 1.0 * sm)
-				vfx.global_position = caster_pos
-				add_child(vfx)
-				shake_power = 5.0
-			"boss_cleave", "boss_great_bash":
-				var vfx = Sprite2D.new()
-				vfx.set_script(preload("res://combat_core/tests/SkillCastVFX.gd"))
-				vfx.setup("res://assets/brackeys_vfx_bundle/predrawn/explosion_6x5.png", 6, 5, 24.0, 1.5 * sm)
-				vfx.global_position = caster_pos
-				add_child(vfx)
-				shake_power = 14.0
-			_:
-				var vfx = Sprite2D.new()
-				vfx.set_script(preload("res://combat_core/tests/SkillCastVFX.gd"))
-				vfx.setup("res://assets/brackeys_vfx_bundle/predrawn/big_hit_6x5.png", 6, 5, 24.0, 1.0 * sm)
-				vfx.global_position = caster_pos
-				add_child(vfx)
+	match tag_lower:
+		# Utility / self-target
+		"epimorphic", "autotomy":
+			tex_path = "res://assets/ui_assets/vfx/Earth Wizard.png"
+			h = 6
+			shake_power = 4.0
+		"divine_departure", "grand_escape":
+			tex_path = "res://assets/ui_assets/vfx/Basic white.png"
+			h = 7
+			shake_power = 5.0
+		# Boss specials
+		"boss_cleave", "boss_great_bash":
+			tex_path = "res://assets/ui_assets/vfx/Basic white.png"
+			h = 7
+			scale_f = 0.3
+			shake_power = 14.0
+		_:
+			match ability_type:
+				2: # UTILITY
+					tex_path = "res://assets/ui_assets/vfx/Basic white.png"
+					h = 7
+					shake_power = 3.0
+				1: # MAGICAL
+					var el_lower := element_tag.to_lower()
+					match el_lower:
+						"fire":
+							tex_path = "res://assets/ui_assets/vfx/Fire Wizard.png"
+							h = 8
+						"water", "ice":
+							tex_path = "res://assets/ui_assets/vfx/Water Wizard.png"
+							h = 6
+						"wind", "air":
+							tex_path = "res://assets/ui_assets/vfx/Wind Wizard.png"
+							h = 7
+						"earth":
+							tex_path = "res://assets/ui_assets/vfx/Earth Wizard.png"
+							h = 6
+						_:
+							tex_path = "res://assets/ui_assets/vfx/Basic white.png"
+							h = 7
+				0: # PHYSICAL
+					tex_path = "res://assets/ui_assets/vfx/Fighter.png"
+					h = 9
+
+	if tex_path.is_empty():
+		return
+
+	var vfx = Sprite2D.new()
+	vfx.set_script(preload("res://combat_core/tests/SkillCastVFX.gd"))
+	vfx.setup(tex_path, h, v, fps, scale_f * sm)
+	vfx.global_position = caster_pos
+	add_child(vfx)
 
 	_apply_camera_shake(1, 0.15, shake_power)
 	_apply_camera_shake(2, 0.15, shake_power)
