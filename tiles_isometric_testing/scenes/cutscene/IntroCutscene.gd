@@ -16,8 +16,16 @@ func _ready() -> void:
 
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_accept") or event.is_action_pressed("ui_cancel") or (event is InputEventMouseButton and event.pressed):
-		# Jika pemain menekan spasi, enter, esc, atau klik mouse, skip cutscene
-		_finish_cutscene()
+		# Cari batas waktu scene berikutnya (kelipatan 15 detik)
+		var current_time = cutscene_animator.current_animation_position
+		var next_time = floor((current_time / 15.0) + 1.0) * 15.0
+		
+		# Jika scene berikutnya melebihi atau sama dengan durasi total cutscene, kita akhiri cutscene
+		if next_time >= cutscene_animator.current_animation_length:
+			_finish_cutscene()
+		else:
+			# Lompat ke scene berikutnya
+			cutscene_animator.seek(next_time, true)
 
 func _on_animation_finished(anim_name: String) -> void:
 	if anim_name == "play_cutscene":
