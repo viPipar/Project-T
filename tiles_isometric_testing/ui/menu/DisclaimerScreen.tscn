@@ -1,6 +1,8 @@
 [gd_scene load_steps=12 format=3 uid="uid://dgkq12j6w7e2x"]
 
 [ext_resource type="Script" path="res://ui/menu/DisclaimerScreen.gd" id="1_disclaimer"]
+[ext_resource type="FontFile" path="res://assets/ui_assets/PirataOne-Regular.ttf" id="pirata_font"]
+[ext_resource type="FontFile" path="res://assets/ui_assets/Metamorphous-Regular.ttf" id="meta_font"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bg"]
 bg_color = Color(0.85098, 0.85098, 0.85098, 1)
@@ -12,12 +14,8 @@ shadow_color = Color(0, 0, 0, 0.25)
 shadow_size = 10
 shadow_offset = Vector2(0, 5)
 
-[sub_resource type="SystemFont" id="SystemFont_title"]
-font_names = PackedStringArray("Sans-Serif", "Arial", "Helvetica")
-font_weight = 700
-
 [sub_resource type="LabelSettings" id="LabelSettings_title"]
-font = SubResource("SystemFont_title")
+font = ExtResource("pirata_font")
 font_size = 32
 font_color = Color(0.0784314, 0.0784314, 0.0784314, 1)
 
@@ -185,7 +183,7 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_torso_p2")
 custom_minimum_size = Vector2(160, 44)
 layout_mode = 2
 size_flags_horizontal = 4
-theme_override_fonts/font = SubResource("SystemFont_title")
+theme_override_fonts/font = ExtResource("pirata_font")
 theme_override_font_sizes/font_size = 16
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")

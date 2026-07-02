@@ -11,13 +11,18 @@ func _ready() -> void:
 	# Add Neobrutalism background
 	var bg = Panel.new()
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg.add_theme_stylebox_override("panel", NeobrutalStyle.get_panel(NeobrutalStyle.COLOR_WHITE))
+	bg.add_theme_stylebox_override("panel", FantasyStyle.get_panel(FantasyStyle.COLOR_PARCHMENT))
 	add_child(bg)
 	move_child(bg, 0)
 	
+	if title:
+		FantasyStyle.apply_title_font(title)
+	
 	leave_btn.add_theme_font_size_override("font_size", 24)
-	NeobrutalStyle.apply_to_button(leave_btn, NeobrutalStyle.COLOR_PINK)
+	FantasyStyle.apply_to_button(leave_btn, FantasyStyle.COLOR_CRIMSON)
 	leave_btn.pressed.connect(func():
+		if RunManager != null and RunManager.has_method("complete_pending_node"):
+			RunManager.complete_pending_node("node_completed")
 		var current = get_parent()
 		var shell = null
 		while current and current != get_tree().get_root():
@@ -69,7 +74,7 @@ func _populate_cards() -> void:
 		card.custom_minimum_size = Vector2(250, 350)
 		card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		card.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		NeobrutalStyle.apply_to_button(card, NeobrutalStyle.COLOR_GRAY)
+		FantasyStyle.apply_to_button(card, FantasyStyle.COLOR_LEATHER)
 		
 		var vbox = VBoxContainer.new()
 		vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -102,11 +107,11 @@ func _on_card_clicked(idx: int) -> void:
 		var data = _cards[i]["data"]
 		var rarity = _cards[i]["rarity"]
 
-		var color = NeobrutalStyle.COLOR_WHITE
-		if rarity == ItemRegistry.Rarity.COMMON: color = NeobrutalStyle.COLOR_CYAN
-		if rarity == ItemRegistry.Rarity.LEGENDARY: color = NeobrutalStyle.COLOR_YELLOW
+		var color = FantasyStyle.COLOR_PARCHMENT
+		if rarity == ItemRegistry.Rarity.COMMON: color = FantasyStyle.COLOR_SAPPHIRE
+		if rarity == ItemRegistry.Rarity.LEGENDARY: color = FantasyStyle.COLOR_GOLD
 
-		NeobrutalStyle.apply_to_button(card, color)
+		FantasyStyle.apply_to_button(card, color)
 
 		var vbox = card.get_child(0) as VBoxContainer
 		for c in vbox.get_children():

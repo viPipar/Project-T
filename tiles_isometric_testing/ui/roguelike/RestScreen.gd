@@ -15,22 +15,22 @@ const OPTIONS_DATA = [
 	{
 		"name": "Full Rest",
 		"desc": "+50% HP, +50% Resource",
-		"color_name": "COLOR_GREEN"
+		"color_name": "COLOR_EMERALD"
 	},
 	{
 		"name": "Partial Rest",
 		"desc": "+25% HP, +100% Resource",
-		"color_name": "COLOR_CYAN"
+		"color_name": "COLOR_SAPPHIRE"
 	},
 	{
 		"name": "Scavenge",
 		"desc": "Search Camp (Risk Roll)",
-		"color_name": "COLOR_YELLOW"
+		"color_name": "COLOR_GOLD"
 	},
 	{
 		"name": "Consecrate",
 		"desc": "Purge all cursed items",
-		"color_name": "COLOR_PINK"
+		"color_name": "COLOR_CRIMSON"
 	}
 ]
 
@@ -44,7 +44,7 @@ func _ready() -> void:
 	# Neobrutalist BG
 	var bg = Panel.new()
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg.add_theme_stylebox_override("panel", NeobrutalStyle.get_panel(NeobrutalStyle.COLOR_WHITE))
+	bg.add_theme_stylebox_override("panel", FantasyStyle.get_panel(FantasyStyle.COLOR_PARCHMENT))
 	add_child(bg)
 	
 	# CenterContainer for dynamic centering under any viewport size
@@ -64,6 +64,7 @@ func _ready() -> void:
 	title_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title_lbl.add_theme_font_size_override("font_size", 48)
 	title_lbl.add_theme_color_override("font_color", Color.BLACK)
+	FantasyStyle.apply_title_font(title_lbl)
 	main_vbox.add_child(title_lbl)
 	
 	# Subtitle
@@ -79,7 +80,7 @@ func _ready() -> void:
 	timer_lbl.text = "Consensus Timer: 15s"
 	timer_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	timer_lbl.add_theme_font_size_override("font_size", 24)
-	timer_lbl.add_theme_color_override("font_color", NeobrutalStyle.COLOR_RED)
+	timer_lbl.add_theme_color_override("font_color", FantasyStyle.COLOR_BLOOD)
 	main_vbox.add_child(timer_lbl)
 	
 	# Columns HBox
@@ -98,6 +99,7 @@ func _ready() -> void:
 	p1_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	p1_title.add_theme_font_size_override("font_size", 24)
 	p1_title.add_theme_color_override("font_color", Color.BLACK)
+	FantasyStyle.apply_title_font(p1_title)
 	p1_vbox.add_child(p1_title)
 	
 	for i in range(OPTIONS_DATA.size()):
@@ -105,8 +107,8 @@ func _ready() -> void:
 		var btn = Button.new()
 		btn.text = "%s\n(%s)" % [data["name"], data["desc"]]
 		btn.custom_minimum_size = Vector2(350, 80)
-		var color = NeobrutalStyle.get_color_by_name(data["color_name"])
-		NeobrutalStyle.apply_to_button(btn, color)
+		var color = FantasyStyle.get_color_by_name(data["color_name"])
+		FantasyStyle.apply_to_button(btn, color)
 		btn.pressed.connect(_on_p1_choice.bind(i))	
 		p1_vbox.add_child(btn)
 		p1_buttons.append(btn)
@@ -121,6 +123,7 @@ func _ready() -> void:
 	p2_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	p2_title.add_theme_font_size_override("font_size", 24)
 	p2_title.add_theme_color_override("font_color", Color.BLACK)
+	FantasyStyle.apply_title_font(p2_title)
 	p2_vbox.add_child(p2_title)
 	
 	for i in range(OPTIONS_DATA.size()):
@@ -128,8 +131,8 @@ func _ready() -> void:
 		var btn = Button.new()
 		btn.text = "%s\n(%s)" % [data["name"], data["desc"]]
 		btn.custom_minimum_size = Vector2(350, 80)
-		var color = NeobrutalStyle.get_color_by_name(data["color_name"])
-		NeobrutalStyle.apply_to_button(btn, color)
+		var color = FantasyStyle.get_color_by_name(data["color_name"])
+		FantasyStyle.apply_to_button(btn, color)
 		btn.pressed.connect(_on_p2_choice.bind(i))
 		p2_vbox.add_child(btn)
 		p2_buttons.append(btn)
@@ -147,7 +150,7 @@ func _ready() -> void:
 	leave_btn.text = "Leave Campfire"
 	leave_btn.custom_minimum_size = Vector2(250, 60)
 	leave_btn.visible = false
-	NeobrutalStyle.apply_to_button(leave_btn, NeobrutalStyle.COLOR_GREEN)
+	FantasyStyle.apply_to_button(leave_btn, FantasyStyle.COLOR_EMERALD)
 	leave_btn.pressed.connect(_on_leave_clicked)
 	main_vbox.add_child(leave_btn)
 	
@@ -235,6 +238,9 @@ func _resolve_choice(choice_idx: int) -> void:
 	_trigger_cursor_rescan()
 
 func _on_leave_clicked() -> void:
+	if RunManager != null and RunManager.has_method("complete_pending_node"):
+		RunManager.complete_pending_node("node_completed")
+
 	var current = get_parent()
 	var shell = null
 	while current and current != get_tree().get_root():

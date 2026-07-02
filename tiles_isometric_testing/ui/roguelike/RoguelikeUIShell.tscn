@@ -1,6 +1,6 @@
-[gd_scene load_steps=2 format=3 uid="uid://roguelike_shell_id"]
+[gd_scene load_steps=2 format=3 uid="uid://cor70ake1piha"]
 
-[ext_resource type="Script" path="res://ui/roguelike/RoguelikeUIShell.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://12k8pm4i4dhg" path="res://ui/roguelike/RoguelikeUIShell.gd" id="1_script"]
 
 [node name="RoguelikeUIShell" type="CanvasLayer"]
 layer = 100

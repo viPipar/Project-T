@@ -1,6 +1,8 @@
-[gd_scene load_steps=18 format=3 uid="uid://dpskv8l6v7e8y"]
+[gd_scene load_steps=17 format=3 uid="uid://dpskv8l6v7e8y"]
 
 [ext_resource type="Script" uid="uid://c7tupe4lfirq4" path="res://ui/menu/MainMenu.gd" id="1_menu"]
+[ext_resource type="FontFile" uid="uid://cce3o3xlrxgqx" path="res://assets/ui_assets/Metamorphous-Regular.ttf" id="meta_font"]
+[ext_resource type="FontFile" uid="uid://dnr8a3lgcn4iv" path="res://assets/ui_assets/PirataOne-Regular.ttf" id="pirata_font"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bg"]
 bg_color = Color(0.0588235, 0.0627451, 0.0784314, 1)
@@ -9,20 +11,12 @@ bg_color = Color(0.0588235, 0.0627451, 0.0784314, 1)
 font_size = 20
 font_color = Color(0.231373, 0.258824, 0.313726, 0.5)
 
-[sub_resource type="SystemFont" id="SystemFont_title"]
-font_names = PackedStringArray("Sans-Serif", "Arial", "Helvetica")
-font_weight = 800
-
 [sub_resource type="LabelSettings" id="LabelSettings_title"]
-font = SubResource("SystemFont_title")
+font = ExtResource("pirata_font")
 font_size = 48
 font_color = Color(0.901961, 0.901961, 0.901961, 1)
 shadow_size = 8
 shadow_color = Color(0, 0, 0, 0.5)
-
-[sub_resource type="SystemFont" id="SystemFont_menu_btn"]
-font_names = PackedStringArray("Sans-Serif", "Arial", "Helvetica")
-font_weight = 700
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
 content_margin_left = 28.0
@@ -72,7 +66,7 @@ shadow_size = 15
 shadow_offset = Vector2(0, 8)
 
 [sub_resource type="LabelSettings" id="LabelSettings_panel_title"]
-font = SubResource("SystemFont_title")
+font = ExtResource("pirata_font")
 font_size = 28
 font_color = Color(0.85098, 0.65098, 0.12549, 1)
 
@@ -106,12 +100,8 @@ corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
-[sub_resource type="SystemFont" id="SystemFont_label"]
-font_names = PackedStringArray("Sans-Serif", "Arial", "Helvetica")
-font_weight = 700
-
 [sub_resource type="LabelSettings" id="LabelSettings_setting_item"]
-font = SubResource("SystemFont_label")
+font = ExtResource("meta_font")
 font_color = Color(0.9, 0.9, 0.9, 1)
 
 [node name="MainMenu" type="Control"]
@@ -182,7 +172,7 @@ layout_mode = 2
 
 [node name="StartGameButton" type="Button" parent="MarginContainer/HBoxContainer/MenuButtons"]
 layout_mode = 2
-theme_override_fonts/font = SubResource("SystemFont_menu_btn")
+theme_override_fonts/font = ExtResource("meta_font")
 theme_override_font_sizes/font_size = 18
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_pressed")
@@ -192,7 +182,7 @@ alignment = 0
 
 [node name="HowToPlayButton" type="Button" parent="MarginContainer/HBoxContainer/MenuButtons"]
 layout_mode = 2
-theme_override_fonts/font = SubResource("SystemFont_menu_btn")
+theme_override_fonts/font = ExtResource("meta_font")
 theme_override_font_sizes/font_size = 18
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_pressed")
@@ -202,7 +192,7 @@ alignment = 0
 
 [node name="SettingsButton" type="Button" parent="MarginContainer/HBoxContainer/MenuButtons"]
 layout_mode = 2
-theme_override_fonts/font = SubResource("SystemFont_menu_btn")
+theme_override_fonts/font = ExtResource("meta_font")
 theme_override_font_sizes/font_size = 18
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_pressed")
@@ -212,7 +202,7 @@ alignment = 0
 
 [node name="CreditsButton" type="Button" parent="MarginContainer/HBoxContainer/MenuButtons"]
 layout_mode = 2
-theme_override_fonts/font = SubResource("SystemFont_menu_btn")
+theme_override_fonts/font = ExtResource("meta_font")
 theme_override_font_sizes/font_size = 18
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_pressed")
@@ -222,7 +212,7 @@ alignment = 0
 
 [node name="ExitButton" type="Button" parent="MarginContainer/HBoxContainer/MenuButtons"]
 layout_mode = 2
-theme_override_fonts/font = SubResource("SystemFont_menu_btn")
+theme_override_fonts/font = ExtResource("meta_font")
 theme_override_font_sizes/font_size = 18
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_pressed")
@@ -292,7 +282,7 @@ autowrap_mode = 2
 [node name="CloseButton" type="Button" parent="Overlays/HowToPlayPanel/MarginContainer/VBox"]
 layout_mode = 2
 size_flags_horizontal = 8
-theme_override_fonts/font = SubResource("SystemFont_menu_btn")
+theme_override_fonts/font = ExtResource("meta_font")
 theme_override_font_sizes/font_size = 14
 theme_override_styles/hover = SubResource("StyleBoxFlat_close_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_close_normal")
@@ -377,7 +367,7 @@ size_flags_vertical = 3
 [node name="CloseButton" type="Button" parent="Overlays/SettingsPanel/MarginContainer/VBox"]
 layout_mode = 2
 size_flags_horizontal = 8
-theme_override_fonts/font = SubResource("SystemFont_menu_btn")
+theme_override_fonts/font = ExtResource("meta_font")
 theme_override_font_sizes/font_size = 14
 theme_override_styles/hover = SubResource("StyleBoxFlat_close_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_close_normal")
@@ -440,7 +430,7 @@ autowrap_mode = 2
 [node name="CloseButton" type="Button" parent="Overlays/CreditsPanel/MarginContainer/VBox"]
 layout_mode = 2
 size_flags_horizontal = 8
-theme_override_fonts/font = SubResource("SystemFont_menu_btn")
+theme_override_fonts/font = ExtResource("meta_font")
 theme_override_font_sizes/font_size = 14
 theme_override_styles/hover = SubResource("StyleBoxFlat_close_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_close_normal")
