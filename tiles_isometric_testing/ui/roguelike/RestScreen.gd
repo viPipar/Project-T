@@ -235,6 +235,9 @@ func _resolve_choice(choice_idx: int) -> void:
 	_trigger_cursor_rescan()
 
 func _on_leave_clicked() -> void:
+	if RunManager != null and RunManager.has_method("complete_pending_node"):
+		RunManager.complete_pending_node("node_completed")
+
 	var current = get_parent()
 	var shell = null
 	while current and current != get_tree().get_root():

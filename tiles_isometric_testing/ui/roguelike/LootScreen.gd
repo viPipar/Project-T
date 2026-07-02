@@ -18,6 +18,8 @@ func _ready() -> void:
 	leave_btn.add_theme_font_size_override("font_size", 24)
 	NeobrutalStyle.apply_to_button(leave_btn, NeobrutalStyle.COLOR_PINK)
 	leave_btn.pressed.connect(func():
+		if RunManager != null and RunManager.has_method("complete_pending_node"):
+			RunManager.complete_pending_node("node_completed")
 		var current = get_parent()
 		var shell = null
 		while current and current != get_tree().get_root():

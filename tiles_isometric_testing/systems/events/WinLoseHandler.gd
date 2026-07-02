@@ -35,6 +35,10 @@ func handle_win(battle_type: String) -> void:
 			if hc and hc.has_method("heal"):
 				hc.heal(9999, null)
 
+	if RunManager != null:
+		RunManager.snapshot_all_players()
+		RunManager.complete_pending_node("node_completed")
+
 func handle_lose() -> void:
 	print("[WinLoseHandler] Processing Lose State...")
 	print("[WinLoseHandler] Applying -50% HP Penalty and Cursed Item.")
@@ -50,3 +54,7 @@ func handle_lose() -> void:
 		var pid = p.get("player_id")
 		if pid != null and typeof(pid) == TYPE_INT and InventoryManager != null:
 			InventoryManager.add_item(pid, "cursed_amulet")
+
+	if RunManager != null:
+		RunManager.snapshot_all_players()
+		RunManager.complete_pending_node("node_completed")

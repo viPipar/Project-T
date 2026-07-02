@@ -59,6 +59,10 @@ func _ready() -> void:
 	if p2_class != null:
 		p2_class.set_primary_class("scholar")
 
+	if RunManager != null and RunManager.is_run_active:
+		RunManager.hydrate_player_node(p1, 1)
+		RunManager.hydrate_player_node(p2, 2)
+
 	TurnManager.register_player(p1)
 	TurnManager.register_player(p2)
 
