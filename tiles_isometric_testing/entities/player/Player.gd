@@ -137,7 +137,7 @@ func _on_confirm() -> void:
 
 	var environment_handler := get_node_or_null("/root/EnvironmentInteractionHandler")
 	if environment_handler != null:
-		var interaction := environment_handler.interact_at(self, target, {
+		var interaction: Dictionary = environment_handler.interact_at(self, target, {
 			"reason": "confirm",
 			"player_id": player_id,
 		})
