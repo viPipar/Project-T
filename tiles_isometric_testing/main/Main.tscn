@@ -247,7 +247,7 @@ offset_left = -3.0
 offset_top = 388.0
 offset_right = 237.0
 offset_bottom = 419.0
-text = "Show Stats & Classes"
+text = "Toggle Controls"
 
 [node name="StatsLabel" type="Label" parent="DebugUI/Root/DebugPanel"]
 layout_mode = 0

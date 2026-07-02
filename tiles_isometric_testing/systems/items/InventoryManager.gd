@@ -39,6 +39,19 @@ func get_player_items(player_id: int) -> Array:
 		return []
 	return _inventories[player_id].duplicate()
 
+func has_item(player_id: int, item_id: String) -> bool:
+	if not _inventories.has(player_id):
+		return false
+	return item_id in _inventories[player_id]
+
+func has_item_node(entity: Node, item_id: String) -> bool:
+	if not is_instance_valid(entity):
+		return false
+	var pid = entity.get("player_id")
+	if pid == null:
+		return false
+	return has_item(int(pid), item_id)
+
 func reset() -> void:
 	_inventories[1].clear()
 	_inventories[2].clear()

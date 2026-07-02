@@ -146,9 +146,9 @@ func _process(delta: float) -> void:
 			map1.position = center1 - cam1
 			map2.position = center2 - cam2
 			
-			if cursor_p1:
+			if cursor_p1 and not InputManager.relic_focus_p1:
 				cursor_p1.global_position = view_p1.global_position + map1.position + p1_map_pos
-			if cursor_p2:
+			if cursor_p2 and not InputManager.relic_focus_p2:
 				var screen_p2_shared = view_p1.global_position + map1.position + p2_map_pos
 				var screen_p2_split = view_p2.global_position + map2.position + p2_map_pos
 				cursor_p2.global_position = screen_p2_shared.lerp(screen_p2_split, split_factor)
@@ -190,9 +190,13 @@ func _set_node_hover_state(node: Control, is_hovered: bool) -> void:
 	if is_hovered:
 		tween.tween_property(node, "scale", Vector2(1.2, 1.2), 0.1)
 		node.modulate = Color(1.2, 1.2, 1.2)
+		if node.has_method("_on_hover_entered"):
+			node.call("_on_hover_entered")
 	else:
 		tween.tween_property(node, "scale", Vector2(1.0, 1.0), 0.1)
 		node.modulate = Color(1.0, 1.0, 1.0)
+		if node.has_method("_on_hover_exited"):
+			node.call("_on_hover_exited")
 
 func _click_under_cursor(player_id: int, pos: Vector2) -> void:
 	for btn in selectable_nodes:

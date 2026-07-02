@@ -14,8 +14,14 @@ func get_balance(player_id: int) -> int:
 
 func add_coins(player_id: int, amount: int) -> void:
 	if not wallets.has(player_id): return
-	wallets[player_id] += amount
-	print("[CoinEconomy] P%d gained %d coins. Total: %d" % [player_id, amount, wallets[player_id]])
+	
+	var final_amount := amount
+	if InventoryManager != null and InventoryManager.has_item(player_id, "ring_greed"):
+		final_amount = int(amount * 1.2)
+		print("[CoinEconomy] Ring of Greed triggered! +20%% bonus coins: +%d -> +%d" % [amount, final_amount])
+		
+	wallets[player_id] += final_amount
+	print("[CoinEconomy] P%d gained %d coins. Total: %d" % [player_id, final_amount, wallets[player_id]])
 	balance_changed.emit(player_id, wallets[player_id])
 
 func deduct_coins(player_id: int, amount: int) -> bool:
