@@ -185,9 +185,6 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 				var a_px = IsoUtils.world_to_iso(t_grid)
 				var t_px = IsoUtils.world_to_iso(a_grid)
 				
-				attacker.z_index = IsoUtils.get_depth(t_grid)
-				target.z_index = IsoUtils.get_depth(a_grid)
-				
 				# Play sweeping teleport tween
 				var tw = create_tween().set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
 				tw.tween_property(attacker, "position", a_px, 0.5)
@@ -292,7 +289,6 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 					if is_instance_valid(GridManager) and GridManager.move_entity(old_pos, dash_dest, attacker):
 						attacker.set("grid_pos", dash_dest)
 						var end_px = IsoUtils.world_to_iso(dash_dest)
-						attacker.z_index = IsoUtils.get_depth(dash_dest)
 						var dash_tw = attacker.create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 						dash_tw.tween_property(attacker, "position", end_px, 0.15)
 						await dash_tw.finished
@@ -556,7 +552,6 @@ func _on_attack(attacker: Node, target: Node, _ability_id: String, target_pos: V
 					var blockade = blockade_scene.instantiate()
 					blockade.set("grid_pos", spawn_pos)
 					blockade.position = IsoUtils.world_to_iso(spawn_pos)
-					blockade.z_index = IsoUtils.get_depth(spawn_pos)
 					if world: world.add_child(blockade)
 
 	if is_player:

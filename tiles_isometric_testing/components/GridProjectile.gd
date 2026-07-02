@@ -47,7 +47,6 @@ func setup(p_shooter: Node, p_target_tile: Vector2i, p_options: Dictionary = {})
 		return
 
 	position = IsoUtils.world_to_iso(_tiles[0])
-	z_index = IsoUtils.get_depth(_tiles[0]) + 10
 	_tile_index = 1
 	queue_redraw()
 
@@ -70,7 +69,6 @@ func _process(delta: float) -> void:
 
 	if to_target.length() <= step:
 		position = target_pos
-		z_index = IsoUtils.get_depth(next_tile) + 10
 		_tile_index += 1
 		if _tile_index >= _tiles.size():
 			_finish()

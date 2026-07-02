@@ -92,8 +92,6 @@ func place_at(pos: Vector2i) -> void:
 	grid_pos = pos
 	GridManager.register_entity(pos, self, GridManager.EntityType.ENEMY)
 	position = IsoUtils.world_to_iso(pos)
-	z_index = IsoUtils.get_depth(pos)
-
 
 func dash(direction: Vector2i, distance: int, options: Dictionary = {}) -> Dictionary:
 	var move_comp := get_node_or_null("MovementComponent") as MovementComponent

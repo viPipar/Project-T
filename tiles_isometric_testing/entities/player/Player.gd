@@ -398,8 +398,7 @@ func _finish_action_resolution() -> void:
 
 
 func _clear_targeting_highlights() -> void:
-	HighlightManager.clear("attack")
-	HighlightManager.clear("skill")
+	HighlightManager.clear("skill_target")
 
 
 func _can_target_empty_tile() -> bool:
@@ -429,8 +428,6 @@ func place_at(pos: Vector2i) -> void:
 	grid_pos = pos
 	GridManager.register_entity(pos, self, GridManager.EntityType.PLAYER)
 	position = IsoUtils.world_to_iso(pos)
-	z_index  = IsoUtils.get_depth(pos)
-
 
 func dash(direction: Vector2i, distance: int, options: Dictionary = {}) -> Dictionary:
 	if movement != null and movement.has_method("dash"):

@@ -162,6 +162,7 @@ script = ExtResource("1_qv31u")
 environment = SubResource("Environment_qtrhv")
 
 [node name="World" type="Node2D" parent="."]
+y_sort_enabled = true
 script = ExtResource("2_wbnyf")
 
 [node name="TileMapLayer" type="TileMapLayer" parent="World"]
@@ -172,9 +173,11 @@ tile_set = SubResource("TileSet_tv7ag")
 script = ExtResource("4_cmtxc")
 
 [node name="HighlightLayer" parent="World" instance=ExtResource("5_hlyr")]
+y_sort_enabled = true
 
 [node name="Entities" type="Node2D" parent="World"]
 z_index = 2
+y_sort_enabled = true
 
 [node name="Camera2D" type="Camera2D" parent="World"]
 position = Vector2(0, 488)

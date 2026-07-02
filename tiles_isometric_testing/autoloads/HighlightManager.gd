@@ -47,6 +47,7 @@ const HIGHLIGHT_CONFIG: Dictionary = {
 	"skill":     { "node_name": "SkillHighlight",     "anim": "skill",  "z_offset": 2 },
 	"hover":     { "node_name": "HoverHighlight",     "anim": "hover",  "z_offset": 4 },
 	"danger":    { "node_name": "DangerHighlight",    "anim": "danger", "z_offset": 1 },
+	"skill_target": { "node_name": "SkillTarget", "anim": "select", "z_offset": 5 },
 	# ── Cursor highlights (multi-animasi, gunakan show_cursor()) ─────────────
 	# CursorP1Highlight punya animasi: valid(hijau), invalid(merah), entity(kuning), self(biru)
 	# CursorP2Highlight punya animasi: valid(ungu),  invalid(merah), entity(kuning), self(biru)
@@ -61,8 +62,8 @@ const CURSOR_STATES: Array[String] = ["valid", "invalid", "entity", "self"]
 
 # -- State internal -----------------------------------------------------------
 var _layer: Node2D = null                              # referensi ke HighlightLayer node
-var _active: Dictionary = {}                           # tipe → Array[ColorRect]
-var _pool:   Dictionary = {}                           # tipe → Array[ColorRect] (reuse)
+var _active: Dictionary = {}                           # tipe → Array[Node2D]
+var _pool:   Dictionary = {}                           # tipe → Array[Node2D] (reuse)
 
 var _shader: Shader = preload("res://ui/shared/hand_drawn_highlight.gdshader")
 
@@ -165,8 +166,11 @@ func _get_color_for_state(state: String, is_p1: bool) -> Color:
 	return Color(1, 1, 1)
 
 func _get_color_for_type(type: String) -> Color:
+	if type == "move_p1": return Color(0.6, 0.1, 0.1) # Merah agak hitam (Crimson/Dark Red)
+	if type == "move_p2": return Color(0.9, 0.9, 0.6) # Putih agak kuning (Pale Yellow)
 	if type.begins_with("move"): return Color(0.1, 0.6, 0.9) # Biru segar untuk gerak
 	if type == "attack": return Color(0.9, 0.1, 0.1)
+	if type == "skill_target": return Color(0.9, 0.1, 0.3) # Merah Pink/Crimson
 	if type == "select": return Color(0.9, 0.9, 0.9)
 	if type == "skill": return Color(0.7, 0.2, 0.9)
 	if type == "hover": return Color(0.9, 0.8, 0.1)
@@ -177,19 +181,46 @@ func _place_rect(grid_pos: Vector2i, type: String, state_override: String = "", 
 	if _layer == null: return
 
 	var cfg: Dictionary = HIGHLIGHT_CONFIG[type]
-	var rect: ColorRect = _get_from_pool(type)
+	var node: Node2D = _get_from_pool(type)
 	
-	if rect == null:
-		rect = ColorRect.new()
-		rect.size = Vector2(256, 128)
-		rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if node == null:
+		node = Node2D.new()
+		# Node2D ini akan di-Y-Sort oleh HighlightLayer
+		node.y_sort_enabled = false
 		
-		var mat = ShaderMaterial.new()
-		mat.shader = _shader
-		rect.material = mat
-		
-		rect.visible = false
-		_layer.add_child(rect)
+		if type == "skill_target":
+			var iso_wrapper = Node2D.new()
+			iso_wrapper.scale = Vector2(1.0, 0.5)
+			
+			var sprite = Sprite2D.new()
+			var tex = preload("res://assets/tiles/ability_highlight.png")
+			sprite.texture = tex
+			
+			# Rotasi 45 dan perhitungan scale agar pas dengan tile 256x128
+			sprite.rotation_degrees = 45
+			var s = 256.0 / (tex.get_width() * sqrt(2.0))
+			sprite.scale = Vector2(s, s)
+			
+			var mat = ShaderMaterial.new()
+			mat.shader = preload("res://ui/shared/shiny_sweep.gdshader")
+			sprite.material = mat
+			
+			iso_wrapper.add_child(sprite)
+			node.add_child(iso_wrapper)
+		else:
+			var rect = ColorRect.new()
+			rect.size = Vector2(256, 128)
+			rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			# Offset posisi visual relatif terhadap center
+			rect.position = Vector2(-128, -64)
+			
+			var mat = ShaderMaterial.new()
+			mat.shader = _shader
+			rect.material = mat
+			node.add_child(rect)
+			
+		node.visible = false
+		_layer.add_child(node)
 
 	# Tentukan warna
 	var base_color: Color
@@ -199,29 +230,36 @@ func _place_rect(grid_pos: Vector2i, type: String, state_override: String = "", 
 	else:
 		base_color = _get_color_for_type(type)
 		
-	var mat = rect.material as ShaderMaterial
-	var fill = base_color
-	fill.a = 0.35
-	var edge = base_color
-	edge.v = min(edge.v + 0.3, 1.0)
-	edge.a = 1.0
-	
-	mat.set_shader_parameter("fill_color", fill)
-	mat.set_shader_parameter("edge_color", edge)
+	if type == "skill_target":
+		var iso_wrapper = node.get_child(0) as Node2D
+		var sprite = iso_wrapper.get_child(0) as Sprite2D
+		var mat = sprite.material as ShaderMaterial
+		mat.set_shader_parameter("base_color", base_color)
+		mat.set_shader_parameter("shine_color", Color(1.0, 1.0, 1.0, 1.0))
+		mat.set_shader_parameter("shine_speed", 1.5)
+	else:
+		var rect = node.get_child(0) as ColorRect
+		var mat = rect.material as ShaderMaterial
+		var fill = base_color
+		# Kurangi opacity fill agar tidak terlalu menyilaukan
+		fill.a = 0.25 
+		var edge = base_color
+		edge.v = min(edge.v + 0.3, 1.0)
+		# Kurangi opacity edge sedikit agar lebih soft
+		edge.a = 0.85 
+		
+		mat.set_shader_parameter("fill_color", fill)
+		mat.set_shader_parameter("edge_color", edge)
 
-	# Set posisi
-	# Rect's pivot is top-left, so we offset by half the size (-128, -64).
-	# Ini menempatkannya persis di lantai tanpa mengambang.
-	rect.position = IsoUtils.world_to_iso(grid_pos) + Vector2(-128, -64)
+	# Set posisi Node2D ke center tile tepat (untuk Y-Sort yang sempurna)
+	node.position = IsoUtils.world_to_iso(grid_pos)
 	
-	# Samakan Z-Index dengan entitas. Karena HighlightLayer berada di atas entitas 
-	# dalam Scene Tree (dirender duluan), highlight akan otomatis berada di bawah kaki mereka.
-	rect.z_index = IsoUtils.get_depth(grid_pos)
-	rect.set_meta("grid_pos", grid_pos)
+	# Z-index dihapus karena kita pakai built-in Y-Sort
+	node.z_index = 0
+	node.set_meta("grid_pos", grid_pos)
 	
-	# Bawa kursor ke urutan paling depan agar menutupi highlight jalan (secara visual di node yang sama)
 	if type.begins_with("cursor_"):
-		rect.move_to_front()
+		node.move_to_front()
 	
 	# Multiplayer visibility
 	var vis_layer := 1
@@ -229,28 +267,28 @@ func _place_rect(grid_pos: Vector2i, type: String, state_override: String = "", 
 		vis_layer = 2
 	elif player_id == 2 or type.ends_with("_p2") or type == "cursor_p2" or type == "cursor_p2_back":
 		vis_layer = 4
-	rect.visibility_layer = vis_layer
+	node.visibility_layer = vis_layer
 	
 	# Muncul dengan Tween Juicy
-	if not rect.visible:
-		rect.visible = true
-		rect.scale = Vector2(0.5, 0.5)
-		rect.pivot_offset = Vector2(128, 64) # Center pivot for scaling
-		var tw = rect.create_tween()
-		tw.tween_property(rect, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	if not node.visible:
+		node.visible = true
+		node.scale = Vector2(0.5, 0.5)
+		# Pivot ada di (0,0) relatif ke Node2D, yang merupakan center lantai
+		var tw = node.create_tween()
+		tw.tween_property(node, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
-	_active[type].append(rect)
+	_active[type].append(node)
 
 
-func _get_from_pool(type: String) -> ColorRect:
+func _get_from_pool(type: String) -> Node2D:
 	if _pool[type].is_empty():
 		return null
-	return _pool[type].pop_back() as ColorRect
+	return _pool[type].pop_back() as Node2D
 
 
-func _return_to_pool(rect: ColorRect, type: String) -> void:
-	rect.visible = false
-	_pool[type].append(rect)
+func _return_to_pool(node: Node2D, type: String) -> void:
+	node.visible = false
+	_pool[type].append(node)
 
 
 func _is_valid_type(type: String) -> bool:

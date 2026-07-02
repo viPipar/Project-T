@@ -176,13 +176,8 @@ func get_dash_destination(_caster: Node, _target: Node) -> Vector2i:
 	return Vector2i(-1, -1)
 
 
-## Get the HighlightManager type string for this ability's grid area color.
 func get_highlight_type() -> String:
-	if is_self_target():
-		return "skill"   # green/purple for self
-	if range_type == "square" and (target_alignment == TargetAlignment.ANY or aoe_type != "none"):
-		return "attack"  # red for AoE
-	return "attack"      # yellow/red for targeted
+	return "skill_target"
 
 
 func execute(caster: Node, targets: Array) -> void:
