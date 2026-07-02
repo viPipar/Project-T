@@ -33,6 +33,8 @@ var nodes_by_id: Dictionary = {}
 var seed_value: int = -1
 var rng: RandomNumberGenerator = null
 
+const RANDOM_SEED = -1
+
 const MIN_BATTLE_NODES_PER_LAYER = 3
 const MAX_BATTLE_NODES_PER_LAYER = 4
 const TOTAL_LAYERS = 15
@@ -42,16 +44,17 @@ const ELITE_LAYERS = [4, 9]
 const BOSS_LAYER = 14
 const MAX_INCOMING_PER_NODE = 2
 
-func generate(new_seed: int = -1) -> void:
+func generate(new_seed: int = RANDOM_SEED) -> void:
 	layers.clear()
 	nodes_by_id.clear()
 	var current_id = 0
 	
-	if new_seed != -1:
+	if new_seed == RANDOM_SEED:
+		var seed_rng := RandomNumberGenerator.new()
+		seed_rng.randomize()
+		seed_value = seed_rng.randi()
+	else:
 		seed_value = new_seed
-	if seed_value == -1:
-		randomize()
-		seed_value = randi()
 		
 	rng = RandomNumberGenerator.new()
 	rng.seed = seed_value
