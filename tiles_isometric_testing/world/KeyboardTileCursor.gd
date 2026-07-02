@@ -21,6 +21,7 @@ var _player_cache: Node = null
 # Referensi ke PlayerCamera2D — di-set oleh main.gd setelah split-screen setup
 var camera_ref: Camera2D = null
 var _last_hovered_entity: Node = null
+var _last_hovered_relic: Control = null
 
 
 func _ready() -> void:
@@ -34,10 +35,23 @@ func get_hovered_tile() -> Vector2i:
 func _process(delta: float) -> void:
 	_move_cursor(delta)
 	_update_hovered_tile()
+	
+	var relic_focus = false
+	if InputManager != null:
+		relic_focus = InputManager.relic_focus_p1 if player_id == 1 else InputManager.relic_focus_p2
+		
+	if relic_focus:
+		_check_relic_hover()
+	else:
+		if is_instance_valid(_last_hovered_relic):
+			if _last_hovered_relic.has_method("_on_hover_exited"):
+				_last_hovered_relic.call("_on_hover_exited")
+			_last_hovered_relic = null
+			
 	queue_redraw()
 
 
-func _move_cursor(_delta: float) -> void:
+func _move_cursor(delta: float) -> void:
 	var relic_focus = false
 	if InputManager != null:
 		relic_focus = InputManager.relic_focus_p1 if player_id == 1 else InputManager.relic_focus_p2
@@ -47,18 +61,78 @@ func _move_cursor(_delta: float) -> void:
 			global_position = camera_ref.global_position
 		return
 		
-	# Free cursor movement on grid!
+	# ── FREE CURSOR MOVEMENT ──
 	var prefix := "p%d_" % player_id
-	var dir := Vector2i.ZERO
-	if Input.is_action_just_pressed(prefix + "move_up"): dir = Vector2i(-1, -1)
-	elif Input.is_action_just_pressed(prefix + "move_down"): dir = Vector2i(1, 1)
-	elif Input.is_action_just_pressed(prefix + "move_left"): dir = Vector2i(-1, 1)
-	elif Input.is_action_just_pressed(prefix + "move_right"): dir = Vector2i(1, -1)
+	var input_dir := Vector2.ZERO
+	if Input.is_action_pressed(prefix + "move_right"): input_dir.x += 1.0
+	if Input.is_action_pressed(prefix + "move_left"):  input_dir.x -= 1.0
+	if Input.is_action_pressed(prefix + "move_down"):  input_dir.y += 1.0
+	if Input.is_action_pressed(prefix + "move_up"):    input_dir.y -= 1.0
 	
-	if dir != Vector2i.ZERO:
-		var new_tile = hovered_tile + dir
-		if new_tile.x >= 0 and new_tile.y >= 0 and new_tile.x < GridManager.grid_size.x and new_tile.y < GridManager.grid_size.y:
-			global_position = IsoUtils.world_to_iso(new_tile)
+	if input_dir != Vector2.ZERO:
+		var zoom_factor = 1.0
+		if camera_ref != null and is_instance_valid(camera_ref):
+			zoom_factor = 1.0 / camera_ref.zoom.x
+		global_position += input_dir.normalized() * move_speed * delta * zoom_factor
+
+	# ── EDGE SCROLLING (CAMERA PANNING) ──
+	if camera_ref != null and is_instance_valid(camera_ref):
+		var screen_pos = get_global_transform_with_canvas().origin
+		var viewport_size = get_viewport().get_visible_rect().size
+		
+		var edge_margin := 40.0
+		var scroll_speed := 400.0
+		var cam_dir := Vector2.ZERO
+		
+		var relic_zone_height := 150.0
+		var in_relic_zone = screen_pos.y < relic_zone_height
+		
+		if not in_relic_zone:
+			if screen_pos.x < edge_margin:
+				cam_dir.x -= 1.0
+			elif screen_pos.x > viewport_size.x - edge_margin:
+				cam_dir.x += 1.0
+				
+		if screen_pos.y < edge_margin:
+			cam_dir.y -= 1.0
+		elif screen_pos.y > viewport_size.y - edge_margin:
+			cam_dir.y += 1.0
+			
+		if cam_dir != Vector2.ZERO:
+			camera_ref._target_pos += cam_dir.normalized() * scroll_speed * delta
+			global_position += cam_dir.normalized() * scroll_speed * delta
+
+
+func _check_relic_hover() -> void:
+	if not is_inside_tree(): return
+	var main = get_tree().root.get_node_or_null("Main")
+	if main == null: return
+	
+	var ssm = main.get_node_or_null("SplitScreenManager")
+	if ssm == null: return
+	
+	var container = ssm.get("_p1_relics_container") if player_id == 1 else ssm.get("_p2_relics_container")
+	if container == null: return
+	
+	var screen_pos = get_global_transform_with_canvas().origin
+	
+	var hovered_btn: Control = null
+	for btn in container.get_children():
+		if is_instance_valid(btn) and btn is Control:
+			if btn.get_global_rect().has_point(screen_pos):
+				hovered_btn = btn
+				break
+				
+	if hovered_btn != _last_hovered_relic:
+		if is_instance_valid(_last_hovered_relic):
+			if _last_hovered_relic.has_method("_on_hover_exited"):
+				_last_hovered_relic.call("_on_hover_exited")
+				
+		if hovered_btn != null:
+			if hovered_btn.has_method("_on_hover_entered"):
+				hovered_btn.call("_on_hover_entered")
+				
+		_last_hovered_relic = hovered_btn
 
 
 func _update_hovered_tile() -> void:
@@ -72,11 +146,7 @@ func _update_hovered_tile() -> void:
 	elif clamp_to_range and not _is_tile_allowed(grid_pos, player):
 		target = _get_fallback_tile(player)
 
-	var relic_focus = false
-	if InputManager != null:
-		relic_focus = InputManager.relic_focus_p1 if player_id == 1 else InputManager.relic_focus_p2
-	if relic_focus and target.x >= 0:
-		global_position = IsoUtils.world_to_iso(target)
+	# No grid snapping in free movement mode
 
 	if target != hovered_tile:
 		hovered_tile = target
